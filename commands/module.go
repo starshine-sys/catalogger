@@ -60,4 +60,19 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 		Permissions: discord.PermissionManageGuild,
 		Command:     b.channels,
 	})
+
+	b.AddCommand(&bcr.Command{
+		Name:    "help",
+		Summary: "Show information about the bot, or a specific command.",
+		Usage:   "[command]",
+
+		Command: b.help,
+	})
+
+	b.AddCommand(&bcr.Command{
+		Name:    "invite",
+		Summary: "Get an invite link for the bot.",
+
+		Command: b.invite,
+	})
 }

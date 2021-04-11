@@ -21,7 +21,9 @@ type Webhook struct {
 func (bot *Bot) SetWebhooks(t string, id discord.GuildID, w *Webhook) {
 	switch strings.ToLower(t) {
 	case "msg":
-		bot.MsgWebhookCache.Set(id.String(), w)
+		bot.MessageDeleteCache.Set(id.String(), w)
+	case "join":
+		bot.GuildMemberAddCache.Set(id.String(), w)
 	default:
 		return
 	}
@@ -36,7 +38,9 @@ func (bot *Bot) GetWebhooks(t string, id discord.GuildID) (*Webhook, error) {
 
 	switch strings.ToLower(t) {
 	case "msg":
-		v, err = bot.MsgWebhookCache.Get(id.String())
+		v, err = bot.MessageDeleteCache.Get(id.String())
+	case "join":
+		v, err = bot.GuildMemberAddCache.Get(id.String())
 	default:
 		return nil, errors.New("invalid webhook type specified")
 	}
@@ -52,7 +56,8 @@ func (bot *Bot) GetWebhooks(t string, id discord.GuildID) (*Webhook, error) {
 
 // ResetCache ...
 func (bot *Bot) ResetCache(id discord.GuildID) {
-	bot.MsgWebhookCache.Remove(id.String())
+	bot.MessageDeleteCache.Remove(id.String())
+	bot.GuildMemberAddCache.Remove(id.String())
 }
 
 func (bot *Bot) getWebhook(id discord.ChannelID, name string) (*discord.Webhook, error) {
@@ -71,4 +76,29 @@ func (bot *Bot) getWebhook(id discord.ChannelID, name string) (*discord.Webhook,
 		Name: name,
 	})
 	return w, err
+}
+
+func (bot *Bot) webhookCache(t string, guildID discord.GuildID, ch discord.ChannelID) (*discord.Webhook, error) {
+	// try getting the cached webhook
+	var wh *discord.Webhook
+
+	w, err := bot.GetWebhooks(t, guildID)
+	if err != nil {
+		wh, err = bot.getWebhook(ch, bot.Router.Bot.Username)
+		if err != nil {
+			return nil, err
+		}
+
+		bot.SetWebhooks(t, guildID, &Webhook{
+			ID:    wh.ID,
+			Token: wh.Token,
+		})
+	} else {
+		wh = &discord.Webhook{
+			ID:    w.ID,
+			Token: w.Token,
+		}
+	}
+
+	return wh, nil
 }

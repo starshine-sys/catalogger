@@ -16,18 +16,21 @@ type Bot struct {
 	DB    *db.DB
 	Sugar *zap.SugaredLogger
 
-	MsgWebhookCache *ttlcache.Cache
+	MessageDeleteCache  *ttlcache.Cache
+	GuildMemberAddCache *ttlcache.Cache
 }
 
 // Init ...
 func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 	b := &Bot{
-		Router:          r,
-		DB:              db,
-		Sugar:           s,
-		MsgWebhookCache: ttlcache.NewCache(),
+		Router:              r,
+		DB:                  db,
+		Sugar:               s,
+		MessageDeleteCache:  ttlcache.NewCache(),
+		GuildMemberAddCache: ttlcache.NewCache(),
 	}
-	b.MsgWebhookCache.SetTTL(10 * time.Minute)
+	b.MessageDeleteCache.SetTTL(10 * time.Minute)
+	b.GuildMemberAddCache.SetTTL(10 * time.Minute)
 
 	// add guild create handler
 	b.State.AddHandler(b.DB.CreateServerIfNotExists)
@@ -36,4 +39,5 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 	b.State.AddHandler(b.pkMessageCreate)
 	b.State.AddHandler(b.pkMessageCreateFallback)
 	b.State.AddHandler(b.pkMessageDelete)
+	b.State.AddHandler(b.guildMemberAdd)
 }

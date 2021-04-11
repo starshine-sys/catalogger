@@ -29,26 +29,10 @@ func (bot *Bot) pkMessageDelete(m *gateway.MessageDeleteEvent) {
 		return
 	}
 
-	// try getting the cached webhook
-	var wh *discord.Webhook
-
-	w, err := bot.GetWebhooks("msg", m.GuildID)
+	wh, err := bot.webhookCache("msg", m.GuildID, ch["MESSAGE_DELETE"])
 	if err != nil {
-		wh, err = bot.getWebhook(ch["MESSAGE_DELETE"], bot.Router.Bot.Username)
-		if err != nil {
-			bot.Sugar.Errorf("Error getting webhook: %v", err)
-			return
-		}
-
-		bot.SetWebhooks("msg", m.GuildID, &Webhook{
-			ID:    wh.ID,
-			Token: wh.Token,
-		})
-	} else {
-		wh = &discord.Webhook{
-			ID:    w.ID,
-			Token: w.Token,
-		}
+		bot.Sugar.Errorf("Error getting webhook: %v", err)
+		return
 	}
 
 	mention := msg.UserID.Mention()

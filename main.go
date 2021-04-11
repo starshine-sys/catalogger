@@ -41,6 +41,7 @@ func main() {
 	if err != nil {
 		sugar.Fatalf("Error creating bot: %v", err)
 	}
+	r.EmbedColor = bcr.ColourPurple
 	r.State.AddHandler(r.MessageCreate)
 
 	// create a database connection
