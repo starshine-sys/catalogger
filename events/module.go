@@ -34,5 +34,6 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 
 	// add pluralkit message create/delete handlers
 	b.State.AddHandler(b.pkMessageCreate)
+	b.State.AddHandler(b.pkMessageCreateFallback)
 	b.State.AddHandler(b.pkMessageDelete)
 }

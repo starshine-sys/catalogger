@@ -52,4 +52,12 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 		Permissions: discord.PermissionManageGuild,
 		Command:     b.setChannel,
 	})
+
+	b.AddCommand(&bcr.Command{
+		Name:    "channels",
+		Summary: "Show all currently logging events.",
+
+		Permissions: discord.PermissionManageGuild,
+		Command:     b.channels,
+	})
 }

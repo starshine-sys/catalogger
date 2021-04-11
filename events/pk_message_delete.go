@@ -3,7 +3,6 @@ package events
 import (
 	"fmt"
 
-	"github.com/diamondburned/arikawa/v2/api"
 	"github.com/diamondburned/arikawa/v2/api/webhook"
 	"github.com/diamondburned/arikawa/v2/discord"
 	"github.com/diamondburned/arikawa/v2/gateway"
@@ -111,22 +110,4 @@ func (bot *Bot) pkMessageDelete(m *gateway.MessageDeleteEvent) {
 	if err == nil {
 		bot.DB.DeleteProxied(msg.MsgID)
 	}
-}
-
-func (bot *Bot) getWebhook(id discord.ChannelID, name string) (*discord.Webhook, error) {
-	ws, err := bot.State.ChannelWebhooks(id)
-	if err == nil {
-		for _, w := range ws {
-			if w.Name == name {
-				return &w, nil
-			}
-		}
-	} else {
-		return nil, err
-	}
-
-	w, err := bot.State.CreateWebhook(id, api.CreateWebhookData{
-		Name: name,
-	})
-	return w, err
 }

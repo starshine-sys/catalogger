@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/diamondburned/arikawa/v2/api"
 	"github.com/diamondburned/arikawa/v2/discord"
 )
 
@@ -52,4 +53,22 @@ func (bot *Bot) GetWebhooks(t string, id discord.GuildID) (*Webhook, error) {
 // ResetCache ...
 func (bot *Bot) ResetCache(id discord.GuildID) {
 	bot.MsgWebhookCache.Remove(id.String())
+}
+
+func (bot *Bot) getWebhook(id discord.ChannelID, name string) (*discord.Webhook, error) {
+	ws, err := bot.State.ChannelWebhooks(id)
+	if err == nil {
+		for _, w := range ws {
+			if w.Name == name {
+				return &w, nil
+			}
+		}
+	} else {
+		return nil, err
+	}
+
+	w, err := bot.State.CreateWebhook(id, api.CreateWebhookData{
+		Name: name,
+	})
+	return w, err
 }
