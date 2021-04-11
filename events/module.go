@@ -22,6 +22,9 @@ type Bot struct {
 	ProxiedTriggers   map[discord.MessageID]struct{}
 	ProxiedTriggersMu sync.Mutex
 
+	Invites  map[discord.GuildID][]discord.Invite
+	InviteMu sync.Mutex
+
 	MessageDeleteCache  *ttlcache.Cache
 	MessageUpdateCache  *ttlcache.Cache
 	GuildMemberAddCache *ttlcache.Cache
@@ -35,6 +38,7 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 		Sugar:  s,
 
 		ProxiedTriggers: map[discord.MessageID]struct{}{},
+		Invites:         map[discord.GuildID][]discord.Invite{},
 
 		MessageDeleteCache:  ttlcache.NewCache(),
 		MessageUpdateCache:  ttlcache.NewCache(),
@@ -51,10 +55,17 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 	b.State.AddHandler(b.pkMessageCreate)
 	b.State.AddHandler(b.pkMessageCreateFallback)
 	b.State.AddHandler(b.pkMessageDelete)
+
+	// add message create/update/delete handlers
 	b.State.AddHandler(b.messageCreate)
 	b.State.AddHandler(b.messageUpdate)
 	b.State.AddHandler(b.messageDelete)
+
+	// add guild member add handlers
 	b.State.AddHandler(b.guildMemberAdd)
+	b.State.AddHandler(b.invitesReady)
+	b.State.AddHandler(b.inviteCreate)
+	b.State.AddHandler(b.inviteDelete)
 }
 
 func (bot *Bot) cleanMessages() {

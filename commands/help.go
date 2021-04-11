@@ -23,11 +23,11 @@ Right now, its main purpose is logging deleted messages proxied by PluralKit, an
 		Fields: []discord.EmbedField{
 			{
 				Name:  "Info commands",
-				Value: "`help`: show this help\n`ping`: show the bot's latency\n`invite`: get an invite link for the bot\n`events`: show all events (not even *close* to all of these are implemented; these are *all* Discord events)",
+				Value: "`help`: show this help\n\n`ping`: show the bot's latency\n\n`invite`: get an invite link for the bot\n\n`events`: show all events (not even *close* to all of these are implemented; these are *all* Discord events)",
 			},
 			{
 				Name:  "Configuration",
-				Value: "`channels`: show which events are logging to which channels\n`setchannel`: log the given event to the current channel.",
+				Value: "`channels`: show which events are logging to which channels\n\n`setchannel`: log the given event to the current channel.\nFor example: `setchannel MESSAGE_DELETE`",
 			},
 			{
 				Name:  "Available events",

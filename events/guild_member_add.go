@@ -3,6 +3,7 @@ package events
 import (
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/diamondburned/arikawa/v2/api/webhook"
 	"github.com/diamondburned/arikawa/v2/discord"
@@ -85,6 +86,62 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) {
 			Value:  bcr.HumanizeTime(bcr.DurationPrecisionMinutes, sys.Created),
 			Inline: true,
 		})
+	}
+
+	if !m.User.Bot {
+		is, err := bot.State.GuildInvites(m.GuildID)
+		if err == nil {
+			bot.InviteMu.Lock()
+			var (
+				found bool
+				inv   discord.Invite
+			)
+
+			for _, existing := range bot.Invites[m.GuildID] {
+				for _, i := range is {
+					if existing.Uses < i.Uses {
+						found = true
+						inv = i
+						break
+					}
+				}
+			}
+
+			if !found {
+				e.Fields = append(e.Fields, discord.EmbedField{
+					Name:  "Invite used",
+					Value: "Could not determine invite.",
+				})
+			} else {
+				e.Fields = append(e.Fields, []discord.EmbedField{
+					{
+						Name:  "​",
+						Value: "**Invite information**",
+					},
+					{
+						Name:   "Code",
+						Value:  inv.Code,
+						Inline: true,
+					},
+					{
+						Name:   "Uses",
+						Value:  fmt.Sprint(inv.Uses),
+						Inline: true,
+					},
+					{
+						Name:   "Created at",
+						Value:  inv.CreatedAt.Format(time.RFC1123),
+						Inline: true,
+					},
+					{
+						Name:   "Created by",
+						Value:  fmt.Sprintf("%v - %v#%v", inv.Inviter.Mention(), inv.Inviter.Username, inv.Inviter.Discriminator),
+						Inline: true,
+					},
+				}...)
+			}
+			bot.InviteMu.Unlock()
+		}
 	}
 
 	webhook.New(wh.ID, wh.Token).Execute(webhook.ExecuteData{
