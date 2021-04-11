@@ -2,6 +2,7 @@ package events
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/diamondburned/arikawa/v2/api/webhook"
 	"github.com/diamondburned/arikawa/v2/discord"
@@ -92,6 +93,8 @@ func (bot *Bot) pkMessageDelete(m *gateway.MessageDeleteEvent) {
 		Embeds:    []discord.Embed{e},
 	})
 	if err == nil {
+		// give other message delete handler time to check the database
+		time.Sleep(1 * time.Second)
 		bot.DB.DeleteProxied(msg.MsgID)
 	}
 }

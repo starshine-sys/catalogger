@@ -2,6 +2,7 @@ package events
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"git.sr.ht/~starshine-sys/logger/db"
@@ -18,6 +19,9 @@ type Bot struct {
 	DB    *db.DB
 	Sugar *zap.SugaredLogger
 
+	ProxiedTriggers   map[discord.MessageID]struct{}
+	ProxiedTriggersMu sync.Mutex
+
 	MessageDeleteCache  *ttlcache.Cache
 	MessageUpdateCache  *ttlcache.Cache
 	GuildMemberAddCache *ttlcache.Cache
@@ -26,9 +30,12 @@ type Bot struct {
 // Init ...
 func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 	b := &Bot{
-		Router:              r,
-		DB:                  db,
-		Sugar:               s,
+		Router: r,
+		DB:     db,
+		Sugar:  s,
+
+		ProxiedTriggers: map[discord.MessageID]struct{}{},
+
 		MessageDeleteCache:  ttlcache.NewCache(),
 		MessageUpdateCache:  ttlcache.NewCache(),
 		GuildMemberAddCache: ttlcache.NewCache(),
@@ -46,6 +53,7 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 	b.State.AddHandler(b.pkMessageDelete)
 	b.State.AddHandler(b.messageCreate)
 	b.State.AddHandler(b.messageUpdate)
+	b.State.AddHandler(b.messageDelete)
 	b.State.AddHandler(b.guildMemberAdd)
 }
 

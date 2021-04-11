@@ -37,7 +37,9 @@ func (db *DB) InsertMessage(m Message) (err error) {
 
 	_, err = db.Pool.Exec(context.Background(), `insert into messages
 (msg_id, user_id, channel_id, server_id, content) values
-($1, $2, $3, $4, $5)`, m.MsgID, m.UserID, m.ChannelID, m.ServerID, m.Content)
+($1, $2, $3, $4, $5)
+on conflict (msg_id) do update
+set content = $5`, m.MsgID, m.UserID, m.ChannelID, m.ServerID, m.Content)
 	return err
 }
 

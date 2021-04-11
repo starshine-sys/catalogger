@@ -3,6 +3,7 @@ package events
 import (
 	"fmt"
 
+	"git.sr.ht/~starshine-sys/logger/db"
 	"github.com/diamondburned/arikawa/v2/api/webhook"
 	"github.com/diamondburned/arikawa/v2/discord"
 	"github.com/diamondburned/arikawa/v2/gateway"
@@ -27,6 +28,14 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 	// try getting the message
 	msg, err := bot.DB.GetMessage(m.ID)
 	if err != nil {
+		bot.DB.InsertMessage(db.Message{
+			MsgID:     m.ID,
+			UserID:    m.Author.ID,
+			ChannelID: m.ChannelID,
+			ServerID:  m.GuildID,
+
+			Content: m.Content,
+		})
 		return
 	}
 
@@ -77,5 +86,15 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 	webhook.New(wh.ID, wh.Token).Execute(webhook.ExecuteData{
 		AvatarURL: bot.Router.Bot.AvatarURL(),
 		Embeds:    []discord.Embed{e},
+	})
+
+	// update the message
+	bot.DB.InsertMessage(db.Message{
+		MsgID:     m.ID,
+		UserID:    m.Author.ID,
+		ChannelID: m.ChannelID,
+		ServerID:  m.GuildID,
+
+		Content: m.Content,
 	})
 }

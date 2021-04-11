@@ -12,7 +12,7 @@ var botsToCheck = []discord.UserID{466378653216014359}
 
 var (
 	linkRegex   = regexp.MustCompile(`^https:\/\/discord.com\/channels\/\d+\/(\d+)\/\d+$`)
-	footerRegex = regexp.MustCompile(`^System ID: (\w{5,6}) \| Member ID: (\w{5,6}) \| Sender: .+ \((\d+)\) \| Message ID: (\d+) \| Original Message ID: \d+$`)
+	footerRegex = regexp.MustCompile(`^System ID: (\w{5,6}) \| Member ID: (\w{5,6}) \| Sender: .+ \((\d+)\) \| Message ID: (\d+) \| Original Message ID: (\d+)$`)
 )
 
 func (bot *Bot) pkMessageCreate(m *gateway.MessageCreateEvent) {
@@ -69,6 +69,11 @@ func (bot *Bot) pkMessageCreate(m *gateway.MessageCreateEvent) {
 		msgID = discord.MessageID(sf)
 		sf, _ = discord.ParseSnowflake(linkRegex.FindStringSubmatch(m.Content)[1])
 		channelID = discord.ChannelID(sf)
+
+		originalMessageID, _ := discord.ParseSnowflake(groups[5])
+		bot.ProxiedTriggersMu.Lock()
+		bot.ProxiedTriggers[discord.MessageID(originalMessageID)] = struct{}{}
+		bot.ProxiedTriggersMu.Unlock()
 	}
 
 	// get full message

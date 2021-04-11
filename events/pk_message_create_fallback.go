@@ -34,6 +34,11 @@ func (bot *Bot) pkMessageCreateFallback(m *gateway.MessageCreateEvent) {
 
 	u, _ := discord.ParseSnowflake(pkm.Sender)
 
+	orig, _ := discord.ParseSnowflake(pkm.Original)
+	bot.ProxiedTriggersMu.Lock()
+	bot.ProxiedTriggers[discord.MessageID(orig)] = struct{}{}
+	bot.ProxiedTriggersMu.Unlock()
+
 	msg := db.Message{
 		MsgID:     m.ID,
 		UserID:    discord.UserID(u),

@@ -30,6 +30,10 @@ Right now, its main purpose is logging deleted messages proxied by PluralKit, an
 				Value: "`channels`: show which events are logging to which channels\n`setchannel`: log the given event to the current channel.",
 			},
 			{
+				Name:  "Available events",
+				Value: "Events currently implemented:\n- `MESSAGE_DELETE`: deleted messages, both normal and PluralKit messages\n- `MESSAGE_UPDATE`: edited messages\n- `GUILD_MEMBER_ADD`: new member join",
+			},
+			{
 				Name:  "Author",
 				Value: "<@!694563574386786314> / starshine system 🌠✨#0001",
 			},
