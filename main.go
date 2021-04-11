@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -42,7 +43,18 @@ func main() {
 		sugar.Fatalf("Error creating bot: %v", err)
 	}
 	r.EmbedColor = bcr.ColourPurple
+
+	// add message create handler
 	r.State.AddHandler(r.MessageCreate)
+
+	// set status
+	r.State.AddHandler(func(ev *gateway.ReadyEvent) {
+		r.State.Gateway.UpdateStatus(gateway.UpdateStatusData{
+			Activities: []discord.Activity{{
+				Name: fmt.Sprintf("%vhelp", os.Getenv("PREFIX")),
+			}},
+		})
+	})
 
 	// create a database connection
 	db, err := db.New(os.Getenv("DATABASE_URL"), sugar)
