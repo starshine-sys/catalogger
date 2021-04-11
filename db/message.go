@@ -24,6 +24,49 @@ type Message struct {
 	System   string
 }
 
+// InsertMessage inserts a message
+func (db *DB) InsertMessage(m Message) (err error) {
+	if m.Content == "" {
+		m.Content = "None"
+	}
+	out, err := crypt.Encrypt([]byte(m.Content), db.AESKey)
+	if err != nil {
+		return err
+	}
+	m.Content = hex.EncodeToString(out)
+
+	_, err = db.Pool.Exec(context.Background(), `insert into messages
+(msg_id, user_id, channel_id, server_id, content) values
+($1, $2, $3, $4, $5)`, m.MsgID, m.UserID, m.ChannelID, m.ServerID, m.Content)
+	return err
+}
+
+// GetMessage gets a single message
+func (db *DB) GetMessage(id discord.MessageID) (m *Message, err error) {
+	m = &Message{}
+
+	err = pgxscan.Get(context.Background(), db.Pool, m, "select * from messages where msg_id = $1", id)
+
+	b, err := hex.DecodeString(m.Content)
+	if err != nil {
+		return nil, err
+	}
+
+	out, err := crypt.Decrypt(b, db.AESKey)
+	if err != nil {
+		return nil, err
+	}
+
+	m.Content = string(out)
+	return
+}
+
+// DeleteMessage deletes a message from the database
+func (db *DB) DeleteMessage(id discord.MessageID) (err error) {
+	_, err = db.Pool.Exec(context.Background(), "delete from messages where msg_id = $1", id)
+	return
+}
+
 // InsertProxied inserts a proxied message
 func (db *DB) InsertProxied(m Message) (err error) {
 	if m.Content == "" {

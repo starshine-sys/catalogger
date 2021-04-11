@@ -13,12 +13,12 @@ var pk = pkgo.NewSession(nil)
 
 func (bot *Bot) pkMessageCreateFallback(m *gateway.MessageCreateEvent) {
 	// only check webhook messages
-	if !m.WebhookID.IsValid() {
+	if !m.WebhookID.IsValid() || !m.GuildID.IsValid() {
 		return
 	}
 
-	// wait 5 seconds
-	time.Sleep(5 * time.Second)
+	// wait 2 seconds
+	time.Sleep(2 * time.Second)
 
 	// check if the message exists in the database; if so, return
 	_, err := bot.DB.GetProxied(m.ID)

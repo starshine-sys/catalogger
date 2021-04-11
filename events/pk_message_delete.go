@@ -29,7 +29,7 @@ func (bot *Bot) pkMessageDelete(m *gateway.MessageDeleteEvent) {
 		return
 	}
 
-	wh, err := bot.webhookCache("msg", m.GuildID, ch["MESSAGE_DELETE"])
+	wh, err := bot.webhookCache("msg_delete", m.GuildID, ch["MESSAGE_DELETE"])
 	if err != nil {
 		bot.Sugar.Errorf("Error getting webhook: %v", err)
 		return

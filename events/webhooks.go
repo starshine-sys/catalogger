@@ -20,8 +20,10 @@ type Webhook struct {
 // SetWebhooks ...
 func (bot *Bot) SetWebhooks(t string, id discord.GuildID, w *Webhook) {
 	switch strings.ToLower(t) {
-	case "msg":
+	case "msg_delete":
 		bot.MessageDeleteCache.Set(id.String(), w)
+	case "msg_update":
+		bot.MessageUpdateCache.Set(id.String(), w)
 	case "join":
 		bot.GuildMemberAddCache.Set(id.String(), w)
 	default:
@@ -37,8 +39,10 @@ func (bot *Bot) GetWebhooks(t string, id discord.GuildID) (*Webhook, error) {
 	)
 
 	switch strings.ToLower(t) {
-	case "msg":
+	case "msg_delete":
 		v, err = bot.MessageDeleteCache.Get(id.String())
+	case "msg_update":
+		v, err = bot.MessageUpdateCache.Get(id.String())
 	case "join":
 		v, err = bot.GuildMemberAddCache.Get(id.String())
 	default:
@@ -57,6 +61,7 @@ func (bot *Bot) GetWebhooks(t string, id discord.GuildID) (*Webhook, error) {
 // ResetCache ...
 func (bot *Bot) ResetCache(id discord.GuildID) {
 	bot.MessageDeleteCache.Remove(id.String())
+	bot.MessageUpdateCache.Remove(id.String())
 	bot.GuildMemberAddCache.Remove(id.String())
 }
 
