@@ -2,12 +2,14 @@ package events
 
 import (
 	"context"
+	"os"
 	"sync"
 	"time"
 
 	"git.sr.ht/~starshine-sys/logger/db"
 	"github.com/ReneKroon/ttlcache/v2"
 	"github.com/diamondburned/arikawa/v2/discord"
+	"github.com/diamondburned/arikawa/v2/utils/handler"
 	"github.com/starshine-sys/bcr"
 	"go.uber.org/zap"
 )
@@ -28,10 +30,14 @@ type Bot struct {
 	MessageDeleteCache  *ttlcache.Cache
 	MessageUpdateCache  *ttlcache.Cache
 	GuildMemberAddCache *ttlcache.Cache
+
+	BotJoinLeaveLog discord.ChannelID
 }
 
 // Init ...
 func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
+	joinLeaveLog, _ := discord.ParseSnowflake(os.Getenv("JOIN_LEAVE_LOG"))
+
 	b := &Bot{
 		Router: r,
 		DB:     db,
@@ -43,10 +49,18 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 		MessageDeleteCache:  ttlcache.NewCache(),
 		MessageUpdateCache:  ttlcache.NewCache(),
 		GuildMemberAddCache: ttlcache.NewCache(),
+
+		BotJoinLeaveLog: discord.ChannelID(joinLeaveLog),
 	}
 	b.MessageDeleteCache.SetTTL(10 * time.Minute)
 	b.MessageUpdateCache.SetTTL(10 * time.Minute)
 	b.GuildMemberAddCache.SetTTL(10 * time.Minute)
+
+	// add join/leave log handlers
+	b.Router.State.PreHandler = handler.New()
+	b.Router.State.PreHandler.Synchronous = true
+	b.Router.State.PreHandler.AddHandler(b.guildDelete)
+	b.Router.State.AddHandler(b.guildCreate)
 
 	// add guild create handler
 	b.State.AddHandler(b.DB.CreateServerIfNotExists)
