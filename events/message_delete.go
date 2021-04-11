@@ -26,6 +26,12 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 		return
 	}
 
+	// if the channels is blacklisted, return
+	var blacklisted bool
+	if bot.DB.Pool.QueryRow(context.Background(), "select exists(select id from guilds where $1 = any(ignored_channels) and id = $2)", m.ChannelID, m.GuildID).Scan(&blacklisted); blacklisted {
+		return
+	}
+
 	wh, err := bot.webhookCache("msg_delete", m.GuildID, ch["MESSAGE_DELETE"])
 	if err != nil {
 		bot.Sugar.Errorf("Error getting webhook: %v", err)

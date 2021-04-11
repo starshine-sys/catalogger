@@ -1,6 +1,7 @@
 package events
 
 import (
+	"context"
 	"fmt"
 
 	"git.sr.ht/~starshine-sys/logger/db"
@@ -22,6 +23,12 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 	}
 
 	if !ch["MESSAGE_UPDATE"].IsValid() {
+		return
+	}
+
+	// if the channels is blacklisted, return
+	var blacklisted bool
+	if bot.DB.Pool.QueryRow(context.Background(), "select exists(select id from guilds where $1 = any(ignored_channels) and id = $2)", m.ChannelID, m.GuildID).Scan(&blacklisted); blacklisted {
 		return
 	}
 

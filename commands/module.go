@@ -40,8 +40,8 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 
 	b.AddCommand(&bcr.Command{
 		Name:        "setchannel",
-		Summary:     "Set the current channel for a given event.",
-		Description: "Set the current channel for a given event.\nUse `--clear` to disable the event.\nUse `events` for a list of valid events.",
+		Summary:     "Set the given event to log in the current channel.",
+		Description: "Set the given event to log in the current channel.\nUse `--clear` to disable the event.\nUse `events` for a list of valid events.",
 		Usage:       "<event>",
 		Args:        bcr.MinArgs(1),
 		Flags: func(fs *pflag.FlagSet) *pflag.FlagSet {
@@ -59,6 +59,15 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 
 		Permissions: discord.PermissionManageGuild,
 		Command:     b.channels,
+	})
+
+	b.AddCommand(&bcr.Command{
+		Name:    "ignore-channel",
+		Aliases: []string{"ignorechannel"},
+		Summary: "Ignore the current channel.",
+
+		Permissions: discord.PermissionManageGuild,
+		Command:     b.ignore,
 	})
 
 	b.AddCommand(&bcr.Command{
