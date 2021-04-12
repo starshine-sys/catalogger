@@ -40,9 +40,9 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 
 	b.AddCommand(&bcr.Command{
 		Name:        "setchannel",
-		Summary:     "Set the given event to log in the current channel.",
-		Description: "Set the given event to log in the current channel.\nUse `--clear` to disable the event.\nUse `events` for a list of valid events.",
-		Usage:       "<event>",
+		Summary:     "Set the given event(s) to log in the current channel.",
+		Description: "Set the given event(s) to log in the current channel.\nSeparate events with commas.\nUse `--clear` to disable the event.\nUse `events` for a list of valid events.",
+		Usage:       "<events...>",
 		Args:        bcr.MinArgs(1),
 		Flags: func(fs *pflag.FlagSet) *pflag.FlagSet {
 			fs.BoolP("clear", "c", false, "Disable the given event.")

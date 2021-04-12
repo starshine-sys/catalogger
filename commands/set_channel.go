@@ -1,6 +1,10 @@
 package commands
 
-import "github.com/starshine-sys/bcr"
+import (
+	"strings"
+
+	"github.com/starshine-sys/bcr"
+)
 
 func (bot *Bot) setChannel(ctx *bcr.Context) (err error) {
 	ch, err := bot.DB.Channels(ctx.Message.GuildID)
@@ -9,16 +13,27 @@ func (bot *Bot) setChannel(ctx *bcr.Context) (err error) {
 		return
 	}
 
-	if _, ok := ch[ctx.Args[0]]; !ok {
-		_, err = ctx.Sendf("Invalid event given. Use `%vevents` for a list of valid events.", ctx.Prefix)
-		return
-	}
-
-	ch[ctx.Args[0]] = ctx.Channel.ID
+	events := strings.Split(
+		strings.Join(ctx.Args, " "), ",",
+	)
 
 	clear, _ := ctx.Flags.GetBool("clear")
 	if clear {
 		ch[ctx.Args[0]] = 0
+	}
+
+	for _, e := range events {
+		e := strings.TrimSpace(e)
+
+		if _, ok := ch[e]; !ok {
+			_, err = ctx.Sendf("Invalid event (``%v``) given. Use `%vevents` for a list of valid events.", bcr.EscapeBackticks(e), ctx.Prefix)
+			return
+		}
+
+		ch[e] = ctx.Channel.ID
+		if clear {
+			ch[e] = 0
+		}
 	}
 
 	err = bot.DB.SetChannels(ctx.Message.GuildID, ch)
@@ -28,9 +43,9 @@ func (bot *Bot) setChannel(ctx *bcr.Context) (err error) {
 	}
 
 	if !clear {
-		_, err = ctx.Sendf("Now logging ``%v`` events to this channel (%v).", bcr.EscapeBackticks(ctx.Args[0]), ctx.Channel.Mention())
+		_, err = ctx.Sendf("Now logging ``%v`` events to this channel (%v).", bcr.EscapeBackticks(strings.Join(events, ", ")), ctx.Channel.Mention())
 	} else {
-		_, err = ctx.Sendf("No longer logging ``%v`` events.", bcr.EscapeBackticks(ctx.Args[0]))
+		_, err = ctx.Sendf("No longer logging ``%v`` events.", bcr.EscapeBackticks(strings.Join(events, ", ")))
 	}
 	return
 }
