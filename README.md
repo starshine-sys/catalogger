@@ -10,6 +10,8 @@ Implemented events:
 - `GUILD_MEMBER_ADD`
 - `INVITE_CREATE`
 - `INVITE_DELETE`
+- `GUILD_BAN_ADD`
+- `GUILD_BAN_REMOVE`
 
 ## Requirements
 

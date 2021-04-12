@@ -32,6 +32,8 @@ type Bot struct {
 	GuildMemberAddCache *ttlcache.Cache
 	InviteCreateCache   *ttlcache.Cache
 	InviteDeleteCache   *ttlcache.Cache
+	GuildBanAddCache    *ttlcache.Cache
+	GuildBanRemoveCache *ttlcache.Cache
 
 	BotJoinLeaveLog discord.ChannelID
 }
@@ -53,12 +55,18 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 		GuildMemberAddCache: ttlcache.NewCache(),
 		InviteCreateCache:   ttlcache.NewCache(),
 		InviteDeleteCache:   ttlcache.NewCache(),
+		GuildBanAddCache:    ttlcache.NewCache(),
+		GuildBanRemoveCache: ttlcache.NewCache(),
 
 		BotJoinLeaveLog: discord.ChannelID(joinLeaveLog),
 	}
 	b.MessageDeleteCache.SetTTL(10 * time.Minute)
 	b.MessageUpdateCache.SetTTL(10 * time.Minute)
 	b.GuildMemberAddCache.SetTTL(10 * time.Minute)
+	b.InviteCreateCache.SetTTL(10 * time.Minute)
+	b.InviteDeleteCache.SetTTL(10 * time.Minute)
+	b.GuildBanAddCache.SetTTL(10 * time.Minute)
+	b.GuildBanRemoveCache.SetTTL(10 * time.Minute)
 
 	// add join/leave log handlers
 	b.Router.State.PreHandler = handler.New()
@@ -88,6 +96,10 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 	// add invite create/delete handlers
 	b.State.AddHandler(b.inviteCreateEvent)
 	b.State.AddHandler(b.inviteDeleteEvent)
+
+	// add ban handlers
+	b.State.AddHandler(b.guildBanAdd)
+	b.State.AddHandler(b.guildBanRemove)
 
 	// add clear cache command
 	b.AddCommand(&bcr.Command{
