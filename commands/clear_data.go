@@ -16,9 +16,11 @@ func (bot *Bot) clearData(ctx *bcr.Context) (err error) {
 	yes, timeout := ctx.YesNoHandler(*m, ctx.Author.ID)
 	if timeout {
 		_, err = ctx.Send("Operation timed out.", nil)
+		return
 	}
 	if !yes {
 		_, err = ctx.Send("Operation cancelled.", nil)
+		return
 	}
 
 	c, err := bot.DB.Pool.Exec(context.Background(), "delete from messages where server_id = $1", ctx.Message.GuildID)
