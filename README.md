@@ -12,6 +12,8 @@ Implemented events:
 - `INVITE_DELETE`
 - `GUILD_BAN_ADD`
 - `GUILD_BAN_REMOVE`
+- `GUILD_MEMBER_UPDATE`
+- `GUILD_MEMBER_NICK_UPDATE`
 
 To invite the bot to your server, use [this link](https://discord.com/api/oauth2/authorize?client_id=830819903371739166&permissions=537259248&scope=bot%20applications.commands).
 

@@ -31,7 +31,7 @@ Right now, its main purpose is logging deleted messages proxied by PluralKit, an
 			},
 			{
 				Name:  "Available events",
-				Value: "Events currently implemented:\n- `MESSAGE_DELETE`: deleted messages, both normal and PluralKit messages\n- `MESSAGE_UPDATE`: edited messages\n- `GUILD_MEMBER_ADD`: new member join\n- `INVITE_CREATE`: created invites\n- `INVITE_DELETE`: deleted invites\n- `GUILD_BAN_ADD`: banned users\n- `GUILD_BAN_REMOVE`: unbanned users",
+				Value: "Events currently implemented:\n- `MESSAGE_DELETE`: deleted messages, both normal and PluralKit messages\n- `MESSAGE_UPDATE`: edited messages\n- `GUILD_MEMBER_ADD`: new member join\n- `INVITE_CREATE`: created invites\n- `INVITE_DELETE`: deleted invites\n- `GUILD_BAN_ADD`: banned users\n- `GUILD_BAN_REMOVE`: unbanned users\n- `GUILD_MEMBER_UPDATE`: role updates\n- `GUILD_MEMBER_NICK_UPDATE`: username/nickname updates",
 			},
 			{
 				Name:  "Author",
