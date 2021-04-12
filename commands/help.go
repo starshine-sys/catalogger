@@ -16,8 +16,9 @@ func (bot *Bot) help(ctx *bcr.Context) (err error) {
 
 	e := &discord.Embed{
 		Title: "Help",
-		Description: fmt.Sprintf(`%v is a basic logging bot.
-Right now, its main purpose is logging deleted messages proxied by PluralKit, and logging system info for new joins.`, ctx.Bot.Username),
+		Description: fmt.Sprintf(`A logging bot that integrates with PluralKit's message proxying.
+The bot's prefix is `+"`%v`"+` (or a mention).
+To get started, use `+"`%vsetchannel`"+` with one or more events (listed below).`, ctx.Prefix, ctx.Prefix),
 		Color: bcr.ColourPurple,
 
 		Fields: []discord.EmbedField{
@@ -27,7 +28,7 @@ Right now, its main purpose is logging deleted messages proxied by PluralKit, an
 			},
 			{
 				Name:  "Configuration",
-				Value: "`channels`: show which events are logging to which channels\n\n`setchannel`: log the given event to the current channel\nFor example: `setchannel MESSAGE_DELETE`\n\n`ignorechannel`: ignore the current channel`",
+				Value: "`channels`: show which events are logging to which channels\n`setchannel`: log the given event(s) to the current channel\n**For example: `setchannel MESSAGE_DELETE, MESSAGE_UPDATE`**\n`ignorechannel`: ignore the current channel\n`cleardata`: clear this server's data (including messages)\n`clearcache`: clear the bot's internal cache, in case logging is not working",
 			},
 			{
 				Name:  "Available events",

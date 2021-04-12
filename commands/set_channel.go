@@ -24,7 +24,7 @@ func (bot *Bot) setChannel(ctx *bcr.Context) (err error) {
 	}
 
 	for _, e := range events {
-		e := strings.TrimSpace(e)
+		e := strings.ToUpper(strings.TrimSpace(e))
 
 		if _, ok := db.DefaultEventMap[e]; !ok {
 			_, err = ctx.Sendf("Invalid event (``%v``) given. Use `%vevents` for a list of valid events.", bcr.EscapeBackticks(e), ctx.Prefix)
