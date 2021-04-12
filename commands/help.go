@@ -32,7 +32,7 @@ To get started, use `+"`%vsetchannel`"+` with one or more events (listed below).
 			},
 			{
 				Name:  "Available events",
-				Value: "Events currently implemented:\n- `MESSAGE_DELETE`: deleted messages, both normal and PluralKit messages\n- `MESSAGE_UPDATE`: edited messages\n- `GUILD_MEMBER_ADD`: new member joining\n- `GUILD_MEMBER_REMOVE`: member leaving\n- `INVITE_CREATE`: created invites\n- `INVITE_DELETE`: deleted invites\n- `GUILD_BAN_ADD`: banned users\n- `GUILD_BAN_REMOVE`: unbanned users\n- `GUILD_MEMBER_UPDATE`: role updates\n- `GUILD_MEMBER_NICK_UPDATE`: username/nickname updates",
+				Value: "Events currently implemented:\n- `MESSAGE_DELETE`: deleted messages, both normal and PluralKit messages\n- `MESSAGE_UPDATE`: edited messages\n- `GUILD_MEMBER_ADD`: new member joining\n- `GUILD_MEMBER_REMOVE`: member leaving\n- `INVITE_CREATE`: created invites\n- `INVITE_DELETE`: deleted invites\n- `GUILD_BAN_ADD`: banned users\n- `GUILD_BAN_REMOVE`: unbanned users\n- `GUILD_MEMBER_UPDATE`: role updates\n- `GUILD_MEMBER_NICK_UPDATE`: username/nickname updates\n- `CHANNEL_CREATE`: channel creations\n- `CHANNEL_UPDATE`: channel updates\n- `CHANNEL_DELETE`: channel deletions",
 			},
 			{
 				Name:  "Author",

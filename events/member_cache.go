@@ -11,6 +11,18 @@ type memberCacheKey struct {
 }
 
 func (bot *Bot) requestGuildMembers(g *gateway.GuildCreateEvent) {
+	bot.ChannelsMu.Lock()
+	for _, ch := range g.Channels {
+		bot.Channels[ch.ID] = ch
+	}
+	bot.ChannelsMu.Unlock()
+
+	bot.RolesMu.Lock()
+	for _, r := range g.Roles {
+		bot.Roles[r.ID] = r
+	}
+	bot.RolesMu.Unlock()
+
 	bot.State.Gateway.RequestGuildMembers(gateway.RequestGuildMembersData{
 		GuildID: []discord.GuildID{g.ID},
 		Limit:   0,

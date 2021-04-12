@@ -15,6 +15,9 @@ Implemented events:
 - `GUILD_BAN_REMOVE`
 - `GUILD_MEMBER_UPDATE`
 - `GUILD_MEMBER_NICK_UPDATE`
+- `CHANNEL_CREATE`
+- `CHANNEL_UPDATE` (note: buggy with permission overrides)
+- `CHANNEL_DELETE`
 
 To invite the bot to your server, use [this link](https://discord.com/api/oauth2/authorize?client_id=830819903371739166&permissions=537259248&scope=bot%20applications.commands).
 

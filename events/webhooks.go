@@ -40,6 +40,22 @@ func (bot *Bot) SetWebhooks(t string, id discord.GuildID, w *Webhook) {
 		bot.GuildMemberUpdateCache.Set(id.String(), w)
 	case "member-nick-update":
 		bot.GuildMemberNickUpdateCache.Set(id.String(), w)
+	case "channel_create":
+		bot.ChannelCreateCache.Set(id.String(), w)
+	case "channel_update":
+		bot.ChannelUpdateCache.Set(id.String(), w)
+	case "channel_delete":
+		bot.ChannelDeleteCache.Set(id.String(), w)
+	case "guild_update":
+		bot.GuildUpdateCache.Set(id.String(), w)
+	case "guild_emojis_update":
+		bot.GuildEmojisUpdateCache.Set(id.String(), w)
+	case "guild_role_create":
+		bot.GuildRoleCreateCache.Set(id.String(), w)
+	case "guild_role_delete":
+		bot.GuildRoleDeleteCache.Set(id.String(), w)
+	case "message_delete_bulk":
+		bot.MessageDeleteBulkCache.Set(id.String(), w)
 	default:
 		return
 	}
@@ -73,6 +89,22 @@ func (bot *Bot) GetWebhooks(t string, id discord.GuildID) (*Webhook, error) {
 		v, err = bot.GuildMemberUpdateCache.Get(id.String())
 	case "member-nick-update":
 		v, err = bot.GuildMemberNickUpdateCache.Get(id.String())
+	case "channel_create":
+		v, err = bot.ChannelCreateCache.Get(id.String())
+	case "channel_update":
+		v, err = bot.ChannelUpdateCache.Get(id.String())
+	case "channel_delete":
+		v, err = bot.ChannelDeleteCache.Get(id.String())
+	case "guild_update":
+		v, err = bot.GuildUpdateCache.Get(id.String())
+	case "guild_emojis_update":
+		v, err = bot.GuildEmojisUpdateCache.Get(id.String())
+	case "guild_role_create":
+		v, err = bot.GuildRoleCreateCache.Get(id.String())
+	case "guild_role_delete":
+		v, err = bot.GuildRoleDeleteCache.Get(id.String())
+	case "message_delete_bulk":
+		v, err = bot.MessageDeleteBulkCache.Get(id.String())
 	default:
 		return nil, errors.New("invalid webhook type specified")
 	}
@@ -98,6 +130,14 @@ func (bot *Bot) ResetCache(id discord.GuildID) {
 	bot.GuildMemberRemoveCache.Remove(id.String())
 	bot.GuildMemberUpdateCache.Remove(id.String())
 	bot.GuildMemberNickUpdateCache.Remove(id.String())
+	bot.ChannelCreateCache.Remove(id.String())
+	bot.ChannelUpdateCache.Remove(id.String())
+	bot.ChannelDeleteCache.Remove(id.String())
+	bot.GuildUpdateCache.Remove(id.String())
+	bot.GuildEmojisUpdateCache.Remove(id.String())
+	bot.GuildRoleCreateCache.Remove(id.String())
+	bot.GuildRoleDeleteCache.Remove(id.String())
+	bot.MessageDeleteBulkCache.Remove(id.String())
 }
 
 func (bot *Bot) getWebhook(id discord.ChannelID, name string) (*discord.Webhook, error) {

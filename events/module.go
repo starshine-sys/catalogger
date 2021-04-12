@@ -30,17 +30,36 @@ type Bot struct {
 	Members   map[memberCacheKey]discord.Member
 	MembersMu sync.Mutex
 
-	MessageDeleteCache  *ttlcache.Cache
-	MessageUpdateCache  *ttlcache.Cache
-	GuildMemberAddCache *ttlcache.Cache
-	InviteCreateCache   *ttlcache.Cache
-	InviteDeleteCache   *ttlcache.Cache
+	Channels   map[discord.ChannelID]discord.Channel
+	ChannelsMu sync.Mutex
+
+	Roles   map[discord.RoleID]discord.Role
+	RolesMu sync.Mutex
+
+	MessageDeleteCache     *ttlcache.Cache
+	MessageUpdateCache     *ttlcache.Cache
+	MessageDeleteBulkCache *ttlcache.Cache
+
+	InviteCreateCache *ttlcache.Cache
+	InviteDeleteCache *ttlcache.Cache
+
 	GuildBanAddCache    *ttlcache.Cache
 	GuildBanRemoveCache *ttlcache.Cache
 
-	GuildMemberRemoveCache     *ttlcache.Cache
+	GuildMemberAddCache    *ttlcache.Cache
+	GuildMemberRemoveCache *ttlcache.Cache
+
 	GuildMemberUpdateCache     *ttlcache.Cache
 	GuildMemberNickUpdateCache *ttlcache.Cache
+
+	ChannelCreateCache *ttlcache.Cache
+	ChannelUpdateCache *ttlcache.Cache
+	ChannelDeleteCache *ttlcache.Cache
+
+	GuildUpdateCache       *ttlcache.Cache
+	GuildEmojisUpdateCache *ttlcache.Cache
+	GuildRoleCreateCache   *ttlcache.Cache
+	GuildRoleDeleteCache   *ttlcache.Cache
 
 	BotJoinLeaveLog discord.ChannelID
 }
@@ -55,20 +74,36 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 		Sugar:  s,
 
 		ProxiedTriggers: map[discord.MessageID]struct{}{},
-		Invites:         map[discord.GuildID][]discord.Invite{},
-		Members:         map[memberCacheKey]discord.Member{},
 
-		MessageDeleteCache:  ttlcache.NewCache(),
-		MessageUpdateCache:  ttlcache.NewCache(),
+		Invites:  map[discord.GuildID][]discord.Invite{},
+		Members:  map[memberCacheKey]discord.Member{},
+		Channels: map[discord.ChannelID]discord.Channel{},
+		Roles:    map[discord.RoleID]discord.Role{},
+
+		MessageDeleteCache: ttlcache.NewCache(),
+		MessageUpdateCache: ttlcache.NewCache(),
+
 		GuildMemberAddCache: ttlcache.NewCache(),
 		InviteCreateCache:   ttlcache.NewCache(),
 		InviteDeleteCache:   ttlcache.NewCache(),
 		GuildBanAddCache:    ttlcache.NewCache(),
 		GuildBanRemoveCache: ttlcache.NewCache(),
 
-		GuildMemberRemoveCache:     ttlcache.NewCache(),
-		GuildMemberUpdateCache:     ttlcache.NewCache(),
 		GuildMemberNickUpdateCache: ttlcache.NewCache(),
+
+		GuildMemberRemoveCache: ttlcache.NewCache(),
+		GuildMemberUpdateCache: ttlcache.NewCache(),
+
+		MessageDeleteBulkCache: ttlcache.NewCache(),
+
+		ChannelCreateCache: ttlcache.NewCache(),
+		ChannelUpdateCache: ttlcache.NewCache(),
+		ChannelDeleteCache: ttlcache.NewCache(),
+
+		GuildUpdateCache:       ttlcache.NewCache(),
+		GuildEmojisUpdateCache: ttlcache.NewCache(),
+		GuildRoleCreateCache:   ttlcache.NewCache(),
+		GuildRoleDeleteCache:   ttlcache.NewCache(),
 
 		BotJoinLeaveLog: discord.ChannelID(joinLeaveLog),
 	}
@@ -82,6 +117,14 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 	b.GuildMemberRemoveCache.SetTTL(10 * time.Minute)
 	b.GuildMemberUpdateCache.SetTTL(10 * time.Minute)
 	b.GuildMemberNickUpdateCache.SetTTL(10 * time.Minute)
+	b.MessageDeleteBulkCache.SetTTL(10 * time.Minute)
+	b.ChannelCreateCache.SetTTL(10 * time.Minute)
+	b.ChannelUpdateCache.SetTTL(10 * time.Minute)
+	b.ChannelDeleteCache.SetTTL(10 * time.Minute)
+	b.GuildUpdateCache.SetTTL(10 * time.Minute)
+	b.GuildEmojisUpdateCache.SetTTL(10 * time.Minute)
+	b.GuildRoleCreateCache.SetTTL(10 * time.Minute)
+	b.GuildRoleDeleteCache.SetTTL(10 * time.Minute)
 
 	// add member cache handlers
 	b.Router.State.AddHandler(b.requestGuildMembers)
@@ -123,6 +166,11 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 	// add ban handlers
 	b.State.AddHandler(b.guildBanAdd)
 	b.State.AddHandler(b.guildBanRemove)
+
+	// add channel handlers
+	b.State.AddHandler(b.channelCreate)
+	b.State.AddHandler(b.channelUpdate)
+	b.State.AddHandler(b.channelDelete)
 
 	// add clear cache command
 	b.AddCommand(&bcr.Command{
