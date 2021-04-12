@@ -34,6 +34,8 @@ func (bot *Bot) SetWebhooks(t string, id discord.GuildID, w *Webhook) {
 		bot.GuildBanAddCache.Set(id.String(), w)
 	case "ban-remove":
 		bot.GuildBanRemoveCache.Set(id.String(), w)
+	case "leave":
+		bot.GuildMemberRemoveCache.Set(id.String(), w)
 	case "member-update":
 		bot.GuildMemberUpdateCache.Set(id.String(), w)
 	case "member-nick-update":
@@ -65,6 +67,8 @@ func (bot *Bot) GetWebhooks(t string, id discord.GuildID) (*Webhook, error) {
 		v, err = bot.GuildBanAddCache.Get(id.String())
 	case "ban-remove":
 		v, err = bot.GuildBanRemoveCache.Get(id.String())
+	case "leave":
+		v, err = bot.GuildMemberRemoveCache.Get(id.String())
 	case "member-update":
 		v, err = bot.GuildMemberUpdateCache.Get(id.String())
 	case "member-nick-update":
@@ -91,6 +95,7 @@ func (bot *Bot) ResetCache(id discord.GuildID) {
 	bot.InviteDeleteCache.Remove(id.String())
 	bot.GuildBanAddCache.Remove(id.String())
 	bot.GuildBanRemoveCache.Remove(id.String())
+	bot.GuildMemberRemoveCache.Remove(id.String())
 	bot.GuildMemberUpdateCache.Remove(id.String())
 	bot.GuildMemberNickUpdateCache.Remove(id.String())
 }

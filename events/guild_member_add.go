@@ -12,6 +12,13 @@ import (
 )
 
 func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) {
+	bot.MembersMu.Lock()
+	bot.Members[memberCacheKey{
+		GuildID: m.GuildID,
+		UserID:  m.User.ID,
+	}] = m.Member
+	bot.MembersMu.Unlock()
+
 	ch, err := bot.DB.Channels(m.GuildID)
 	if err != nil {
 		bot.Sugar.Errorf("Error getting server channels: %v", err)

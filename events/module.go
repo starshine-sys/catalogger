@@ -38,6 +38,7 @@ type Bot struct {
 	GuildBanAddCache    *ttlcache.Cache
 	GuildBanRemoveCache *ttlcache.Cache
 
+	GuildMemberRemoveCache     *ttlcache.Cache
 	GuildMemberUpdateCache     *ttlcache.Cache
 	GuildMemberNickUpdateCache *ttlcache.Cache
 
@@ -65,6 +66,7 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 		GuildBanAddCache:    ttlcache.NewCache(),
 		GuildBanRemoveCache: ttlcache.NewCache(),
 
+		GuildMemberRemoveCache:     ttlcache.NewCache(),
 		GuildMemberUpdateCache:     ttlcache.NewCache(),
 		GuildMemberNickUpdateCache: ttlcache.NewCache(),
 
@@ -77,6 +79,7 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 	b.InviteDeleteCache.SetTTL(10 * time.Minute)
 	b.GuildBanAddCache.SetTTL(10 * time.Minute)
 	b.GuildBanRemoveCache.SetTTL(10 * time.Minute)
+	b.GuildMemberRemoveCache.SetTTL(10 * time.Minute)
 	b.GuildMemberUpdateCache.SetTTL(10 * time.Minute)
 	b.GuildMemberNickUpdateCache.SetTTL(10 * time.Minute)
 
@@ -106,6 +109,7 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 	// add guild member handlers
 	b.State.AddHandler(b.guildMemberAdd)
 	b.State.AddHandler(b.guildMemberUpdate)
+	b.State.AddHandler(b.guildMemberRemove)
 
 	// add invite handlers
 	b.State.AddHandler(b.invitesReady)
