@@ -67,7 +67,7 @@ func (bot *Bot) invite(ctx *bcr.Context) (err error) {
 		discord.PermissionManageWebhooks |
 		discord.PermissionManageGuild |
 		discord.PermissionViewAuditLog |
-		discord.PermissionViewChannel
+		discord.PermissionManageChannels
 
 	link := fmt.Sprintf("https://discord.com/api/oauth2/authorize?client_id=%v&permissions=%v&scope=bot%%20applications.commands", ctx.Bot.ID, perms)
 
