@@ -27,7 +27,7 @@ Right now, its main purpose is logging deleted messages proxied by PluralKit, an
 			},
 			{
 				Name:  "Configuration",
-				Value: "`channels`: show which events are logging to which channels\n\n`setchannel`: log the given event to the current channel\nFor example: `setchannel MESSAGE_DELETE\n\n`ignorechannel`: ignore the current channel`",
+				Value: "`channels`: show which events are logging to which channels\n\n`setchannel`: log the given event to the current channel\nFor example: `setchannel MESSAGE_DELETE`\n\n`ignorechannel`: ignore the current channel`",
 			},
 			{
 				Name:  "Available events",
