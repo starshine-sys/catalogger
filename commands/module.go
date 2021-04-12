@@ -70,6 +70,15 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 		Command:     b.ignore,
 	})
 
+	b.AddCommand(&bcr.Command{
+		Name:    "clear-data",
+		Aliases: []string{"cleardata"},
+		Summary: "**Clear all of this server's data.**",
+
+		Permissions: discord.PermissionManageGuild,
+		Command:     b.clearData,
+	})
+
 	h := b.AddCommand(&bcr.Command{
 		Name:    "help",
 		Summary: "Show information about the bot, or a specific command.",
