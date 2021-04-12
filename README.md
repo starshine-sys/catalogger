@@ -13,6 +13,8 @@ Implemented events:
 - `GUILD_BAN_ADD`
 - `GUILD_BAN_REMOVE`
 
+To invite the bot to your server, use [this link](https://discord.com/api/oauth2/authorize?client_id=830819903371739166&permissions=537259248&scope=bot%20applications.commands).
+
 ## Requirements
 
 - Go 1.16
