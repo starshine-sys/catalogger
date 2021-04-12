@@ -7,7 +7,9 @@ Implemented events:
 
 - `MESSAGE_UPDATE`
 - `MESSAGE_DELETE`
-- `GUILD_MEMBER_ADD` (no invite logging yet 😔)
+- `GUILD_MEMBER_ADD`
+- `INVITE_CREATE`
+- `INVITE_DELETE`
 
 ## Requirements
 
