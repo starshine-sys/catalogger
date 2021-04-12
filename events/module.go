@@ -27,6 +27,9 @@ type Bot struct {
 	Invites  map[discord.GuildID][]discord.Invite
 	InviteMu sync.Mutex
 
+	Members   map[memberCacheKey]discord.Member
+	MembersMu sync.Mutex
+
 	MessageDeleteCache  *ttlcache.Cache
 	MessageUpdateCache  *ttlcache.Cache
 	GuildMemberAddCache *ttlcache.Cache
@@ -34,6 +37,9 @@ type Bot struct {
 	InviteDeleteCache   *ttlcache.Cache
 	GuildBanAddCache    *ttlcache.Cache
 	GuildBanRemoveCache *ttlcache.Cache
+
+	GuildMemberUpdateCache     *ttlcache.Cache
+	GuildMemberNickUpdateCache *ttlcache.Cache
 
 	BotJoinLeaveLog discord.ChannelID
 }
@@ -49,6 +55,7 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 
 		ProxiedTriggers: map[discord.MessageID]struct{}{},
 		Invites:         map[discord.GuildID][]discord.Invite{},
+		Members:         map[memberCacheKey]discord.Member{},
 
 		MessageDeleteCache:  ttlcache.NewCache(),
 		MessageUpdateCache:  ttlcache.NewCache(),
@@ -57,6 +64,9 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 		InviteDeleteCache:   ttlcache.NewCache(),
 		GuildBanAddCache:    ttlcache.NewCache(),
 		GuildBanRemoveCache: ttlcache.NewCache(),
+
+		GuildMemberUpdateCache:     ttlcache.NewCache(),
+		GuildMemberNickUpdateCache: ttlcache.NewCache(),
 
 		BotJoinLeaveLog: discord.ChannelID(joinLeaveLog),
 	}
@@ -67,6 +77,12 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 	b.InviteDeleteCache.SetTTL(10 * time.Minute)
 	b.GuildBanAddCache.SetTTL(10 * time.Minute)
 	b.GuildBanRemoveCache.SetTTL(10 * time.Minute)
+	b.GuildMemberUpdateCache.SetTTL(10 * time.Minute)
+	b.GuildMemberNickUpdateCache.SetTTL(10 * time.Minute)
+
+	// add member cache handlers
+	b.Router.State.AddHandler(b.requestGuildMembers)
+	b.Router.State.AddHandler(b.guildMemberChunk)
 
 	// add join/leave log handlers
 	b.Router.State.PreHandler = handler.New()
@@ -87,8 +103,11 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 	b.State.AddHandler(b.messageUpdate)
 	b.State.AddHandler(b.messageDelete)
 
-	// add guild member add handlers
+	// add guild member handlers
 	b.State.AddHandler(b.guildMemberAdd)
+	b.State.AddHandler(b.guildMemberUpdate)
+
+	// add invite handlers
 	b.State.AddHandler(b.invitesReady)
 	b.State.AddHandler(b.inviteCreate)
 	b.State.AddHandler(b.inviteDelete)

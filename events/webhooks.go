@@ -34,6 +34,10 @@ func (bot *Bot) SetWebhooks(t string, id discord.GuildID, w *Webhook) {
 		bot.GuildBanAddCache.Set(id.String(), w)
 	case "ban-remove":
 		bot.GuildBanRemoveCache.Set(id.String(), w)
+	case "member-update":
+		bot.GuildMemberUpdateCache.Set(id.String(), w)
+	case "member-nick-update":
+		bot.GuildMemberNickUpdateCache.Set(id.String(), w)
 	default:
 		return
 	}
@@ -61,6 +65,10 @@ func (bot *Bot) GetWebhooks(t string, id discord.GuildID) (*Webhook, error) {
 		v, err = bot.GuildBanAddCache.Get(id.String())
 	case "ban-remove":
 		v, err = bot.GuildBanRemoveCache.Get(id.String())
+	case "member-update":
+		v, err = bot.GuildMemberUpdateCache.Get(id.String())
+	case "member-nick-update":
+		v, err = bot.GuildMemberNickUpdateCache.Get(id.String())
 	default:
 		return nil, errors.New("invalid webhook type specified")
 	}
@@ -83,6 +91,8 @@ func (bot *Bot) ResetCache(id discord.GuildID) {
 	bot.InviteDeleteCache.Remove(id.String())
 	bot.GuildBanAddCache.Remove(id.String())
 	bot.GuildBanRemoveCache.Remove(id.String())
+	bot.GuildMemberUpdateCache.Remove(id.String())
+	bot.GuildMemberNickUpdateCache.Remove(id.String())
 }
 
 func (bot *Bot) getWebhook(id discord.ChannelID, name string) (*discord.Webhook, error) {
