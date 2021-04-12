@@ -23,7 +23,7 @@ Right now, its main purpose is logging deleted messages proxied by PluralKit, an
 		Fields: []discord.EmbedField{
 			{
 				Name:  "Info commands",
-				Value: "`help`: show this help\n\n`ping`: show the bot's latency\n\n`invite`: get an invite link for the bot\n\n`events`: show all events (not even *close* to all of these are implemented; these are *all* Discord events)",
+				Value: "`help`: show this help\n`help permissions`: show a list of required permissions\n`ping`: show the bot's latency\n`invite`: get an invite link for the bot\n`events`: show all events (not even *close* to all of these are implemented; these are *all* Discord events)",
 			},
 			{
 				Name:  "Configuration",
@@ -31,7 +31,7 @@ Right now, its main purpose is logging deleted messages proxied by PluralKit, an
 			},
 			{
 				Name:  "Available events",
-				Value: "Events currently implemented:\n- `MESSAGE_DELETE`: deleted messages, both normal and PluralKit messages\n- `MESSAGE_UPDATE`: edited messages\n- `GUILD_MEMBER_ADD`: new member join",
+				Value: "Events currently implemented:\n- `MESSAGE_DELETE`: deleted messages, both normal and PluralKit messages\n- `MESSAGE_UPDATE`: edited messages\n- `GUILD_MEMBER_ADD`: new member join\n- `INVITE_CREATE`: created invites\n- `INVITE_DELETE`: deleted invites",
 			},
 			{
 				Name:  "Author",
@@ -72,5 +72,19 @@ func (bot *Bot) invite(ctx *bcr.Context) (err error) {
 	link := fmt.Sprintf("https://discord.com/api/oauth2/authorize?client_id=%v&permissions=%v&scope=bot%%20applications.commands", ctx.Bot.ID, perms)
 
 	_, err = ctx.Sendf("Use the following link to invite me to your server: <%v>", link)
+	return
+}
+
+func (bot *Bot) perms(ctx *bcr.Context) (err error) {
+	e := discord.Embed{
+		Title: "Permissions",
+		Description: `This bot requires the following major permissions to function correctly:
+- **Manage Webhooks**: to send log messages
+- **Manage Server**: to track used invites
+- **Manage Channels**: to track invite creation and deletion, and for more accurate used invite tracking`,
+		Color: bcr.ColourPurple,
+	}
+
+	_, err = ctx.Send("", &e)
 	return
 }

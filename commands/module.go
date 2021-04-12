@@ -70,12 +70,20 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 		Command:     b.ignore,
 	})
 
-	b.AddCommand(&bcr.Command{
+	h := b.AddCommand(&bcr.Command{
 		Name:    "help",
 		Summary: "Show information about the bot, or a specific command.",
 		Usage:   "[command]",
 
 		Command: b.help,
+	})
+
+	h.AddSubcommand(&bcr.Command{
+		Name:    "permissions",
+		Aliases: []string{"perms"},
+		Summary: "Show a list of required permissions.",
+
+		Command: b.perms,
 	})
 
 	b.AddCommand(&bcr.Command{

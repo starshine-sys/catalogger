@@ -30,6 +30,8 @@ type Bot struct {
 	MessageDeleteCache  *ttlcache.Cache
 	MessageUpdateCache  *ttlcache.Cache
 	GuildMemberAddCache *ttlcache.Cache
+	InviteCreateCache   *ttlcache.Cache
+	InviteDeleteCache   *ttlcache.Cache
 
 	BotJoinLeaveLog discord.ChannelID
 }
@@ -49,6 +51,8 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 		MessageDeleteCache:  ttlcache.NewCache(),
 		MessageUpdateCache:  ttlcache.NewCache(),
 		GuildMemberAddCache: ttlcache.NewCache(),
+		InviteCreateCache:   ttlcache.NewCache(),
+		InviteDeleteCache:   ttlcache.NewCache(),
 
 		BotJoinLeaveLog: discord.ChannelID(joinLeaveLog),
 	}
@@ -80,6 +84,24 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 	b.State.AddHandler(b.invitesReady)
 	b.State.AddHandler(b.inviteCreate)
 	b.State.AddHandler(b.inviteDelete)
+
+	// add invite create/delete handlers
+	b.State.AddHandler(b.inviteCreateEvent)
+	b.State.AddHandler(b.inviteDeleteEvent)
+
+	// add clear cache command
+	b.AddCommand(&bcr.Command{
+		Name:    "clear-cache",
+		Aliases: []string{"clearcache"},
+		Summary: "Clear this server's webhook cache.",
+
+		Permissions: discord.PermissionManageGuild,
+		Command: func(ctx *bcr.Context) (err error) {
+			b.ResetCache(ctx.Message.GuildID)
+			_, err = ctx.Send("Reset the webhook cache for this server.", nil)
+			return
+		},
+	})
 }
 
 func (bot *Bot) cleanMessages() {
