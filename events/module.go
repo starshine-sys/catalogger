@@ -24,6 +24,9 @@ type Bot struct {
 	ProxiedTriggers   map[discord.MessageID]struct{}
 	ProxiedTriggersMu sync.Mutex
 
+	BotMessages   map[discord.MessageID]struct{}
+	BotMessagesMu sync.Mutex
+
 	Invites  map[discord.GuildID][]discord.Invite
 	InviteMu sync.Mutex
 
@@ -60,6 +63,7 @@ type Bot struct {
 	GuildEmojisUpdateCache *ttlcache.Cache
 	GuildRoleCreateCache   *ttlcache.Cache
 	GuildRoleDeleteCache   *ttlcache.Cache
+	GuildRoleUpdateCache   *ttlcache.Cache
 
 	BotJoinLeaveLog discord.ChannelID
 }
@@ -74,6 +78,7 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 		Sugar:  s,
 
 		ProxiedTriggers: map[discord.MessageID]struct{}{},
+		BotMessages:     map[discord.MessageID]struct{}{},
 
 		Invites:  map[discord.GuildID][]discord.Invite{},
 		Members:  map[memberCacheKey]discord.Member{},
@@ -104,6 +109,7 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 		GuildEmojisUpdateCache: ttlcache.NewCache(),
 		GuildRoleCreateCache:   ttlcache.NewCache(),
 		GuildRoleDeleteCache:   ttlcache.NewCache(),
+		GuildRoleUpdateCache:   ttlcache.NewCache(),
 
 		BotJoinLeaveLog: discord.ChannelID(joinLeaveLog),
 	}
@@ -125,6 +131,7 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 	b.GuildEmojisUpdateCache.SetTTL(10 * time.Minute)
 	b.GuildRoleCreateCache.SetTTL(10 * time.Minute)
 	b.GuildRoleDeleteCache.SetTTL(10 * time.Minute)
+	b.GuildRoleUpdateCache.SetTTL(10 * time.Minute)
 
 	// add member cache handlers
 	b.Router.State.AddHandler(b.requestGuildMembers)
@@ -172,6 +179,11 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 	b.State.AddHandler(b.channelUpdate)
 	b.State.AddHandler(b.channelDelete)
 
+	// add role handlers
+	b.State.AddHandler(b.guildRoleCreate)
+	b.State.AddHandler(b.guildRoleUpdate)
+	b.State.AddHandler(b.guildRoleDelete)
+
 	// add clear cache command
 	b.AddCommand(&bcr.Command{
 		Name:    "clear-cache",
@@ -185,6 +197,8 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 			return
 		},
 	})
+
+	go b.cleanMessages()
 }
 
 func (bot *Bot) cleanMessages() {
@@ -195,9 +209,7 @@ func (bot *Bot) cleanMessages() {
 			continue
 		}
 
-		if n := c.RowsAffected(); n != 0 {
-			bot.Sugar.Debugf("Deleted %v PK messages older than 30 days.", n)
-		}
+		bot.Sugar.Debugf("Deleted %v PK messages older than 30 days.", c.RowsAffected())
 
 		c, err = bot.DB.Pool.Exec(context.Background(), "delete from messages where msg_id < $1", discord.NewSnowflake(time.Now().UTC().Add(-720*time.Hour)))
 		if err != nil {
@@ -205,9 +217,7 @@ func (bot *Bot) cleanMessages() {
 			continue
 		}
 
-		if n := c.RowsAffected(); n != 0 {
-			bot.Sugar.Debugf("Deleted %v messages older than 30 days.", n)
-		}
+		bot.Sugar.Debugf("Deleted %v normal messages older than 30 days.", c.RowsAffected())
 
 		time.Sleep(1 * time.Minute)
 	}

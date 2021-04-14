@@ -18,6 +18,9 @@ Implemented events:
 - `CHANNEL_CREATE`
 - `CHANNEL_UPDATE` (note: buggy with permission overrides)
 - `CHANNEL_DELETE`
+- `GUILD_ROLE_CREATE`
+- `GUILD_ROLE_UPDATE`
+- `GUILD_ROLE_DELETE`
 
 To invite the bot to your server, use [this link](https://discord.com/api/oauth2/authorize?client_id=830819903371739166&permissions=537259248&scope=bot%20applications.commands).
 

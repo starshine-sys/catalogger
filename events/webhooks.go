@@ -52,6 +52,8 @@ func (bot *Bot) SetWebhooks(t string, id discord.GuildID, w *Webhook) {
 		bot.GuildEmojisUpdateCache.Set(id.String(), w)
 	case "guild_role_create":
 		bot.GuildRoleCreateCache.Set(id.String(), w)
+	case "guild_role_update":
+		bot.GuildRoleUpdateCache.Set(id.String(), w)
 	case "guild_role_delete":
 		bot.GuildRoleDeleteCache.Set(id.String(), w)
 	case "message_delete_bulk":
@@ -101,6 +103,8 @@ func (bot *Bot) GetWebhooks(t string, id discord.GuildID) (*Webhook, error) {
 		v, err = bot.GuildEmojisUpdateCache.Get(id.String())
 	case "guild_role_create":
 		v, err = bot.GuildRoleCreateCache.Get(id.String())
+	case "guild_role_update":
+		v, err = bot.GuildRoleUpdateCache.Get(id.String())
 	case "guild_role_delete":
 		v, err = bot.GuildRoleDeleteCache.Get(id.String())
 	case "message_delete_bulk":
@@ -136,6 +140,7 @@ func (bot *Bot) ResetCache(id discord.GuildID) {
 	bot.GuildUpdateCache.Remove(id.String())
 	bot.GuildEmojisUpdateCache.Remove(id.String())
 	bot.GuildRoleCreateCache.Remove(id.String())
+	bot.GuildRoleUpdateCache.Remove(id.String())
 	bot.GuildRoleDeleteCache.Remove(id.String())
 	bot.MessageDeleteBulkCache.Remove(id.String())
 }
@@ -144,7 +149,7 @@ func (bot *Bot) getWebhook(id discord.ChannelID, name string) (*discord.Webhook,
 	ws, err := bot.State.ChannelWebhooks(id)
 	if err == nil {
 		for _, w := range ws {
-			if w.Name == name {
+			if w.Name == name && (w.User.ID == bot.Bot.ID || !w.User.ID.IsValid()) {
 				return &w, nil
 			}
 		}

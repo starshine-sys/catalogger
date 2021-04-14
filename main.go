@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 
 	"git.sr.ht/~starshine-sys/logger/commands"
@@ -14,10 +15,20 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/starshine-sys/bcr"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 func main() {
-	zap, err := zap.NewDevelopment()
+	debug, _ := strconv.ParseBool(os.Getenv("DEBUG_LOGGING"))
+
+	zapConf := zap.NewDevelopmentConfig()
+	if debug {
+		zapConf.Level = zap.NewAtomicLevelAt(zapcore.DebugLevel)
+	} else {
+		zapConf.Level = zap.NewAtomicLevelAt(zapcore.InfoLevel)
+	}
+
+	zap, err := zapConf.Build()
 	if err != nil {
 		panic(err)
 	}
