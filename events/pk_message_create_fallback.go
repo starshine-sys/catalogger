@@ -1,6 +1,7 @@
 package events
 
 import (
+	"context"
 	"time"
 
 	"git.sr.ht/~starshine-sys/logger/db"
@@ -19,6 +20,12 @@ func (bot *Bot) pkMessageCreateFallback(m *gateway.MessageCreateEvent) {
 
 	// wait 2 seconds
 	time.Sleep(2 * time.Second)
+
+	// if the channel is blacklisted, return
+	var blacklisted bool
+	if bot.DB.Pool.QueryRow(context.Background(), "select exists(select id from guilds where $1 = any(ignored_channels) and id = $2)", m.ChannelID, m.GuildID).Scan(&blacklisted); blacklisted {
+		return
+	}
 
 	// check if the message exists in the database; if so, return
 	_, err := bot.DB.GetProxied(m.ID)
