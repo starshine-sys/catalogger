@@ -76,8 +76,9 @@ func (bot *Bot) guildMemberUpdate(ev *gateway.GuildMemberUpdateEvent) {
 			Icon: m.User.AvatarURL(),
 			Name: ev.User.Username + "#" + ev.User.Discriminator,
 		},
-		Color: bcr.ColourOrange,
-		Title: "Roles updated",
+		Color:       bcr.ColourOrange,
+		Title:       "Roles updated",
+		Description: ev.User.Mention(),
 
 		Footer: &discord.EmbedFooter{
 			Text: fmt.Sprintf("User ID: %v", ev.User.ID),

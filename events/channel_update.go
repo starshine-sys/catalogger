@@ -37,8 +37,9 @@ func (bot *Bot) channelUpdate(ev *gateway.ChannelUpdateEvent) {
 	}
 
 	e := discord.Embed{
-		Title: "Channel updated",
-		Color: bcr.ColourBlue,
+		Title:       "Channel updated",
+		Color:       bcr.ColourBlue,
+		Description: fmt.Sprintf("%v - #%v", ev.Mention(), ev.Name),
 
 		Footer: &discord.EmbedFooter{
 			Text: "ID: " + ev.ID.String(),
