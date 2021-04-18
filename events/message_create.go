@@ -8,7 +8,7 @@ import (
 )
 
 func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) {
-	if !m.GuildID.IsValid() || m.Author.Bot {
+	if !m.GuildID.IsValid() || m.WebhookID.IsValid() {
 		return
 	}
 
