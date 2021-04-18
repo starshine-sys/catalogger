@@ -4,9 +4,10 @@ To invite the bot to your server, use [this link](https://discord.com/api/oauth2
 
 Catalogger's prefix is `lg!`. Self-hosted instances can use any prefix.
 
-To start logging events, use the command `lg!setchannel` with a *comma-separated* list of [events](#events).  
-For example: `lg!setchannel message_update,message_delete`  
-To *disable* logging for an event, use `lg!setchannel` with the `--clear` flag.  
+To start logging events, use the command `lg!setchannel` with a *comma-separated* list of [events](#events).
+For example: `lg!setchannel message_update,message_delete`
+
+To *disable* logging for an event, use `lg!setchannel` with the `--clear` flag.
 For example, `lg!setchannel --clear message_update` will stop logging the message update event.
 
 To ignore events from a channel, use `lg!ignorechannel` in that channel.  
