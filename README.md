@@ -34,7 +34,8 @@ To invite the bot to your server, use [this link](https://discord.com/api/oauth2
 1. Create a database
 2. Copy `.env.example` to `.env` and fill it in
 3. `go build`
-4. Run the executable
+4. Run the migrations in `migrations/` (using [tern](https://github.com/jackc/tern))
+5. Run the executable
 
 ## License
 
