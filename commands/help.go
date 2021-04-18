@@ -18,7 +18,9 @@ func (bot *Bot) help(ctx *bcr.Context) (err error) {
 		Title: "Help",
 		Description: fmt.Sprintf(`A logging bot that integrates with PluralKit's message proxying.
 The bot's prefix is `+"`%v`"+` (or a mention).
-To get started, use `+"`%vsetchannel`"+` with one or more events (listed below).`, ctx.Prefix, ctx.Prefix),
+To get started, use `+"`%vsetchannel`"+` with one or more events.
+
+[Basic usage guide](https://git.sr.ht/~starshine-sys/logger/tree/main/item/docs/USAGE.md) / [Privacy](https://git.sr.ht/~starshine-sys/logger/tree/main/item/docs/PRIVACY.md)`, ctx.Prefix, ctx.Prefix),
 		Color: bcr.ColourPurple,
 
 		Fields: []discord.EmbedField{
@@ -31,8 +33,8 @@ To get started, use `+"`%vsetchannel`"+` with one or more events (listed below).
 				Value: "`channels`: show which events are logging to which channels\n`setchannel`: log the given event(s) to the current channel\n**For example: `setchannel MESSAGE_DELETE, MESSAGE_UPDATE`**\n`ignorechannel`: ignore the current channel\n`cleardata`: clear this server's data (including messages)\n`clearcache`: clear the bot's internal cache, in case logging is not working",
 			},
 			{
-				Name:  "Available events",
-				Value: "Events currently implemented:\n- `MESSAGE_DELETE`: deleted messages, both normal and PluralKit messages\n- `MESSAGE_UPDATE`: edited messages\n- `GUILD_MEMBER_ADD`: new member joining\n- `GUILD_MEMBER_REMOVE`: member leaving\n- `INVITE_CREATE`: created invites\n- `INVITE_DELETE`: deleted invites\n- `GUILD_BAN_ADD`: banned users\n- `GUILD_BAN_REMOVE`: unbanned users\n- `GUILD_MEMBER_UPDATE`: role updates\n- `GUILD_MEMBER_NICK_UPDATE`: username/nickname updates\n- `CHANNEL_CREATE`: channel creations\n- `CHANNEL_UPDATE`: channel updates\n- `CHANNEL_DELETE`: channel deletions\n- `GUILD_ROLE_CREATE`: role creations\n- `GUILD_ROLE_UPDATE`: role updates\n- `GUILD_ROLE_DELETE`: role deletions",
+				Name:  "Events",
+				Value: "For a list of events, see [here](https://git.sr.ht/~starshine-sys/logger/tree/main/item/docs/USAGE.md#events).",
 			},
 			{
 				Name:  "Author",
