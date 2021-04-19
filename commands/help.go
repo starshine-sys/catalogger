@@ -30,7 +30,7 @@ To get started, use `+"`%vsetchannel`"+` with one or more events.
 			},
 			{
 				Name:  "Configuration",
-				Value: "`channels`: show which events are logging to which channels\n`setchannel`: log the given event(s) to the current channel\n**For example: `setchannel MESSAGE_DELETE, MESSAGE_UPDATE`**\n`ignorechannel`: ignore the current channel\n`cleardata`: clear this server's data (including messages)\n`clearcache`: clear the bot's internal cache, in case logging is not working",
+				Value: "`channels`: show which events are logging to which channels\n`setchannel`: log the given event(s) to the current channel\n**For example: `setchannel MESSAGE_DELETE, MESSAGE_UPDATE`**\n`ignorechannel`: ignore the current channel\n`cleardata`: clear this server's data (including messages)\n`clearcache`: clear the bot's internal cache, in case logging is not working\n`permcheck`: check for permission errors in log channels",
 			},
 			{
 				Name:  "Events",
