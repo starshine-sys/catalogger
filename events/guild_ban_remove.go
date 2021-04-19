@@ -93,6 +93,35 @@ func (bot *Bot) guildBanRemove(ev *gateway.GuildBanRemoveEvent) {
 			Name:  "PluralKit system ID",
 			Value: sys.ID,
 		})
+
+		banned, err := bot.DB.IsSystemBanned(ev.GuildID, sys.ID)
+		if err != nil {
+			bot.Sugar.Errorf("Error getting banned systems for %v: %v", ev.GuildID, err)
+			bot.Sugar.Infof("Trying to unban %v anyway.", sys.ID)
+
+			err = bot.DB.UnbanSystem(ev.GuildID, sys.ID)
+			if err == nil {
+				e.Fields = append(e.Fields, discord.EmbedField{
+					Name:  "Linked system unbanned",
+					Value: "The system linked to this account has been unbanned.",
+				})
+			}
+		}
+
+		if banned {
+			err = bot.DB.UnbanSystem(ev.GuildID, sys.ID)
+			if err == nil {
+				e.Fields = append(e.Fields, discord.EmbedField{
+					Name:  "Linked system unbanned",
+					Value: "The system linked to this account has been unbanned.",
+				})
+			} else {
+				e.Fields = append(e.Fields, discord.EmbedField{
+					Name:  "Linked system not unbanned",
+					Value: "There was an error trying to unban the linked system.\nYou will still be warned when an account linked to this system joins.",
+				})
+			}
+		}
 	}
 
 	webhook.New(wh.ID, wh.Token).Execute(webhook.ExecuteData{

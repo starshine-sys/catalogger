@@ -36,7 +36,7 @@ func (bot *Bot) clearData(ctx *bcr.Context) (err error) {
 
 	deleted += c.RowsAffected()
 
-	_, err = bot.DB.Pool.Exec(context.Background(), "update guilds set channels = $1, ignored_channels = array[]::bigint[] where id = $2", db.DefaultEventMap, ctx.Message.GuildID)
+	_, err = bot.DB.Pool.Exec(context.Background(), "update guilds set channels = $1, ignored_channels = array[]::bigint[], banned_systems = array[]::char(5)[] where id = $2", db.DefaultEventMap, ctx.Message.GuildID)
 	if err != nil {
 		bot.Sugar.Errorf("Error deleting guild info for %v: %v", ctx.Message.GuildID, err)
 		_, err = ctx.Send("There was an error deleting your data, please contact the bot owner for assistance.", nil)

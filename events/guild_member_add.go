@@ -151,8 +151,32 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) {
 		}
 	}
 
+	embeds := []discord.Embed{e}
+
+	if sys != nil && sys.ID != "" {
+		if banned, _ := bot.DB.IsSystemBanned(m.GuildID, sys.ID); banned {
+			e := discord.Embed{
+				Title: "Banned system",
+
+				Color: bcr.ColourRed,
+				Footer: &discord.EmbedFooter{
+					Text: "ID: " + sys.ID,
+				},
+				Timestamp: discord.NowTimestamp(),
+			}
+
+			if sys.Name != "" {
+				e.Description = fmt.Sprintf("⚠️ The system associated with this account (**%v**) has been banned from the server.", sys.Name)
+			} else {
+				e.Description = "⚠️ The system associated with this account has been banned from the server."
+			}
+
+			embeds = append(embeds, e)
+		}
+	}
+
 	webhook.New(wh.ID, wh.Token).Execute(webhook.ExecuteData{
 		AvatarURL: bot.Router.Bot.AvatarURL(),
-		Embeds:    []discord.Embed{e},
+		Embeds:    embeds,
 	})
 }

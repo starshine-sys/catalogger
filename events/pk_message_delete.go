@@ -61,10 +61,6 @@ func (bot *Bot) pkMessageDelete(m *gateway.MessageDeleteEvent) {
 		Color:       bcr.ColourRed,
 		Fields: []discord.EmbedField{
 			{
-				Name:  "​",
-				Value: "​",
-			},
-			{
 				Name:   "Channel",
 				Value:  fmt.Sprintf("%v\nID: %v", msg.ChannelID.Mention(), msg.ChannelID),
 				Inline: true,
@@ -76,7 +72,7 @@ func (bot *Bot) pkMessageDelete(m *gateway.MessageDeleteEvent) {
 			},
 			{
 				Name:  "​",
-				Value: "​",
+				Value: "**PluralKit information**",
 			},
 			{
 				Name:   "System ID",

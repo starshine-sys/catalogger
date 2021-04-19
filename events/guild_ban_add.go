@@ -93,6 +93,33 @@ func (bot *Bot) guildBanAdd(ev *gateway.GuildBanAddEvent) {
 			Name:  "PluralKit system ID",
 			Value: sys.ID,
 		})
+
+		banned, err := bot.DB.IsSystemBanned(ev.GuildID, sys.ID)
+		if err != nil {
+			bot.Sugar.Errorf("Error getting banned systems for %v: %v", ev.GuildID, err)
+		}
+
+		if banned {
+			e.Fields = append(e.Fields, discord.EmbedField{
+				Name:  "System banned",
+				Value: "The system linked to this account has already been banned.",
+			})
+		} else {
+			err = bot.DB.BanSystem(ev.GuildID, sys.ID)
+			if err != nil {
+				bot.Sugar.Errorf("Erorr banning system: %v", err)
+				e.Fields = append(e.Fields, discord.EmbedField{
+					Name:  "System not banned",
+					Value: "There was an error trying to ban the linked system.\nYou will **not** be warned when an account linked to this system joins.",
+				})
+			} else {
+				e.Fields = append(e.Fields, discord.EmbedField{
+					Name:  "System banned",
+					Value: "The system linked to this account has been banned.\nYou will be warned when an account linked to this system joins.",
+				})
+			}
+		}
+
 	}
 
 	webhook.New(wh.ID, wh.Token).Execute(webhook.ExecuteData{
