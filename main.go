@@ -97,6 +97,8 @@ func main() {
 	botUser, _ := r.State.Me()
 	sugar.Infof("User: %v#%v (%v)", botUser.Username, botUser.Discriminator, botUser.ID)
 	r.Bot = botUser
+	// normally creating a Context would do this, but as we set the user above, that doesn't work
+	r.Prefixes = append(r.Prefixes, "<@"+r.Bot.ID.String()+">", "<@!"+r.Bot.ID.String()+">")
 
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)

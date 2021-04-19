@@ -67,6 +67,14 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 	})
 
 	b.AddCommand(&bcr.Command{
+		Name:    "permcheck",
+		Summary: "Check the bot's permissions.",
+
+		Permissions: discord.PermissionManageGuild,
+		Command:     b.permcheck,
+	})
+
+	b.AddCommand(&bcr.Command{
 		Name:    "ignore-channel",
 		Aliases: []string{"ignorechannel"},
 		Summary: "Ignore the current channel.",

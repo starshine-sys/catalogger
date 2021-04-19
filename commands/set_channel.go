@@ -48,5 +48,9 @@ func (bot *Bot) setChannel(ctx *bcr.Context) (err error) {
 	} else {
 		_, err = ctx.Sendf("No longer logging ``%v`` events.", bcr.EscapeBackticks(strings.Join(events, ", ")))
 	}
+	if err != nil {
+		bot.Sugar.Errorf("Error sending message: %v", err)
+	}
+	err = bot.Router.GetCommand("clearcache").Command(ctx)
 	return
 }
