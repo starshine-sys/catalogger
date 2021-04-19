@@ -1,8 +1,6 @@
 package commands
 
 import (
-	"time"
-
 	"git.sr.ht/~starshine-sys/logger/db"
 	"github.com/diamondburned/arikawa/v2/discord"
 	"github.com/spf13/pflag"
@@ -16,8 +14,6 @@ type Bot struct {
 
 	DB    *db.DB
 	Sugar *zap.SugaredLogger
-
-	Start time.Time
 }
 
 // Init ...
@@ -26,15 +22,7 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 		Router: r,
 		DB:     db,
 		Sugar:  s,
-		Start:  time.Now().UTC(),
 	}
-
-	b.AddCommand(&bcr.Command{
-		Name:    "stats",
-		Summary: "Show the bot's latency and other stats.",
-
-		Command: b.ping,
-	})
 
 	b.AddCommand(&bcr.Command{
 		Name:    "events",

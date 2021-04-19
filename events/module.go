@@ -66,6 +66,8 @@ type Bot struct {
 	GuildRoleUpdateCache   *ttlcache.Cache
 
 	BotJoinLeaveLog discord.ChannelID
+
+	Start time.Time
 }
 
 // Init ...
@@ -76,6 +78,7 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 		Router: r,
 		DB:     db,
 		Sugar:  s,
+		Start:  time.Now().UTC(),
 
 		ProxiedTriggers: map[discord.MessageID]struct{}{},
 		BotMessages:     map[discord.MessageID]struct{}{},
@@ -196,6 +199,13 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 			_, err = ctx.Send("Reset the webhook cache for this server.", nil)
 			return
 		},
+	})
+
+	b.AddCommand(&bcr.Command{
+		Name:    "stats",
+		Summary: "Show the bot's latency and other stats.",
+
+		Command: b.ping,
 	})
 
 	go b.cleanMessages()

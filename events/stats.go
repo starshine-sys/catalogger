@@ -1,4 +1,4 @@
-package commands
+package events
 
 import (
 	"context"
@@ -44,6 +44,10 @@ func (bot *Bot) ping(ctx *bcr.Context) (err error) {
 		bot.Sugar.Errorf("Error getting guilds: %v", err)
 	}
 
+	bot.MembersMu.Lock()
+	bot.ChannelsMu.Lock()
+	bot.RolesMu.Lock()
+
 	e := discord.Embed{
 		Color: bcr.ColourPurple,
 		Fields: []discord.EmbedField{
@@ -77,11 +81,22 @@ func (bot *Bot) ping(ctx *bcr.Context) (err error) {
 				Inline: true,
 			},
 			{
-				Name:  "Numbers",
-				Value: fmt.Sprintf("%v messages (%v normal, %v proxied) from %v servers", humanize.Comma(msgs.Messages+msgs.PKMessages), humanize.Comma(msgs.Messages), humanize.Comma(msgs.PKMessages), len(guilds)),
+				Name: "Numbers",
+				Value: fmt.Sprintf(
+					`%v messages (%v normal, %v proxied) from %v servers
+Cached %v members, %v channels, and %v roles`,
+					humanize.Comma(msgs.Messages+msgs.PKMessages), humanize.Comma(msgs.Messages), humanize.Comma(msgs.PKMessages), len(guilds),
+					humanize.Comma(int64(len(bot.Members))),
+					humanize.Comma(int64(len(bot.Channels))),
+					humanize.Comma(int64(len(bot.Roles))),
+				),
 			},
 		},
 	}
+
+	bot.MembersMu.Unlock()
+	bot.ChannelsMu.Unlock()
+	bot.RolesMu.Unlock()
 
 	_, err = ctx.Edit(m, "", &e)
 	return err
