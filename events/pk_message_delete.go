@@ -50,7 +50,7 @@ func (bot *Bot) pkMessageDelete(m *gateway.MessageDeleteEvent) {
 		mention = fmt.Sprintf("%v\n%v#%v\nID: %v", u.Mention(), u.Username, u.Discriminator, u.ID)
 		author = &discord.EmbedAuthor{
 			Icon: u.AvatarURL(),
-			Name: u.Username + u.Discriminator,
+			Name: u.Username + "#" + u.Discriminator,
 		}
 	}
 

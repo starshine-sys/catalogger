@@ -55,7 +55,7 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 	mention := fmt.Sprintf("%v\n%v#%v\nID: %v", m.Author.Mention(), m.Author.Username, m.Author.Discriminator, m.Author.ID)
 	author := &discord.EmbedAuthor{
 		Icon: m.Author.AvatarURL(),
-		Name: m.Author.Username + m.Author.Discriminator,
+		Name: m.Author.Username + "#" + m.Author.Discriminator,
 	}
 
 	updated := m.Content
