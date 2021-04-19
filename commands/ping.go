@@ -1,12 +1,14 @@
 package commands
 
 import (
+	"context"
 	"fmt"
 	"runtime"
 	"time"
 
 	"github.com/diamondburned/arikawa/v2/discord"
 	"github.com/dustin/go-humanize"
+	"github.com/georgysavva/scany/pgxscan"
 	"github.com/starshine-sys/bcr"
 )
 
@@ -26,6 +28,21 @@ func (bot *Bot) ping(ctx *bcr.Context) (err error) {
 	// this will return 0ms in the first minute after the bot is restarted
 	// can't do much about that though
 	heartbeat := ctx.State.Gateway.PacerLoop.EchoBeat.Time().Sub(ctx.State.Gateway.PacerLoop.SentBeat.Time()).Round(time.Millisecond)
+
+	// message counts! that's all we store anyway
+	var msgs struct {
+		Messages   int64
+		PKMessages int64
+	}
+
+	err = pgxscan.Get(context.Background(), bot.DB.Pool, &msgs, "select (select count(*) from messages) as messages, (select count(*) from pk_messages) as pk_messages")
+	if err != nil {
+		bot.Sugar.Errorf("Error getting message counts: %v", err)
+	}
+	guilds, err := ctx.State.Guilds()
+	if err != nil {
+		bot.Sugar.Errorf("Error getting guilds: %v", err)
+	}
 
 	e := discord.Embed{
 		Color: bcr.ColourPurple,
@@ -58,6 +75,10 @@ func (bot *Bot) ping(ctx *bcr.Context) (err error) {
 					bot.Start.Format("Jan _2 2006, 15:04:05 MST"),
 				),
 				Inline: true,
+			},
+			{
+				Name:  "Numbers",
+				Value: fmt.Sprintf("%v messages (%v normal, %v proxied) from %v servers", humanize.Comma(msgs.Messages+msgs.PKMessages), humanize.Comma(msgs.Messages), humanize.Comma(msgs.PKMessages), len(guilds)),
 			},
 		},
 	}
