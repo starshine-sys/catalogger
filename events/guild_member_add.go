@@ -106,7 +106,7 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) {
 
 			for _, existing := range bot.Invites[m.GuildID] {
 				for _, i := range is {
-					if existing.Uses < i.Uses {
+					if existing.Code == i.Code && existing.Uses < i.Uses {
 						found = true
 						inv = i
 						break
@@ -147,6 +147,9 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) {
 					},
 				}...)
 			}
+
+			bot.Invites[m.GuildID] = is
+
 			bot.InviteMu.Unlock()
 		}
 	}
