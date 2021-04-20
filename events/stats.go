@@ -44,6 +44,11 @@ func (bot *Bot) ping(ctx *bcr.Context) (err error) {
 		bot.Sugar.Errorf("Error getting guilds: %v", err)
 	}
 
+	// database latency
+	t = time.Now()
+	bot.DB.Channels(ctx.Message.GuildID)
+	dbLatency := time.Since(t).Round(time.Microsecond)
+
 	bot.MembersMu.Lock()
 	bot.ChannelsMu.Lock()
 	bot.RolesMu.Lock()
@@ -53,7 +58,7 @@ func (bot *Bot) ping(ctx *bcr.Context) (err error) {
 		Fields: []discord.EmbedField{
 			{
 				Name:   "Ping",
-				Value:  fmt.Sprintf("Heartbeat: %v\nMessage: %v", heartbeat, latency),
+				Value:  fmt.Sprintf("Heartbeat: %v\nMessage: %v\nDatabase: %v", heartbeat, latency, dbLatency),
 				Inline: true,
 			},
 			{

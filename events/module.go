@@ -203,6 +203,7 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 
 	b.AddCommand(&bcr.Command{
 		Name:    "stats",
+		Aliases: []string{"ping"},
 		Summary: "Show the bot's latency and other stats.",
 
 		Command: b.ping,
