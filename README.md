@@ -42,6 +42,7 @@ To invite the bot to your server, use [this link](https://discord.com/api/oauth2
 BSD 3-Clause License
 
 Copyright (c) 2021, Starshine System
+
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
