@@ -41,11 +41,11 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) {
 		},
 
 		Color:       bcr.ColourGreen,
-		Description: fmt.Sprintf("%v\n%v#%v", m.Mention(), m.User.Username, m.User.Discriminator),
+		Description: fmt.Sprintf("%v#%v %v", m.User.Username, m.User.Discriminator, m.Mention()),
 
 		Fields: []discord.EmbedField{
 			{
-				Name:   "Account age",
+				Name:   "Account created",
 				Value:  bcr.HumanizeTime(bcr.DurationPrecisionMinutes, m.User.ID.Time()),
 				Inline: true,
 			},
@@ -120,10 +120,20 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) {
 					Value: "Could not determine invite.",
 				})
 			} else {
+				name, err := bot.DB.GetInviteName(inv.Code)
+				if err != nil {
+					bot.Sugar.Errorf("Error getting invite name: %v", err)
+				}
+
 				e.Fields = append(e.Fields, []discord.EmbedField{
 					{
 						Name:  "​",
 						Value: "**Invite information**",
+					},
+					{
+						Name:   "Name",
+						Value:  name,
+						Inline: true,
 					},
 					{
 						Name:   "Code",
@@ -142,7 +152,7 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) {
 					},
 					{
 						Name:   "Created by",
-						Value:  fmt.Sprintf("%v - %v#%v", inv.Inviter.Mention(), inv.Inviter.Username, inv.Inviter.Discriminator),
+						Value:  fmt.Sprintf("%v#%v %v", inv.Inviter.Username, inv.Inviter.Discriminator, inv.Inviter.Mention()),
 						Inline: true,
 					},
 				}...)

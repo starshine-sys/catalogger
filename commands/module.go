@@ -102,4 +102,23 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 
 		Command: b.invite,
 	})
+
+	inv := b.AddCommand(&bcr.Command{
+		Name:    "invites",
+		Summary: "List this server's invites.",
+
+		Permissions: discord.PermissionManageGuild,
+		Command:     b.listInvites,
+	})
+
+	inv.AddSubcommand(&bcr.Command{
+		Name:    "name",
+		Aliases: []string{"rename"},
+		Summary: "Set an invite's name.",
+		Usage:   "<invite code> <new name>",
+		Args:    bcr.MinArgs(2),
+
+		Permissions: discord.PermissionManageGuild,
+		Command:     b.renameInvite,
+	})
 }

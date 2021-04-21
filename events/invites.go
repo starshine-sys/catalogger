@@ -1,6 +1,7 @@
 package events
 
 import (
+	"context"
 	"time"
 
 	"github.com/diamondburned/arikawa/v2/gateway"
@@ -33,6 +34,11 @@ func (bot *Bot) inviteCreate(g *gateway.InviteCreateEvent) {
 func (bot *Bot) inviteDelete(g *gateway.InviteDeleteEvent) {
 	// wait 0.5 seconds so we can log the event
 	time.Sleep(500 * time.Millisecond)
+
+	_, err := bot.DB.Pool.Exec(context.Background(), "delete from invites where code = $1", g.Code)
+	if err != nil {
+		bot.Sugar.Errorf("Error deleting invite name: %v", err)
+	}
 
 	inv, err := bot.State.GuildInvites(g.GuildID)
 	if err != nil {
