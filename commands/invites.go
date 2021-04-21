@@ -52,7 +52,7 @@ Created by %v#%v`, name, invites[code].Uses, invites[code].Inviter.Username, inv
 	}
 
 	_, err = ctx.PagedEmbed(
-		FieldPaginator("Invites", bcr.ColourPurple, fields, 6), false,
+		FieldPaginator("Invites", bcr.ColourPurple, fields, 9), false,
 	)
 	return
 }
@@ -68,7 +68,7 @@ func FieldPaginator(title string, colour discord.Color, fields []discord.EmbedFi
 			Title: title,
 			Color: colour,
 			Footer: &discord.EmbedFooter{
-				Text: fmt.Sprintf("Page 1/%v", math.Ceil(float64(len(fields)/perPage))),
+				Text: fmt.Sprintf("Page 1/%v", math.Ceil(float64(float64(len(fields))/float64(perPage)))),
 			},
 		}
 	)
@@ -80,7 +80,7 @@ func FieldPaginator(title string, colour discord.Color, fields []discord.EmbedFi
 				Title: title,
 				Color: colour,
 				Footer: &discord.EmbedFooter{
-					Text: fmt.Sprintf("Page %v/%v", pages+1, math.Ceil(float64(len(fields)/perPage))),
+					Text: fmt.Sprintf("Page %v/%v", pages+1, math.Ceil(float64(float64(len(fields))/float64(perPage)))),
 				},
 			}
 			count = 0

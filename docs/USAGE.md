@@ -4,20 +4,38 @@ To invite the bot to your server, use [this link](https://discord.com/api/oauth2
 
 Catalogger's prefix is `lg!`. Self-hosted instances can use any prefix.
 
+## Getting started
+
 To start logging events, use the command `lg!setchannel` with a *comma-separated* list of [events](#events).
-For example: `lg!setchannel message_update,message_delete`
+- For example: `lg!setchannel message_update,message_delete`
 
 To *disable* logging for an event, use `lg!setchannel` with the `--clear` flag.
-For example, `lg!setchannel --clear message_update` will stop logging the message update event.
+- For example, `lg!setchannel --clear message_update` will stop logging the message update event.
 
 To ignore events from a channel, use `lg!ignorechannel` in that channel.  
 To stop ignoring the channel, run the command again.
 
-If the bot stops logging an event, try the `lg!clearcache` command.  
+### Logging invites
+
+Invites are logged by default (although the bot needs both "Manage Server" and "Manage Channels" for it to work).
+
+You can give invites names, to track where people are coming from.
+
+To do this, use the `lg!invites name` command with the invite code and the name you want to give to the invite.
+
+You can use `lg!invites` to list all of the server's invites.
+
+## Troubleshooting
+
+If the bot stops logging an event, try the `lg!permcheck` command;
+if that's all clear, but the bot still isn't logging, try the `lg!clearcache` command.
+
 If it's still not working, feel free to join the [support server](https://discord.gg/anzCcFKBk4) and ask there!
 
-To delete *all* of your server's data, use the `lg!cleardata` command.  
-This will reset your server's configuration, and delete all cached messages.  
+## Resetting your data
+
+To delete *all* of your server's data, use the `lg!cleardata` command.
+This will reset your server's configuration, and delete all cached messages.
 **This process is irreversible.**
 
 ## Events
