@@ -158,6 +158,7 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 	b.State.AddHandler(b.messageCreate)
 	b.State.AddHandler(b.messageUpdate)
 	b.State.AddHandler(b.messageDelete)
+	b.State.AddHandler(b.bulkMessageDelete)
 
 	// add guild member handlers
 	b.State.AddHandler(b.guildMemberAdd)

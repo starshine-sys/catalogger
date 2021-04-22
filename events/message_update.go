@@ -40,6 +40,7 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 			UserID:    m.Author.ID,
 			ChannelID: m.ChannelID,
 			ServerID:  m.GuildID,
+			Username:  m.Author.Username + "#" + m.Author.Discriminator,
 
 			Content: m.Content,
 		})
@@ -101,6 +102,7 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 		UserID:    m.Author.ID,
 		ChannelID: m.ChannelID,
 		ServerID:  m.GuildID,
+		Username:  m.Author.Username + "#" + m.Author.Discriminator,
 
 		Content: m.Content,
 	})

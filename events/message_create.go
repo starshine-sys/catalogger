@@ -33,6 +33,7 @@ func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) {
 		UserID:    m.Author.ID,
 		ChannelID: m.ChannelID,
 		ServerID:  m.GuildID,
+		Username:  m.Author.Username + "#" + m.Author.Discriminator,
 
 		Content: m.Content,
 	}
