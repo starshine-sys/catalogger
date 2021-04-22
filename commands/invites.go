@@ -51,8 +51,6 @@ Created by %v#%v`, name, invites[code].Uses, invites[code].Inviter.Username, inv
 		})
 	}
 
-	ctx.NewMessage()
-
 	_, err = ctx.PagedEmbed(
 		FieldPaginator("Invites", bcr.ColourPurple, fields, 9), false,
 	)
