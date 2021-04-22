@@ -43,6 +43,7 @@ This will reset your server's configuration, and delete all cached messages.
 The following events are implemented:
 
 - `MESSAGE_DELETE`: deleted messages, both normal and PluralKit messages
+- `MESSAGE_DELETE_BULK`: bulk message deletions
 - `MESSAGE_UPDATE`: edited messages
 - `GUILD_MEMBER_ADD`: new member joining
 - `GUILD_MEMBER_REMOVE`: member leaving
@@ -63,4 +64,3 @@ The following events are not yet implemented:
 
 - `GUILD_UPDATE`: server updates, such as name and icon changes
 - `GUILD_EMOJIS_UPDATE`: changes to a server's custom emotes
-- `MESSAGE_DELETE_BULK`: bulk message deletions

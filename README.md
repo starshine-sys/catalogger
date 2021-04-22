@@ -1,26 +1,8 @@
 # Logger
 
 A logger bot that integrates with PluralKit's message proxying.  
-Very much WIP but message logging and join logging both work.
 
-Implemented events:
-
-- `MESSAGE_UPDATE`
-- `MESSAGE_DELETE`
-- `GUILD_MEMBER_ADD`
-- `GUILD_MEMBER_REMOVE`
-- `INVITE_CREATE`
-- `INVITE_DELETE`
-- `GUILD_BAN_ADD`
-- `GUILD_BAN_REMOVE`
-- `GUILD_MEMBER_UPDATE`
-- `GUILD_MEMBER_NICK_UPDATE`
-- `CHANNEL_CREATE`
-- `CHANNEL_UPDATE` (note: buggy with permission overrides)
-- `CHANNEL_DELETE`
-- `GUILD_ROLE_CREATE`
-- `GUILD_ROLE_UPDATE`
-- `GUILD_ROLE_DELETE`
+For a usage guide, check out docs/USAGE.md
 
 To invite the bot to your server, use [this link](https://discord.com/api/oauth2/authorize?client_id=830819903371739166&permissions=537259248&scope=bot%20applications.commands).
 
