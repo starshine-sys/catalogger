@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/diamondburned/arikawa/v2/discord"
+	"github.com/dustin/go-humanize/english"
 	"github.com/starshine-sys/bcr"
 )
 
@@ -17,10 +18,10 @@ func (bot *Bot) help(ctx *bcr.Context) (err error) {
 	e := &discord.Embed{
 		Title: "Help",
 		Description: fmt.Sprintf(`A logging bot that integrates with PluralKit's message proxying.
-The bot's prefix is `+"`%v`"+` (or a mention).
+The bot's prefixes are %v.
 To get started, use `+"`%vsetchannel`"+` with one or more events.
 
-[Basic usage guide](https://git.sr.ht/~starshine-sys/logger/tree/main/item/docs/USAGE.md) / [Privacy](https://git.sr.ht/~starshine-sys/logger/tree/main/item/docs/PRIVACY.md)`, ctx.Prefix, ctx.Prefix),
+[Basic usage guide](https://git.sr.ht/~starshine-sys/logger/tree/main/item/docs/USAGE.md) / [Privacy](https://git.sr.ht/~starshine-sys/logger/tree/main/item/docs/PRIVACY.md)`, english.OxfordWordSeries(ctx.Router.Prefixes[:len(ctx.Router.Prefixes)-1], "and"), ctx.Prefix),
 		Color: bcr.ColourPurple,
 
 		Fields: []discord.EmbedField{

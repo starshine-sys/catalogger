@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"syscall"
 
 	"git.sr.ht/~starshine-sys/logger/commands"
@@ -47,7 +48,7 @@ func main() {
 	r, err := bcr.NewWithIntents(
 		os.Getenv("TOKEN"),
 		[]discord.UserID{discord.UserID(sf)},
-		[]string{os.Getenv("PREFIX")},
+		strings.Split(os.Getenv("PREFIXES"), ","),
 		intents,
 	)
 	if err != nil {
@@ -62,7 +63,7 @@ func main() {
 	r.State.AddHandler(func(ev *gateway.ReadyEvent) {
 		r.State.Gateway.UpdateStatus(gateway.UpdateStatusData{
 			Activities: []discord.Activity{{
-				Name: fmt.Sprintf("%vhelp", os.Getenv("PREFIX")),
+				Name: fmt.Sprintf("%vhelp", strings.Split(os.Getenv("PREFIXES"), ",")[0]),
 			}},
 		})
 	})
