@@ -4,11 +4,23 @@ import (
 	"context"
 
 	"git.sr.ht/~starshine-sys/logger/db"
+	"github.com/dustin/go-humanize"
 	"github.com/starshine-sys/bcr"
 )
 
 func (bot *Bot) clearData(ctx *bcr.Context) (err error) {
-	m, err := ctx.Send("⚠️ **Are you sure you want to clear this server's data?** This will delete all logged messages and will clear your settings.", nil)
+	// get count
+	var msgCount int64
+
+	err = bot.DB.Pool.QueryRow(context.Background(), `select (
+	(select count(msg_id) from messages where server_id = $1) +
+	(select count(msg_id) from pk_messages where server_id = $1)
+)`, ctx.Message.GuildID).Scan(&msgCount)
+	if err != nil {
+		bot.Sugar.Errorf("Error getting message count: %v", err)
+	}
+
+	m, err := ctx.Sendf("⚠️ **Are you sure you want to clear this server's data?** This will delete all logged messages (%v messages) and will clear your settings.", humanize.Comma(msgCount))
 	if err != nil {
 		return err
 	}

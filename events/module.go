@@ -221,7 +221,11 @@ func (bot *Bot) cleanMessages() {
 			continue
 		}
 
-		bot.Sugar.Debugf("Deleted %v PK messages older than 30 days.", c.RowsAffected())
+		if n := c.RowsAffected(); n == 0 {
+			bot.Sugar.Debugf("Deleted 0 PK messages older than 30 days.")
+		} else {
+			bot.Sugar.Infof("Deleted %v PK messages older than 30 days.", n)
+		}
 
 		c, err = bot.DB.Pool.Exec(context.Background(), "delete from messages where msg_id < $1", discord.NewSnowflake(time.Now().UTC().Add(-720*time.Hour)))
 		if err != nil {
@@ -229,7 +233,11 @@ func (bot *Bot) cleanMessages() {
 			continue
 		}
 
-		bot.Sugar.Debugf("Deleted %v normal messages older than 30 days.", c.RowsAffected())
+		if n := c.RowsAffected(); n == 0 {
+			bot.Sugar.Debugf("Deleted 0 normal messages older than 30 days.")
+		} else {
+			bot.Sugar.Infof("Deleted %v normal messages older than 30 days.", n)
+		}
 
 		time.Sleep(1 * time.Minute)
 	}
