@@ -3,6 +3,8 @@ package commands
 import (
 	"fmt"
 	"os"
+	"sort"
+	"strings"
 
 	"github.com/diamondburned/arikawa/v2/discord"
 	"github.com/dustin/go-humanize/english"
@@ -27,7 +29,7 @@ To get started, use `+"`%vsetchannel`"+` with one or more events.
 		Fields: []discord.EmbedField{
 			{
 				Name:  "Info commands",
-				Value: "`help`: show this help\n`help permissions`: show a list of required permissions\n`stats`: show the bot's latency and other stats\n`invite`: get an invite link for the bot\n`events`: show all events (not all of these are implemented yet)",
+				Value: "`help`: show this help\n`help permissions`: show a list of required permissions\n`help commands`: show a list of commands\n`stats`: show the bot's latency and other stats\n`invite`: get an invite link for the bot\n`events`: show all events (not all of these are implemented yet)",
 			},
 			{
 				Name:  "Configuration",
@@ -90,5 +92,31 @@ func (bot *Bot) perms(ctx *bcr.Context) (err error) {
 	}
 
 	_, err = ctx.Send("", &e)
+	return
+}
+
+func (bot *Bot) commands(ctx *bcr.Context) (err error) {
+	cmds := bot.Router.Commands()
+	sort.Sort(bcr.Commands(cmds))
+
+	var fields []discord.EmbedField
+	for _, c := range cmds {
+		v := c.Summary
+		if v == "" {
+			v = "No help given."
+		}
+		if c.Permissions != 0 {
+			v += fmt.Sprintf("\nRequires the %v permission.", strings.Join(bcr.PermStrings(c.Permissions), ", "))
+		}
+
+		fields = append(fields, discord.EmbedField{
+			Name:  c.Name,
+			Value: v,
+		})
+	}
+
+	_, err = ctx.PagedEmbed(
+		bcr.FieldPaginator("Commands", fmt.Sprintf("Use `%vhelp <name>` for more info on a command.", ctx.Router.Prefixes[0]), bcr.ColourPurple, fields, 5), false,
+	)
 	return
 }

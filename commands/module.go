@@ -74,7 +74,7 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 	b.AddCommand(&bcr.Command{
 		Name:    "clear-data",
 		Aliases: []string{"cleardata"},
-		Summary: "**Clear all of this server's data.**",
+		Summary: "Clear ___all___ of this server's data.",
 
 		Permissions: discord.PermissionManageGuild,
 		Command:     b.clearData,
@@ -94,6 +94,14 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 		Summary: "Show a list of required permissions.",
 
 		Command: b.perms,
+	})
+
+	h.AddSubcommand(&bcr.Command{
+		Name:    "commands",
+		Aliases: []string{"cmds"},
+		Summary: "Show a list of all commands",
+
+		Command: b.commands,
 	})
 
 	b.AddCommand(&bcr.Command{
@@ -120,5 +128,15 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 
 		Permissions: discord.PermissionManageGuild,
 		Command:     b.renameInvite,
+	})
+
+	b.AddCommand(&bcr.Command{
+		Name:    "admin-stats",
+		Aliases: []string{"adminstats"},
+		Summary: "Per-server message stats.",
+
+		Hidden:    true,
+		OwnerOnly: true,
+		Command:   b.adminStats,
 	})
 }
