@@ -11,6 +11,6 @@ require (
 	github.com/joho/godotenv v1.3.0
 	github.com/spf13/pflag v1.0.5
 	github.com/starshine-sys/bcr v0.15.1
-	github.com/starshine-sys/pkgo v0.3.0
+	github.com/starshine-sys/pkgo v0.3.2-0.20210426103511-1124ec82220c
 	go.uber.org/zap v1.16.0
 )
