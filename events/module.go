@@ -39,6 +39,9 @@ type Bot struct {
 	Roles   map[discord.RoleID]discord.Role
 	RolesMu sync.Mutex
 
+	Guilds   map[discord.GuildID]discord.Guild
+	GuildsMu sync.Mutex
+
 	MessageDeleteCache     *ttlcache.Cache
 	MessageUpdateCache     *ttlcache.Cache
 	MessageDeleteBulkCache *ttlcache.Cache
@@ -87,6 +90,7 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 		Members:  map[memberCacheKey]discord.Member{},
 		Channels: map[discord.ChannelID]discord.Channel{},
 		Roles:    map[discord.RoleID]discord.Role{},
+		Guilds:   map[discord.GuildID]discord.Guild{},
 
 		MessageDeleteCache: ttlcache.NewCache(),
 		MessageUpdateCache: ttlcache.NewCache(),
@@ -187,6 +191,9 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 	b.State.AddHandler(b.guildRoleCreate)
 	b.State.AddHandler(b.guildRoleUpdate)
 	b.State.AddHandler(b.guildRoleDelete)
+
+	// add guild handlers
+	b.State.AddHandler(b.guildUpdate)
 
 	// add clear cache command
 	b.AddCommand(&bcr.Command{

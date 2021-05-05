@@ -61,8 +61,8 @@ The following events are implemented:
 - `GUILD_ROLE_CREATE`: role creations
 - `GUILD_ROLE_UPDATE`: role updates
 - `GUILD_ROLE_DELETE`: role deletions
+- `GUILD_UPDATE`: server updates, such as name and icon changes
 
 The following events are not yet implemented:
 
-- `GUILD_UPDATE`: server updates, such as name and icon changes
 - `GUILD_EMOJIS_UPDATE`: changes to a server's custom emotes

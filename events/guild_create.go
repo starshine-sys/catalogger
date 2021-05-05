@@ -11,6 +11,10 @@ import (
 )
 
 func (bot *Bot) guildCreate(g *gateway.GuildCreateEvent) {
+	bot.GuildsMu.Lock()
+	bot.Guilds[g.ID] = g.Guild
+	bot.GuildsMu.Unlock()
+
 	// if we joined this guild more than one minute ago, return
 	if g.Joined.Time().UTC().Before(time.Now().UTC().Add(-1 * time.Minute)) {
 		var exists bool
