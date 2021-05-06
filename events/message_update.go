@@ -33,18 +33,21 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 	}
 
 	// try getting the message
-	msg, err := bot.DB.GetMessage(m.ID)
+	msg, err := bot.DB.GetProxied(m.ID)
 	if err != nil {
-		bot.DB.InsertMessage(db.Message{
-			MsgID:     m.ID,
-			UserID:    m.Author.ID,
-			ChannelID: m.ChannelID,
-			ServerID:  m.GuildID,
-			Username:  m.Author.Username + "#" + m.Author.Discriminator,
+		msg, err = bot.DB.GetMessage(m.ID)
+		if err != nil {
+			bot.DB.InsertMessage(db.Message{
+				MsgID:     m.ID,
+				UserID:    m.Author.ID,
+				ChannelID: m.ChannelID,
+				ServerID:  m.GuildID,
+				Username:  m.Author.Username + "#" + m.Author.Discriminator,
 
-			Content: m.Content,
-		})
-		return
+				Content: m.Content,
+			})
+			return
+		}
 	}
 
 	wh, err := bot.webhookCache("msg_update", m.GuildID, ch["MESSAGE_UPDATE"])
@@ -91,19 +94,73 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 		Timestamp: discord.NewTimestamp(msg.MsgID.Time()),
 	}
 
-	webhook.New(wh.ID, wh.Token).Execute(webhook.ExecuteData{
+	if msg.System != "" && msg.Member != "" {
+		e.Title = fmt.Sprintf("Message by \"%v\" updated\nOld content", m.Author.Username)
+
+		u, err := bot.State.User(msg.UserID)
+		if err == nil {
+			e.Fields[len(e.Fields)-1] = discord.EmbedField{
+				Name:   "Linked Discord account",
+				Value:  fmt.Sprintf("%v\n%v#%v\nID: %v", u.Mention(), u.Username, u.Discriminator, u.ID),
+				Inline: true,
+			}
+		} else {
+			e.Fields[len(e.Fields)-1] = discord.EmbedField{
+				Name:   "Linked Discord account",
+				Value:  fmt.Sprintf("%v\nID: %v", msg.UserID.Mention(), msg.UserID),
+				Inline: true,
+			}
+		}
+
+		e.Fields = append(e.Fields, []discord.EmbedField{
+			{
+				Name:  "​",
+				Value: "**PluralKit information**",
+			},
+			{
+				Name:   "System ID",
+				Value:  msg.System,
+				Inline: true,
+			},
+			{
+				Name:   "Member ID",
+				Value:  msg.Member,
+				Inline: true,
+			},
+		}...)
+	}
+
+	err = webhook.New(wh.ID, wh.Token).Execute(webhook.ExecuteData{
 		AvatarURL: bot.Router.Bot.AvatarURL(),
 		Embeds:    []discord.Embed{e},
 	})
+	if err != nil {
+		bot.Sugar.Errorf("Error sending message update log: %v", err)
+	}
 
 	// update the message
-	bot.DB.InsertMessage(db.Message{
-		MsgID:     m.ID,
-		UserID:    m.Author.ID,
-		ChannelID: m.ChannelID,
-		ServerID:  m.GuildID,
-		Username:  m.Author.Username + "#" + m.Author.Discriminator,
+	if msg.System != "" {
+		bot.DB.InsertProxied(db.Message{
+			MsgID:     m.ID,
+			UserID:    m.Author.ID,
+			ChannelID: m.ChannelID,
+			ServerID:  m.GuildID,
 
-		Content: m.Content,
-	})
+			Username: m.Author.Username,
+			Member:   msg.Member,
+			System:   msg.System,
+
+			Content: m.Content,
+		})
+	} else {
+		bot.DB.InsertMessage(db.Message{
+			MsgID:     m.ID,
+			UserID:    m.Author.ID,
+			ChannelID: m.ChannelID,
+			ServerID:  m.GuildID,
+			Username:  m.Author.Username + "#" + m.Author.Discriminator,
+
+			Content: m.Content,
+		})
+	}
 }

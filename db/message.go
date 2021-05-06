@@ -88,7 +88,10 @@ func (db *DB) InsertProxied(m Message) (err error) {
 
 	_, err = db.Pool.Exec(context.Background(), `insert into pk_messages
 (msg_id, user_id, channel_id, server_id, username, member, system, content) values
-($1, $2, $3, $4, $5, $6, $7, $8)`, m.MsgID, m.UserID, m.ChannelID, m.ServerID, m.Username, m.Member, m.System, m.Content)
+($1, $2, $3, $4, $5, $6, $7, $8)
+on conflict (msg_id) do update
+set content = $8`,
+		m.MsgID, m.UserID, m.ChannelID, m.ServerID, m.Username, m.Member, m.System, m.Content)
 	return err
 }
 
