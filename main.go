@@ -6,6 +6,7 @@ import (
 	"os/signal"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 
 	"git.sr.ht/~starshine-sys/logger/commands"
@@ -60,11 +61,15 @@ func main() {
 	r.State.AddHandler(r.MessageCreate)
 
 	// set status
+	var o sync.Once
 	r.State.AddHandler(func(ev *gateway.ReadyEvent) {
 		r.State.Gateway.UpdateStatus(gateway.UpdateStatusData{
 			Activities: []discord.Activity{{
 				Name: fmt.Sprintf("%vhelp", strings.Split(os.Getenv("PREFIXES"), ",")[0]),
 			}},
+		})
+		o.Do(func() {
+			statusLoop(r.State)
 		})
 	})
 
