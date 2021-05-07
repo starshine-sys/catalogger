@@ -12,7 +12,7 @@ import (
 )
 
 func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
-	if !m.GuildID.IsValid() {
+	if !m.GuildID.IsValid() || !m.Author.ID.IsValid() {
 		return
 	}
 
@@ -63,6 +63,9 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 	}
 
 	updated := m.Content
+	if updated == "" {
+		updated = "None"
+	}
 	if len(updated) > 1000 {
 		updated = updated[:1000] + "..."
 	}

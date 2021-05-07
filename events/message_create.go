@@ -28,6 +28,11 @@ func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) {
 		return
 	}
 
+	content := m.Content
+	if m.Content == "" {
+		content = "None"
+	}
+
 	msg := db.Message{
 		MsgID:     m.ID,
 		UserID:    m.Author.ID,
@@ -35,7 +40,7 @@ func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) {
 		ServerID:  m.GuildID,
 		Username:  m.Author.Username + "#" + m.Author.Discriminator,
 
-		Content: m.Content,
+		Content: content,
 	}
 
 	err = bot.DB.InsertMessage(msg)

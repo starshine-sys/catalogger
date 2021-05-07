@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"os/signal"
 	"strconv"
@@ -63,11 +62,6 @@ func main() {
 	// set status
 	var o sync.Once
 	r.State.AddHandler(func(ev *gateway.ReadyEvent) {
-		r.State.Gateway.UpdateStatus(gateway.UpdateStatusData{
-			Activities: []discord.Activity{{
-				Name: fmt.Sprintf("%vhelp", strings.Split(os.Getenv("PREFIXES"), ",")[0]),
-			}},
-		})
 		o.Do(func() {
 			statusLoop(r.State)
 		})
