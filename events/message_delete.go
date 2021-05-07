@@ -3,6 +3,7 @@ package events
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/diamondburned/arikawa/v2/api/webhook"
@@ -10,6 +11,9 @@ import (
 	"github.com/diamondburned/arikawa/v2/gateway"
 	"github.com/starshine-sys/bcr"
 )
+
+// Messages with these prefixes will get ignored
+var editPrefixes = []string{"pk;edit", "pk!edit"}
 
 func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 	if !m.GuildID.IsValid() {
@@ -76,6 +80,11 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 		return
 	}
 
+	// ignore any pk;edit messages
+	if hasAnyPrefixLower(msg.Content, editPrefixes...) {
+		return
+	}
+
 	mention := msg.UserID.Mention()
 	var author *discord.EmbedAuthor
 	u, err := bot.State.User(msg.UserID)
@@ -117,4 +126,15 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 	if err == nil {
 		bot.DB.DeleteMessage(msg.MsgID)
 	}
+}
+
+func hasAnyPrefixLower(s string, prefixes ...string) bool {
+	s = strings.ToLower(s)
+
+	for _, p := range prefixes {
+		if strings.HasPrefix(s, p) {
+			return true
+		}
+	}
+	return false
 }
