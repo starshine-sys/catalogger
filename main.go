@@ -1,11 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/signal"
 	"strconv"
 	"strings"
-	"sync"
 	"syscall"
 
 	"git.sr.ht/~starshine-sys/logger/commands"
@@ -60,11 +60,15 @@ func main() {
 	r.State.AddHandler(r.MessageCreate)
 
 	// set status
-	var o sync.Once
 	r.State.AddHandler(func(ev *gateway.ReadyEvent) {
-		o.Do(func() {
-			statusLoop(r.State)
+		err = r.State.Gateway.UpdateStatus(gateway.UpdateStatusData{
+			Activities: []discord.Activity{{
+				Name: fmt.Sprintf("%vhelp", strings.Split(os.Getenv("PREFIXES"), ",")[0]),
+			}},
 		})
+		if err != nil {
+			sugar.Errorf("Error setting bot status: %v", err)
+		}
 	})
 
 	// create a database connection
