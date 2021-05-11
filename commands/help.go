@@ -23,7 +23,7 @@ func (bot *Bot) help(ctx *bcr.Context) (err error) {
 The bot's prefixes are %v.
 To get started, use `+"`%vsetchannel`"+` with one or more events.
 
-[Basic usage guide](https://git.sr.ht/~starshine-sys/logger/tree/main/item/docs/USAGE.md) / [Privacy](https://git.sr.ht/~starshine-sys/logger/tree/main/item/docs/PRIVACY.md)`, english.OxfordWordSeries(ctx.Router.Prefixes[:len(ctx.Router.Prefixes)-1], "and"), ctx.Prefix),
+[Basic usage guide](https://github.com/starshine-sys/catalogger/blob/main/docs/USAGE.md) / [Privacy](https://github.com/starshine-sys/catalogger/blob/main/docs/PRIVACY.md)`, english.OxfordWordSeries(ctx.Router.Prefixes[:len(ctx.Router.Prefixes)-1], "and"), ctx.Prefix),
 		Color: bcr.ColourPurple,
 
 		Fields: []discord.EmbedField{
@@ -37,7 +37,7 @@ To get started, use `+"`%vsetchannel`"+` with one or more events.
 			},
 			{
 				Name:  "Events",
-				Value: "For a list of events, see [here](https://git.sr.ht/~starshine-sys/logger/tree/main/item/docs/USAGE.md#events).",
+				Value: "For a list of events, see [here](https://github.com/starshine-sys/catalogger/blob/main/docs/USAGE.md#events).",
 			},
 			{
 				Name:  "Author",
@@ -45,7 +45,7 @@ To get started, use `+"`%vsetchannel`"+` with one or more events.
 			},
 			{
 				Name:  "Source code",
-				Value: "https://git.sr.ht/~starshine-sys/logger / [BSD 3-clause license](https://git.sr.ht/~starshine-sys/logger/tree/main/item/LICENSE)",
+				Value: "https://github.com/starshine-sys/catalogger / [BSD 3-clause license](https://github.com/starshine-sys/catalogger/blob/main/LICENSE)",
 			},
 		},
 	}

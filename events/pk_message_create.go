@@ -3,9 +3,9 @@ package events
 import (
 	"regexp"
 
-	"git.sr.ht/~starshine-sys/logger/db"
 	"github.com/diamondburned/arikawa/v2/discord"
 	"github.com/diamondburned/arikawa/v2/gateway"
+	"github.com/starshine-sys/catalogger/db"
 )
 
 var botsToCheck = []discord.UserID{466378653216014359}

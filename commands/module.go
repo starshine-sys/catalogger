@@ -1,10 +1,10 @@
 package commands
 
 import (
-	"git.sr.ht/~starshine-sys/logger/db"
 	"github.com/diamondburned/arikawa/v2/discord"
 	"github.com/spf13/pflag"
 	"github.com/starshine-sys/bcr"
+	"github.com/starshine-sys/catalogger/db"
 	"go.uber.org/zap"
 )
 

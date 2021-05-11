@@ -6,11 +6,11 @@ import (
 	"sync"
 	"time"
 
-	"git.sr.ht/~starshine-sys/logger/db"
 	"github.com/ReneKroon/ttlcache/v2"
 	"github.com/diamondburned/arikawa/v2/discord"
 	"github.com/diamondburned/arikawa/v2/utils/handler"
 	"github.com/starshine-sys/bcr"
+	"github.com/starshine-sys/catalogger/db"
 	"go.uber.org/zap"
 )
 

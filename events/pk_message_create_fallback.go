@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"git.sr.ht/~starshine-sys/logger/db"
 	"github.com/diamondburned/arikawa/v2/discord"
 	"github.com/diamondburned/arikawa/v2/gateway"
+	"github.com/starshine-sys/catalogger/db"
 	"github.com/starshine-sys/pkgo"
 )
 

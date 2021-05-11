@@ -3,8 +3,8 @@ package events
 import (
 	"context"
 
-	"git.sr.ht/~starshine-sys/logger/db"
 	"github.com/diamondburned/arikawa/v2/gateway"
+	"github.com/starshine-sys/catalogger/db"
 )
 
 func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) {

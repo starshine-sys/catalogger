@@ -13,7 +13,7 @@ import (
 	"github.com/diamondburned/arikawa/v2/utils/sendpart"
 	"github.com/starshine-sys/bcr"
 
-	"git.sr.ht/~starshine-sys/logger/db"
+	"github.com/starshine-sys/catalogger/db"
 )
 
 func (bot *Bot) bulkMessageDelete(ev *gateway.MessageDeleteBulkEvent) {

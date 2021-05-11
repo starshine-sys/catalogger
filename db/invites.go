@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/hex"
 
-	"git.sr.ht/~starshine-sys/logger/crypt"
 	"github.com/diamondburned/arikawa/v2/discord"
 	"github.com/georgysavva/scany/pgxscan"
+	"github.com/starshine-sys/catalogger/crypt"
 )
 
 // GetInvites gets this guild's named invites

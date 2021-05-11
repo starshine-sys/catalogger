@@ -3,9 +3,9 @@ package commands
 import (
 	"context"
 
-	"git.sr.ht/~starshine-sys/logger/db"
 	"github.com/dustin/go-humanize"
 	"github.com/starshine-sys/bcr"
+	"github.com/starshine-sys/catalogger/db"
 )
 
 func (bot *Bot) clearData(ctx *bcr.Context) (err error) {

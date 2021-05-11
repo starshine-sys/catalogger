@@ -3,8 +3,8 @@ package commands
 import (
 	"strings"
 
-	"git.sr.ht/~starshine-sys/logger/db"
 	"github.com/starshine-sys/bcr"
+	"github.com/starshine-sys/catalogger/db"
 )
 
 func (bot *Bot) setChannel(ctx *bcr.Context) (err error) {

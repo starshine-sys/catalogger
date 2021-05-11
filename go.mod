@@ -1,4 +1,4 @@
-module git.sr.ht/~starshine-sys/logger
+module github.com/starshine-sys/catalogger
 
 go 1.16
 

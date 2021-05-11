@@ -8,13 +8,13 @@ import (
 	"strings"
 	"syscall"
 
-	"git.sr.ht/~starshine-sys/logger/commands"
-	"git.sr.ht/~starshine-sys/logger/db"
-	"git.sr.ht/~starshine-sys/logger/events"
 	"github.com/diamondburned/arikawa/v2/discord"
 	"github.com/diamondburned/arikawa/v2/gateway"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/starshine-sys/bcr"
+	"github.com/starshine-sys/catalogger/commands"
+	"github.com/starshine-sys/catalogger/db"
+	"github.com/starshine-sys/catalogger/events"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )

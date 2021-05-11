@@ -3,9 +3,9 @@ package commands
 import (
 	"strings"
 
-	"git.sr.ht/~starshine-sys/logger/db"
 	"github.com/diamondburned/arikawa/v2/discord"
 	"github.com/starshine-sys/bcr"
+	"github.com/starshine-sys/catalogger/db"
 )
 
 func (bot *Bot) events(ctx *bcr.Context) (err error) {
