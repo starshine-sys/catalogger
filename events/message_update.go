@@ -62,40 +62,78 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 		Name: m.Author.Username + "#" + m.Author.Discriminator,
 	}
 
-	updated := m.Content
-	if updated == "" {
-		updated = "None"
-	}
-	if len(updated) > 1000 {
-		updated = updated[:1000] + "..."
-	}
-
 	e := discord.Embed{
-		Author:      author,
-		Title:       fmt.Sprintf("Message by \"%v#%v\" updated\nOld content", m.Author.Username, m.Author.Discriminator),
-		Description: msg.Content,
-		Color:       bcr.ColourPurple,
-		Fields: []discord.EmbedField{
-			{
-				Name:  "New content",
-				Value: updated,
-			},
-			{
-				Name:   "Channel",
-				Value:  fmt.Sprintf("%v\nID: %v", msg.ChannelID.Mention(), msg.ChannelID),
-				Inline: true,
-			},
-			{
-				Name:   "Author",
-				Value:  mention,
-				Inline: true,
-			},
-		},
+		Author: author,
+		Title:  fmt.Sprintf("Message by \"%v#%v\" updated", m.Author.Username, m.Author.Discriminator),
+		Color:  bcr.ColourPurple,
 		Footer: &discord.EmbedFooter{
 			Text: fmt.Sprintf("ID: %v", msg.MsgID),
 		},
 		Timestamp: discord.NewTimestamp(msg.MsgID.Time()),
 	}
+
+	updated := m.Content
+	if updated == "" {
+		updated = "None"
+	}
+
+	// sometimes we get update events that don't actually change the content
+	// including stuff like the message getting pinned
+	// so we just ignore those updates
+	if updated == msg.Content {
+		return
+	}
+
+	if len(msg.Content) > 1000 {
+		e.Fields = append(e.Fields, []discord.EmbedField{
+			{
+				Name:  "Old content",
+				Value: msg.Content[:1000] + "...",
+			},
+			{
+				Name:  "Old content (cont.)",
+				Value: "..." + msg.Content[1000:],
+			},
+		}...)
+	} else {
+		e.Fields = append(e.Fields, discord.EmbedField{
+			Name:  "Old content",
+			Value: msg.Content,
+		})
+	}
+
+	e.Fields = append(e.Fields, discord.EmbedField{Name: "​", Value: "​"})
+
+	if len(updated) > 1000 {
+		e.Fields = append(e.Fields, []discord.EmbedField{
+			{
+				Name:  "New content",
+				Value: updated[:1000] + "...",
+			},
+			{
+				Name:  "New content (cont.)",
+				Value: "..." + updated[1000:],
+			},
+		}...)
+	} else {
+		e.Fields = append(e.Fields, discord.EmbedField{
+			Name:  "New content",
+			Value: updated,
+		})
+	}
+
+	e.Fields = append(e.Fields, []discord.EmbedField{
+		{
+			Name:   "Channel",
+			Value:  fmt.Sprintf("%v\nID: %v", msg.ChannelID.Mention(), msg.ChannelID),
+			Inline: true,
+		},
+		{
+			Name:   "Author",
+			Value:  mention,
+			Inline: true,
+		},
+	}...)
 
 	if msg.System != "" && msg.Member != "" {
 		e.Title = fmt.Sprintf("Message by \"%v\" updated\nOld content", m.Author.Username)
