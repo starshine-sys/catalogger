@@ -29,7 +29,7 @@ To get started, use `+"`%vsetchannel`"+` with one or more events.
 		Fields: []discord.EmbedField{
 			{
 				Name:  "Info commands",
-				Value: "`help`: show this help\n`help permissions`: show a list of required permissions\n`help commands`: show a list of commands\n`stats`: show the bot's latency and other stats\n`invite`: get an invite link for the bot\n`events`: show all events (not all of these are implemented yet)",
+				Value: "`help`: show this help\n`help permissions`: show a list of required permissions\n`help commands`: show a list of commands\n`stats`: show the bot's latency and other stats\n`invite`: get an invite link for the bot\n`events`: show all events",
 			},
 			{
 				Name:  "Configuration",

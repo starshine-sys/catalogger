@@ -136,7 +136,7 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 	}...)
 
 	if msg.System != "" && msg.Member != "" {
-		e.Title = fmt.Sprintf("Message by \"%v\" updated\nOld content", m.Author.Username)
+		e.Title = fmt.Sprintf("Message by \"%v\" updated", m.Author.Username)
 
 		u, err := bot.State.User(msg.UserID)
 		if err == nil {

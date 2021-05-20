@@ -34,7 +34,7 @@ func (bot *Bot) guildMemberUpdate(ev *gateway.GuildMemberUpdateEvent) {
 	}] = up
 	bot.MembersMu.Unlock()
 
-	if m.Nick != ev.Nick || m.User.Username+"#"+m.User.Discriminator != ev.User.Username+"#"+ev.User.Discriminator {
+	if m.Nick != ev.Nick || m.User.Username+"#"+m.User.Discriminator != ev.User.Username+"#"+ev.User.Discriminator || m.User.Avatar != ev.User.Avatar {
 		// username or nickname changed, so run that handler
 		bot.guildMemberNickUpdate(ev, m)
 	}
@@ -143,11 +143,11 @@ func (bot *Bot) guildMemberNickUpdate(ev *gateway.GuildMemberUpdateEvent, m disc
 	e := discord.Embed{
 		Title: "Changed nickname",
 		Author: &discord.EmbedAuthor{
-			Icon: m.User.AvatarURL(),
+			Icon: ev.User.AvatarURL(),
 			Name: ev.User.Username + "#" + ev.User.Discriminator,
 		},
 		Thumbnail: &discord.EmbedThumbnail{
-			URL: m.User.AvatarURL(),
+			URL: ev.User.AvatarURL() + "?size=1024",
 		},
 		Color: bcr.ColourGreen,
 		Footer: &discord.EmbedFooter{
@@ -175,6 +175,18 @@ func (bot *Bot) guildMemberNickUpdate(ev *gateway.GuildMemberUpdateEvent, m disc
 	}
 
 	e.Description = fmt.Sprintf("**Before:** %v\n**After:** %v", oldNick, newNick)
+
+	if m.User.Avatar != ev.User.Avatar {
+		if oldNick == newNick {
+			e.Title = ""
+			e.Description = ""
+		}
+
+		e.Fields = append(e.Fields, discord.EmbedField{
+			Name:  "Avatar updated",
+			Value: fmt.Sprintf("[Before](%v) (link will only work as long as the avatar is cached)\n[After](%v)", m.User.AvatarURL()+"?size=1024", ev.User.AvatarURL()+"?size=1024"),
+		})
+	}
 
 	webhook.New(wh.ID, wh.Token).Execute(webhook.ExecuteData{
 		AvatarURL: bot.Router.Bot.AvatarURL(),
