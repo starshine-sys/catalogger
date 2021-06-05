@@ -6,6 +6,7 @@ import (
 
 	"github.com/diamondburned/arikawa/v2/api"
 	"github.com/diamondburned/arikawa/v2/discord"
+	"github.com/diamondburned/arikawa/v2/gateway"
 )
 
 // ErrNotExists ...
@@ -205,4 +206,9 @@ func (bot *Bot) getRedirect(guildID discord.GuildID, ch discord.ChannelID) (*dis
 	bot.RedirectCache.Set(ch.String(), wh)
 
 	return wh, nil
+}
+
+func (bot *Bot) webhooksUpdate(ev *gateway.WebhooksUpdateEvent) {
+	bot.ResetCache(ev.GuildID)
+	bot.RedirectCache.Remove(ev.ChannelID.String())
 }

@@ -200,6 +200,9 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 	// add guild handlers
 	b.State.AddHandler(b.guildUpdate)
 
+	// add webhook update handler
+	b.State.AddHandler(b.webhooksUpdate)
+
 	// add clear cache command
 	b.AddCommand(&bcr.Command{
 		Name:    "clear-cache",
