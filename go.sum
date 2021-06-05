@@ -349,6 +349,8 @@ github.com/starshine-sys/bcr v0.15.1 h1:vDM6fGkC9q8SpCOMii8XBT50r94Hz1l4s/2e7sYy
 github.com/starshine-sys/bcr v0.15.1/go.mod h1:1j9GalRPP0PWRA+VBf6oCndO5a2ZKFDoFiRDMHFAHD8=
 github.com/starshine-sys/bcr v0.15.2-0.20210511205955-c2aa44e86739 h1:TbBHkC5pbOzjP5ulYycpRXnz3gLti0mNfhR0dx+fH4g=
 github.com/starshine-sys/bcr v0.15.2-0.20210511205955-c2aa44e86739/go.mod h1:1j9GalRPP0PWRA+VBf6oCndO5a2ZKFDoFiRDMHFAHD8=
+github.com/starshine-sys/bcr v0.17.1 h1:YZYo7d8wafXrgCylRSo353uTg2+qnJNoNuuBnJfse78=
+github.com/starshine-sys/bcr v0.17.1/go.mod h1:1j9GalRPP0PWRA+VBf6oCndO5a2ZKFDoFiRDMHFAHD8=
 github.com/starshine-sys/pkgo v0.3.0 h1:rnvOVgzmL486digMjbu1Uxknh54WQ0PALSDn/jExOks=
 github.com/starshine-sys/pkgo v0.3.0/go.mod h1:/MObIv0vRt273UyDtuPdMNgADYhOh+h7VPccO6Zh9V8=
 github.com/starshine-sys/pkgo v0.3.2-0.20210426103511-1124ec82220c h1:CnhD4BsxTzoGQszOVGyI9lc3yw7mA3DuNR2AAkY/qPE=
