@@ -27,6 +27,13 @@ To do this, use the `cl!invites name` command with the invite code and the name 
 
 You can use `cl!invites` to list all of the server's invites.
 
+### Redirecting events
+
+You might want to redirect message update/delete events from some channels to specific log channels (for example, NSFW channels).  
+You can do this with the `cl!redirect` command, for example: `cl!redirect #the-void #autodelete-log`.  
+**Note:** there *must* be a default log channel for the event for redirecting to work.  
+**Note 2:** you can remove a redirect by replacing the second channel link in the redirect command with `clear`.
+
 ## Troubleshooting
 
 If the bot stops logging an event, try the `cl!permcheck` command;
