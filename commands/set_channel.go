@@ -18,6 +18,10 @@ func (bot *Bot) setChannel(ctx *bcr.Context) (err error) {
 		strings.Join(ctx.Args, " "), ",",
 	)
 
+	if len(events) == 1 {
+		events = ctx.Args
+	}
+
 	clear, _ := ctx.Flags.GetBool("clear")
 	if clear {
 		ch[ctx.Args[0]] = 0
