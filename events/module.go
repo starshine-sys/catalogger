@@ -68,6 +68,8 @@ type Bot struct {
 	GuildRoleDeleteCache   *ttlcache.Cache
 	GuildRoleUpdateCache   *ttlcache.Cache
 
+	RedirectCache *ttlcache.Cache
+
 	BotJoinLeaveLog discord.ChannelID
 
 	Start time.Time
@@ -118,6 +120,8 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 		GuildRoleDeleteCache:   ttlcache.NewCache(),
 		GuildRoleUpdateCache:   ttlcache.NewCache(),
 
+		RedirectCache: ttlcache.NewCache(),
+
 		BotJoinLeaveLog: discord.ChannelID(joinLeaveLog),
 	}
 	b.MessageDeleteCache.SetTTL(10 * time.Minute)
@@ -139,6 +143,7 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 	b.GuildRoleCreateCache.SetTTL(10 * time.Minute)
 	b.GuildRoleDeleteCache.SetTTL(10 * time.Minute)
 	b.GuildRoleUpdateCache.SetTTL(10 * time.Minute)
+	b.RedirectCache.SetTTL(10 * time.Minute)
 
 	// add member cache handlers
 	b.Router.State.AddHandler(b.requestGuildMembers)

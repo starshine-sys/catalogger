@@ -43,6 +43,18 @@ func (bot *Bot) pkMessageDelete(m *gateway.MessageDeleteEvent) {
 		return
 	}
 
+	redirects, err := bot.DB.Redirects(m.GuildID)
+	if err != nil {
+		bot.Sugar.Errorf("Error getting redirects: %v", err)
+	}
+	if redirects[m.ChannelID.String()].IsValid() {
+		wh, err = bot.getRedirect(m.GuildID, redirects[m.ChannelID.String()])
+		if err != nil {
+			bot.Sugar.Errorf("Error getting webhook: %v", err)
+			return
+		}
+	}
+
 	mention := msg.UserID.Mention()
 	var author *discord.EmbedAuthor
 	u, err := bot.State.User(msg.UserID)

@@ -42,6 +42,18 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 		return
 	}
 
+	redirects, err := bot.DB.Redirects(m.GuildID)
+	if err != nil {
+		bot.Sugar.Errorf("Error getting redirects: %v", err)
+	}
+	if redirects[m.ChannelID.String()].IsValid() {
+		wh, err = bot.getRedirect(m.GuildID, redirects[m.ChannelID.String()])
+		if err != nil {
+			bot.Sugar.Errorf("Error getting webhook: %v", err)
+			return
+		}
+	}
+
 	// proxied messages are handled by a different handler
 	var isProxied bool
 	bot.DB.Pool.QueryRow(context.Background(), "select exists(select msg_id from pk_messages where msg_id = $1)", m.ID).Scan(&isProxied)

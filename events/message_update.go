@@ -56,6 +56,18 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 		return
 	}
 
+	redirects, err := bot.DB.Redirects(m.GuildID)
+	if err != nil {
+		bot.Sugar.Errorf("Error getting redirects: %v", err)
+	}
+	if redirects[m.ChannelID.String()].IsValid() {
+		wh, err = bot.getRedirect(m.GuildID, redirects[m.ChannelID.String()])
+		if err != nil {
+			bot.Sugar.Errorf("Error getting webhook: %v", err)
+			return
+		}
+	}
+
 	mention := fmt.Sprintf("%v\n%v#%v\nID: %v", m.Author.Mention(), m.Author.Username, m.Author.Discriminator, m.Author.ID)
 	author := &discord.EmbedAuthor{
 		Icon: m.Author.AvatarURL(),

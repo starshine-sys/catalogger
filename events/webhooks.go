@@ -187,3 +187,22 @@ func (bot *Bot) webhookCache(t string, guildID discord.GuildID, ch discord.Chann
 
 	return wh, nil
 }
+
+func (bot *Bot) getRedirect(guildID discord.GuildID, ch discord.ChannelID) (*discord.Webhook, error) {
+	// try getting the cached webhook
+	var wh *discord.Webhook
+
+	v, err := bot.RedirectCache.Get(ch.String())
+	if err == nil {
+		return v.(*discord.Webhook), nil
+	}
+
+	wh, err = bot.getWebhook(ch, bot.Router.Bot.Username)
+	if err != nil {
+		return nil, err
+	}
+
+	bot.RedirectCache.Set(ch.String(), wh)
+
+	return wh, nil
+}

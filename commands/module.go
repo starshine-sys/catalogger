@@ -47,6 +47,17 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 	})
 
 	b.AddCommand(&bcr.Command{
+		Name:        "redirect",
+		Summary:     "Show channels being redirected, or change where a channel is being redirected to.",
+		Description: "Show channels being redirected, or change where a channel is being redirected to.\nUse `--clear` or `clear` to reset to the default log channel.",
+
+		Usage: "[<source> <destination|--clear>]",
+
+		Permissions: discord.PermissionManageGuild,
+		Command:     b.redirect,
+	})
+
+	b.AddCommand(&bcr.Command{
 		Name:    "channels",
 		Summary: "Show all currently logging events.",
 
