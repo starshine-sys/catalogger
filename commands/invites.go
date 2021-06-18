@@ -33,9 +33,7 @@ func (bot *Bot) listInvites(ctx *bcr.Context) (err error) {
 
 	names, err = bot.DB.GetInvites(ctx.Message.GuildID, names)
 	if err != nil {
-		bot.Sugar.Errorf("Error getting guild invite names: %v", err)
-		_, err = ctx.Sendf("Internal error occurred.")
-		return
+		return bot.DB.ReportCtx(ctx, err)
 	}
 
 	var fields []discord.EmbedField

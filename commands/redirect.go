@@ -11,9 +11,7 @@ func (bot *Bot) redirect(ctx *bcr.Context) (err error) {
 	if len(ctx.Args) == 0 {
 		m, err := bot.DB.Redirects(ctx.Message.GuildID)
 		if err != nil {
-			bot.Sugar.Errorf("Error getting redirect map: %v", err)
-			_, err = ctx.Send(":x: Internal error occurred.", nil)
-			return err
+			return bot.DB.ReportCtx(ctx, err)
 		}
 
 		if len(m) == 0 {
@@ -39,9 +37,7 @@ func (bot *Bot) redirect(ctx *bcr.Context) (err error) {
 
 	m, err := bot.DB.Redirects(ctx.Message.GuildID)
 	if err != nil {
-		bot.Sugar.Errorf("Error getting redirect map: %v", err)
-		_, err = ctx.Send(":x: Internal error occurred.", nil)
-		return err
+		return bot.DB.ReportCtx(ctx, err)
 	}
 
 	src, err := ctx.ParseChannel(ctx.Args[0])
@@ -71,9 +67,7 @@ func (bot *Bot) redirect(ctx *bcr.Context) (err error) {
 
 	err = bot.DB.SetRedirects(ctx.Message.GuildID, m)
 	if err != nil {
-		bot.Sugar.Errorf("Error setting redirect map: %v", err)
-		_, err = ctx.Send(":x: Internal error occurred.", nil)
-		return err
+		return bot.DB.ReportCtx(ctx, err)
 	}
 
 	s := fmt.Sprintf("Events from %v are now logging to %v.", src.Mention(), dest.Mention())

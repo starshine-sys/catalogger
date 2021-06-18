@@ -22,9 +22,12 @@ func (bot *Bot) pkMessageCreate(m *gateway.MessageCreateEvent) {
 
 	ch, err := bot.DB.Channels(m.GuildID)
 	if err != nil {
-		bot.Sugar.Errorf("Error getting server channels: %v", err)
-		return
+		bot.DB.Report(db.ErrorContext{
+			Event:   "pk_message_create",
+			GuildID: m.GuildID,
+		}, err)
 	}
+
 	if !ch["MESSAGE_DELETE"].IsValid() {
 		return
 	}
@@ -79,8 +82,10 @@ func (bot *Bot) pkMessageCreate(m *gateway.MessageCreateEvent) {
 	// get full message
 	msg, err := bot.State.Message(channelID, msgID)
 	if err != nil {
-		bot.Sugar.Errorf("Error retrieving original message: %v", err)
-		return
+		bot.DB.Report(db.ErrorContext{
+			Event:   "pk_message_create",
+			GuildID: m.GuildID,
+		}, err)
 	}
 
 	dbMsg := db.Message{
@@ -98,6 +103,9 @@ func (bot *Bot) pkMessageCreate(m *gateway.MessageCreateEvent) {
 
 	err = bot.DB.InsertProxied(dbMsg)
 	if err != nil {
-		bot.Sugar.Errorf("Error inserting message %v: %v", msgID, err)
+		bot.DB.Report(db.ErrorContext{
+			Event:   "pk_message_create",
+			GuildID: m.GuildID,
+		}, err)
 	}
 }

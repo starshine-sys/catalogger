@@ -23,8 +23,10 @@ func (bot *Bot) bulkMessageDelete(ev *gateway.MessageDeleteBulkEvent) {
 
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {
-		bot.Sugar.Errorf("Error getting channels for %v: %v", ev.GuildID, err)
-		return
+		bot.DB.Report(db.ErrorContext{
+			Event:   "bulk_message_delete",
+			GuildID: ev.GuildID,
+		}, err)
 	}
 
 	if !ch["MESSAGE_DELETE_BULK"].IsValid() {
@@ -39,8 +41,10 @@ func (bot *Bot) bulkMessageDelete(ev *gateway.MessageDeleteBulkEvent) {
 
 	wh, err := bot.webhookCache("message_delete_bulk", ev.GuildID, ch["MESSAGE_DELETE_BULK"])
 	if err != nil {
-		bot.Sugar.Errorf("Error getting webhook: %v", err)
-		return
+		bot.DB.Report(db.ErrorContext{
+			Event:   "bulk_message_delete",
+			GuildID: ev.GuildID,
+		}, err)
 	}
 
 	var msgs []*db.Message
@@ -135,9 +139,15 @@ PK system: %v / PK member: %v
 		Timestamp:   discord.NowTimestamp(),
 	}
 
-	webhook.New(wh.ID, wh.Token).ExecuteAndWait(webhook.ExecuteData{
+	_, err = webhook.New(wh.ID, wh.Token).ExecuteAndWait(webhook.ExecuteData{
 		AvatarURL: bot.Router.Bot.AvatarURL(),
 		Embeds:    []discord.Embed{e},
 		Files:     []sendpart.File{file},
 	})
+	if err != nil {
+		bot.DB.Report(db.ErrorContext{
+			Event:   "bulk_message_delete",
+			GuildID: ev.GuildID,
+		}, err)
+	}
 }

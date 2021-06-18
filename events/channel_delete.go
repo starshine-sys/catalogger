@@ -7,6 +7,7 @@ import (
 	"github.com/diamondburned/arikawa/v2/discord"
 	"github.com/diamondburned/arikawa/v2/gateway"
 	"github.com/starshine-sys/bcr"
+	"github.com/starshine-sys/catalogger/db"
 )
 
 func (bot *Bot) channelDelete(ev *gateway.ChannelDeleteEvent) {
@@ -16,8 +17,10 @@ func (bot *Bot) channelDelete(ev *gateway.ChannelDeleteEvent) {
 
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {
-		bot.Sugar.Errorf("Error getting server channels: %v", err)
-		return
+		bot.DB.Report(db.ErrorContext{
+			Event:   "channel_delete",
+			GuildID: ev.GuildID,
+		}, err)
 	}
 	if !ch["CHANNEL_DELETE"].IsValid() {
 		return
@@ -25,8 +28,10 @@ func (bot *Bot) channelDelete(ev *gateway.ChannelDeleteEvent) {
 
 	wh, err := bot.webhookCache("channel_delete", ev.GuildID, ch["CHANNEL_DELETE"])
 	if err != nil {
-		bot.Sugar.Errorf("Error getting webhook: %v", err)
-		return
+		bot.DB.Report(db.ErrorContext{
+			Event:   "channel_delete",
+			GuildID: ev.GuildID,
+		}, err)
 	}
 
 	desc := fmt.Sprintf("**Name:** #%v", ev.Name)
@@ -54,8 +59,14 @@ func (bot *Bot) channelDelete(ev *gateway.ChannelDeleteEvent) {
 		})
 	}
 
-	webhook.New(wh.ID, wh.Token).Execute(webhook.ExecuteData{
+	err = webhook.New(wh.ID, wh.Token).Execute(webhook.ExecuteData{
 		AvatarURL: bot.Router.Bot.AvatarURL(),
 		Embeds:    []discord.Embed{e},
 	})
+	if err != nil {
+		bot.DB.Report(db.ErrorContext{
+			Event:   "channel_delete",
+			GuildID: ev.GuildID,
+		}, err)
+	}
 }

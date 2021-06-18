@@ -8,6 +8,7 @@ import (
 	"github.com/diamondburned/arikawa/v2/discord"
 	"github.com/diamondburned/arikawa/v2/gateway"
 	"github.com/starshine-sys/bcr"
+	"github.com/starshine-sys/catalogger/db"
 )
 
 func (bot *Bot) guildRoleDelete(ev *gateway.GuildRoleDeleteEvent) {
@@ -23,17 +24,22 @@ func (bot *Bot) guildRoleDelete(ev *gateway.GuildRoleDeleteEvent) {
 
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {
-		bot.Sugar.Errorf("Error getting server channels: %v", err)
-		return
+		bot.DB.Report(db.ErrorContext{
+			Event:   "role_delete",
+			GuildID: ev.GuildID,
+		}, err)
 	}
+
 	if !ch["GUILD_ROLE_DELETE"].IsValid() {
 		return
 	}
 
 	wh, err := bot.webhookCache("guild_role_delete", ev.GuildID, ch["GUILD_ROLE_DELETE"])
 	if err != nil {
-		bot.Sugar.Errorf("Error getting webhook: %v", err)
-		return
+		bot.DB.Report(db.ErrorContext{
+			Event:   "role_delete",
+			GuildID: ev.GuildID,
+		}, err)
 	}
 
 	e := discord.Embed{
@@ -59,8 +65,14 @@ Created %v`, old.Name, old.Color, old.Mentionable, old.Hoist, old.Position, bcr.
 		})
 	}
 
-	webhook.New(wh.ID, wh.Token).Execute(webhook.ExecuteData{
+	err = webhook.New(wh.ID, wh.Token).Execute(webhook.ExecuteData{
 		AvatarURL: bot.Router.Bot.AvatarURL(),
 		Embeds:    []discord.Embed{e},
 	})
+	if err != nil {
+		bot.DB.Report(db.ErrorContext{
+			Event:   "role_delete",
+			GuildID: ev.GuildID,
+		}, err)
+	}
 }

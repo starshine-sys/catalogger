@@ -20,8 +20,7 @@ func (bot *Bot) adminStats(ctx *bcr.Context) (err error) {
 
 	err = pgxscan.Select(context.Background(), bot.DB.Pool, &stats, "select * from server_messages")
 	if err != nil {
-		_, err = ctx.Sendf("Error: %v", err)
-		return
+		return bot.DB.ReportCtx(ctx, err)
 	}
 
 	if len(stats) == 0 {

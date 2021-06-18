@@ -7,6 +7,7 @@ import (
 	"github.com/diamondburned/arikawa/v2/discord"
 	"github.com/diamondburned/arikawa/v2/gateway"
 	"github.com/starshine-sys/bcr"
+	"github.com/starshine-sys/catalogger/db"
 )
 
 func (bot *Bot) guildUpdate(ev *gateway.GuildUpdateEvent) {
@@ -23,17 +24,22 @@ func (bot *Bot) guildUpdate(ev *gateway.GuildUpdateEvent) {
 
 	ch, err := bot.DB.Channels(ev.ID)
 	if err != nil {
-		bot.Sugar.Errorf("Error getting server channels: %v", err)
-		return
+		bot.DB.Report(db.ErrorContext{
+			Event:   "guild_update",
+			GuildID: ev.ID,
+		}, err)
 	}
+
 	if !ch["GUILD_UPDATE"].IsValid() {
 		return
 	}
 
 	wh, err := bot.webhookCache("guild_update", ev.ID, ch["GUILD_UPDATE"])
 	if err != nil {
-		bot.Sugar.Errorf("Error getting webhook: %v", err)
-		return
+		bot.DB.Report(db.ErrorContext{
+			Event:   "guild_update",
+			GuildID: ev.ID,
+		}, err)
 	}
 
 	var changed bool
@@ -85,8 +91,14 @@ func (bot *Bot) guildUpdate(ev *gateway.GuildUpdateEvent) {
 		return
 	}
 
-	webhook.New(wh.ID, wh.Token).Execute(webhook.ExecuteData{
+	err = webhook.New(wh.ID, wh.Token).Execute(webhook.ExecuteData{
 		AvatarURL: bot.Router.Bot.AvatarURL(),
 		Embeds:    []discord.Embed{e},
 	})
+	if err != nil {
+		bot.DB.Report(db.ErrorContext{
+			Event:   "guild_update",
+			GuildID: ev.ID,
+		}, err)
+	}
 }

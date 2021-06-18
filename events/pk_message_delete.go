@@ -9,6 +9,7 @@ import (
 	"github.com/diamondburned/arikawa/v2/discord"
 	"github.com/diamondburned/arikawa/v2/gateway"
 	"github.com/starshine-sys/bcr"
+	"github.com/starshine-sys/catalogger/db"
 )
 
 func (bot *Bot) pkMessageDelete(m *gateway.MessageDeleteEvent) {
@@ -18,8 +19,10 @@ func (bot *Bot) pkMessageDelete(m *gateway.MessageDeleteEvent) {
 
 	ch, err := bot.DB.Channels(m.GuildID)
 	if err != nil {
-		bot.Sugar.Errorf("Error getting server channels: %v", err)
-		return
+		bot.DB.Report(db.ErrorContext{
+			Event:   "pk_message_delete",
+			GuildID: m.GuildID,
+		}, err)
 	}
 	if !ch["MESSAGE_DELETE"].IsValid() {
 		return
@@ -39,19 +42,27 @@ func (bot *Bot) pkMessageDelete(m *gateway.MessageDeleteEvent) {
 
 	wh, err := bot.webhookCache("msg_delete", m.GuildID, ch["MESSAGE_DELETE"])
 	if err != nil {
-		bot.Sugar.Errorf("Error getting webhook: %v", err)
-		return
+		bot.DB.Report(db.ErrorContext{
+			Event:   "pk_message_delete",
+			GuildID: m.GuildID,
+		}, err)
 	}
 
 	redirects, err := bot.DB.Redirects(m.GuildID)
 	if err != nil {
-		bot.Sugar.Errorf("Error getting redirects: %v", err)
+		bot.DB.Report(db.ErrorContext{
+			Event:   "pk_message_delete",
+			GuildID: m.GuildID,
+		}, err)
 	}
+
 	if redirects[m.ChannelID.String()].IsValid() {
 		wh, err = bot.getRedirect(m.GuildID, redirects[m.ChannelID.String()])
 		if err != nil {
-			bot.Sugar.Errorf("Error getting webhook: %v", err)
-			return
+			bot.DB.Report(db.ErrorContext{
+				Event:   "pk_message_delete",
+				GuildID: m.GuildID,
+			}, err)
 		}
 	}
 
@@ -111,5 +122,10 @@ func (bot *Bot) pkMessageDelete(m *gateway.MessageDeleteEvent) {
 		// give other message delete handler time to check the database
 		time.Sleep(1 * time.Second)
 		bot.DB.DeleteProxied(msg.MsgID)
+	} else {
+		bot.DB.Report(db.ErrorContext{
+			Event:   "pk_message_delete",
+			GuildID: m.GuildID,
+		}, err)
 	}
 }

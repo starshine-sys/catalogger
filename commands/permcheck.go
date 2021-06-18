@@ -25,8 +25,7 @@ var requiredPerms = []bcr.Perm{
 func (bot *Bot) permcheck(ctx *bcr.Context) (err error) {
 	ch, err := bot.DB.Channels(ctx.Message.GuildID)
 	if err != nil {
-		_, err = ctx.Sendf("Error getting channels: %v\nPlease contact the developer.", err)
-		return
+		return bot.DB.ReportCtx(ctx, err)
 	}
 
 	toCheck := map[discord.ChannelID]struct{}{}

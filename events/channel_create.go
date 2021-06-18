@@ -8,6 +8,7 @@ import (
 	"github.com/diamondburned/arikawa/v2/discord"
 	"github.com/diamondburned/arikawa/v2/gateway"
 	"github.com/starshine-sys/bcr"
+	"github.com/starshine-sys/catalogger/db"
 )
 
 func (bot *Bot) channelCreate(ev *gateway.ChannelCreateEvent) {
@@ -17,8 +18,10 @@ func (bot *Bot) channelCreate(ev *gateway.ChannelCreateEvent) {
 
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {
-		bot.Sugar.Errorf("Error getting server channels: %v", err)
-		return
+		bot.DB.Report(db.ErrorContext{
+			Event:   "channel_create",
+			GuildID: ev.GuildID,
+		}, err)
 	}
 	if !ch["CHANNEL_CREATE"].IsValid() {
 		return
@@ -26,8 +29,10 @@ func (bot *Bot) channelCreate(ev *gateway.ChannelCreateEvent) {
 
 	wh, err := bot.webhookCache("channel_create", ev.GuildID, ch["CHANNEL_CREATE"])
 	if err != nil {
-		bot.Sugar.Errorf("Error getting webhook: %v", err)
-		return
+		bot.DB.Report(db.ErrorContext{
+			Event:   "channel_create",
+			GuildID: ev.GuildID,
+		}, err)
 	}
 
 	e := discord.Embed{
@@ -87,8 +92,14 @@ func (bot *Bot) channelCreate(ev *gateway.ChannelCreateEvent) {
 		e.Fields = append(e.Fields, f)
 	}
 
-	webhook.New(wh.ID, wh.Token).Execute(webhook.ExecuteData{
+	err = webhook.New(wh.ID, wh.Token).Execute(webhook.ExecuteData{
 		AvatarURL: bot.Router.Bot.AvatarURL(),
 		Embeds:    []discord.Embed{e},
 	})
+	if err != nil {
+		bot.DB.Report(db.ErrorContext{
+			Event:   "channel_create",
+			GuildID: ev.GuildID,
+		}, err)
+	}
 }

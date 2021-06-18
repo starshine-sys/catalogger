@@ -8,22 +8,28 @@ import (
 	"github.com/diamondburned/arikawa/v2/discord"
 	"github.com/diamondburned/arikawa/v2/gateway"
 	"github.com/starshine-sys/bcr"
+	"github.com/starshine-sys/catalogger/db"
 )
 
 func (bot *Bot) inviteCreateEvent(ev *gateway.InviteCreateEvent) {
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {
-		bot.Sugar.Errorf("Error getting server channels: %v", err)
-		return
+		bot.DB.Report(db.ErrorContext{
+			Event:   "invite_create",
+			GuildID: ev.GuildID,
+		}, err)
 	}
+
 	if !ch["INVITE_CREATE"].IsValid() {
 		return
 	}
 
 	wh, err := bot.webhookCache("invite-create", ev.GuildID, ch["INVITE_CREATE"])
 	if err != nil {
-		bot.Sugar.Errorf("Error getting webhook: %v", err)
-		return
+		bot.DB.Report(db.ErrorContext{
+			Event:   "invite_create",
+			GuildID: ev.GuildID,
+		}, err)
 	}
 
 	maxUses := fmt.Sprint(ev.MaxUses)
@@ -65,10 +71,16 @@ func (bot *Bot) inviteCreateEvent(ev *gateway.InviteCreateEvent) {
 		Timestamp: discord.NowTimestamp(),
 	}
 
-	webhook.New(wh.ID, wh.Token).Execute(webhook.ExecuteData{
+	err = webhook.New(wh.ID, wh.Token).Execute(webhook.ExecuteData{
 		AvatarURL: bot.Router.Bot.AvatarURL(),
 		Embeds:    []discord.Embed{e},
 	})
+	if err != nil {
+		bot.DB.Report(db.ErrorContext{
+			Event:   "invite_create",
+			GuildID: ev.GuildID,
+		}, err)
+	}
 }
 
 func (bot *Bot) inviteDeleteEvent(ev *gateway.InviteDeleteEvent) {
@@ -92,17 +104,22 @@ func (bot *Bot) inviteDeleteEvent(ev *gateway.InviteDeleteEvent) {
 
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {
-		bot.Sugar.Errorf("Error getting server channels: %v", err)
-		return
+		bot.DB.Report(db.ErrorContext{
+			Event:   "invite_delete",
+			GuildID: ev.GuildID,
+		}, err)
 	}
+
 	if !ch["INVITE_DELETE"].IsValid() {
 		return
 	}
 
 	wh, err := bot.webhookCache("invite-delete", ev.GuildID, ch["INVITE_DELETE"])
 	if err != nil {
-		bot.Sugar.Errorf("Error getting webhook: %v", err)
-		return
+		bot.DB.Report(db.ErrorContext{
+			Event:   "invite_delete",
+			GuildID: ev.GuildID,
+		}, err)
 	}
 
 	maxUses := fmt.Sprint(inv.MaxUses)
@@ -138,8 +155,14 @@ func (bot *Bot) inviteDeleteEvent(ev *gateway.InviteDeleteEvent) {
 		Timestamp: discord.NowTimestamp(),
 	}
 
-	webhook.New(wh.ID, wh.Token).Execute(webhook.ExecuteData{
+	err = webhook.New(wh.ID, wh.Token).Execute(webhook.ExecuteData{
 		AvatarURL: bot.Router.Bot.AvatarURL(),
 		Embeds:    []discord.Embed{e},
 	})
+	if err != nil {
+		bot.DB.Report(db.ErrorContext{
+			Event:   "invite_delete",
+			GuildID: ev.GuildID,
+		}, err)
+	}
 }

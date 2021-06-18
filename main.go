@@ -10,6 +10,7 @@ import (
 
 	"github.com/diamondburned/arikawa/v2/discord"
 	"github.com/diamondburned/arikawa/v2/gateway"
+	"github.com/getsentry/sentry-go"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/commands"
@@ -71,8 +72,20 @@ func main() {
 		}
 	})
 
+	// sentry, if enabled
+	var hub *sentry.Hub
+	if os.Getenv("SENTRY_URL") != "" {
+		err = sentry.Init(sentry.ClientOptions{
+			Dsn: os.Getenv("SENTRY_URL"),
+		})
+		if err != nil {
+			sugar.Fatalf("Error initialising Sentry: %v", err)
+		}
+		hub = sentry.CurrentHub()
+	}
+
 	// create a database connection
-	db, err := db.New(os.Getenv("DATABASE_URL"), sugar)
+	db, err := db.New(os.Getenv("DATABASE_URL"), sugar, hub)
 	if err != nil {
 		sugar.Fatalf("Error opening database connection: %v", err)
 	}

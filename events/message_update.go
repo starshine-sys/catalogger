@@ -18,8 +18,10 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 
 	ch, err := bot.DB.Channels(m.GuildID)
 	if err != nil {
-		bot.Sugar.Errorf("Error getting channels for %v: %v", m.GuildID, err)
-		return
+		bot.DB.Report(db.ErrorContext{
+			Event:   "message_update",
+			GuildID: m.GuildID,
+		}, err)
 	}
 
 	if !ch["MESSAGE_UPDATE"].IsValid() {
@@ -52,19 +54,27 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 
 	wh, err := bot.webhookCache("msg_update", m.GuildID, ch["MESSAGE_UPDATE"])
 	if err != nil {
-		bot.Sugar.Errorf("Error getting webhook: %v", err)
-		return
+		bot.DB.Report(db.ErrorContext{
+			Event:   "message_update",
+			GuildID: m.GuildID,
+		}, err)
 	}
 
 	redirects, err := bot.DB.Redirects(m.GuildID)
 	if err != nil {
-		bot.Sugar.Errorf("Error getting redirects: %v", err)
+		bot.DB.Report(db.ErrorContext{
+			Event:   "message_update",
+			GuildID: m.GuildID,
+		}, err)
 	}
+
 	if redirects[m.ChannelID.String()].IsValid() {
 		wh, err = bot.getRedirect(m.GuildID, redirects[m.ChannelID.String()])
 		if err != nil {
-			bot.Sugar.Errorf("Error getting webhook: %v", err)
-			return
+			bot.DB.Report(db.ErrorContext{
+				Event:   "message_update",
+				GuildID: m.GuildID,
+			}, err)
 		}
 	}
 
@@ -188,7 +198,10 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 		Embeds:    []discord.Embed{e},
 	})
 	if err != nil {
-		bot.Sugar.Errorf("Error sending message update log: %v", err)
+		bot.DB.Report(db.ErrorContext{
+			Event:   "message_update",
+			GuildID: m.GuildID,
+		}, err)
 	}
 
 	// update the message

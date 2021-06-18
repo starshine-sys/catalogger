@@ -8,6 +8,7 @@ import (
 	"github.com/diamondburned/arikawa/v2/discord"
 	"github.com/diamondburned/arikawa/v2/gateway"
 	"github.com/starshine-sys/bcr"
+	"github.com/starshine-sys/catalogger/db"
 )
 
 func (bot *Bot) guildMemberUpdate(ev *gateway.GuildMemberUpdateEvent) {
@@ -58,17 +59,22 @@ func (bot *Bot) guildMemberUpdate(ev *gateway.GuildMemberUpdateEvent) {
 
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {
-		bot.Sugar.Errorf("Error getting server channels: %v", err)
-		return
+		bot.DB.Report(db.ErrorContext{
+			Event:   "guild_member_update",
+			GuildID: ev.GuildID,
+		}, err)
 	}
+
 	if !ch["GUILD_MEMBER_UPDATE"].IsValid() {
 		return
 	}
 
 	wh, err := bot.webhookCache("member-update", ev.GuildID, ch["GUILD_MEMBER_UPDATE"])
 	if err != nil {
-		bot.Sugar.Errorf("Error getting webhook: %v", err)
-		return
+		bot.DB.Report(db.ErrorContext{
+			Event:   "guild_member_update",
+			GuildID: ev.GuildID,
+		}, err)
 	}
 
 	e := discord.Embed{
@@ -118,26 +124,37 @@ func (bot *Bot) guildMemberUpdate(ev *gateway.GuildMemberUpdateEvent) {
 		})
 	}
 
-	webhook.New(wh.ID, wh.Token).Execute(webhook.ExecuteData{
+	err = webhook.New(wh.ID, wh.Token).Execute(webhook.ExecuteData{
 		AvatarURL: bot.Router.Bot.AvatarURL(),
 		Embeds:    []discord.Embed{e},
 	})
+	if err != nil {
+		bot.DB.Report(db.ErrorContext{
+			Event:   "guild_member_update",
+			GuildID: ev.GuildID,
+		}, err)
+	}
 }
 
 func (bot *Bot) guildMemberNickUpdate(ev *gateway.GuildMemberUpdateEvent, m discord.Member) {
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {
-		bot.Sugar.Errorf("Error getting server channels: %v", err)
-		return
+		bot.DB.Report(db.ErrorContext{
+			Event:   "guild_member_nick_update",
+			GuildID: ev.GuildID,
+		}, err)
 	}
+
 	if !ch["GUILD_MEMBER_NICK_UPDATE"].IsValid() {
 		return
 	}
 
 	wh, err := bot.webhookCache("member-nick-update", ev.GuildID, ch["GUILD_MEMBER_NICK_UPDATE"])
 	if err != nil {
-		bot.Sugar.Errorf("Error getting webhook: %v", err)
-		return
+		bot.DB.Report(db.ErrorContext{
+			Event:   "guild_member_nick_update",
+			GuildID: ev.GuildID,
+		}, err)
 	}
 
 	e := discord.Embed{
@@ -188,10 +205,16 @@ func (bot *Bot) guildMemberNickUpdate(ev *gateway.GuildMemberUpdateEvent, m disc
 		})
 	}
 
-	webhook.New(wh.ID, wh.Token).Execute(webhook.ExecuteData{
+	err = webhook.New(wh.ID, wh.Token).Execute(webhook.ExecuteData{
 		AvatarURL: bot.Router.Bot.AvatarURL(),
 		Embeds:    []discord.Embed{e},
 	})
+	if err != nil {
+		bot.DB.Report(db.ErrorContext{
+			Event:   "guild_member_nick_update",
+			GuildID: ev.GuildID,
+		}, err)
+	}
 }
 
 func roleIn(s []discord.RoleID, id discord.RoleID) (exists bool) {

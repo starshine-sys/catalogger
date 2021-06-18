@@ -37,11 +37,11 @@ func (bot *Bot) ping(ctx *bcr.Context) (err error) {
 
 	err = pgxscan.Get(context.Background(), bot.DB.Pool, &msgs, "select (select count(*) from messages) as messages, (select count(*) from pk_messages) as pk_messages")
 	if err != nil {
-		bot.Sugar.Errorf("Error getting message counts: %v", err)
+		return bot.DB.ReportCtx(ctx, err)
 	}
 	guilds, err := ctx.State.Guilds()
 	if err != nil {
-		bot.Sugar.Errorf("Error getting guilds: %v", err)
+		return bot.DB.ReportCtx(ctx, err)
 	}
 
 	// database latency

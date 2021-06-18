@@ -10,8 +10,7 @@ import (
 func (bot *Bot) setChannel(ctx *bcr.Context) (err error) {
 	ch, err := bot.DB.Channels(ctx.Message.GuildID)
 	if err != nil {
-		_, err = ctx.Sendf("Error: %v", err)
-		return
+		return bot.DB.ReportCtx(ctx, err)
 	}
 
 	events := strings.Split(
@@ -43,8 +42,7 @@ func (bot *Bot) setChannel(ctx *bcr.Context) (err error) {
 
 	err = bot.DB.SetChannels(ctx.Message.GuildID, ch)
 	if err != nil {
-		_, err = ctx.Sendf("Error: %v", err)
-		return
+		return bot.DB.ReportCtx(ctx, err)
 	}
 
 	if !clear {

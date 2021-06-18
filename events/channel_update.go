@@ -8,6 +8,7 @@ import (
 	"github.com/diamondburned/arikawa/v2/discord"
 	"github.com/diamondburned/arikawa/v2/gateway"
 	"github.com/starshine-sys/bcr"
+	"github.com/starshine-sys/catalogger/db"
 )
 
 func (bot *Bot) channelUpdate(ev *gateway.ChannelUpdateEvent) {
@@ -23,8 +24,10 @@ func (bot *Bot) channelUpdate(ev *gateway.ChannelUpdateEvent) {
 
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {
-		bot.Sugar.Errorf("Error getting server channels: %v", err)
-		return
+		bot.DB.Report(db.ErrorContext{
+			Event:   "channel_update",
+			GuildID: ev.GuildID,
+		}, err)
 	}
 	if !ch["CHANNEL_UPDATE"].IsValid() {
 		return
@@ -186,10 +189,16 @@ func (bot *Bot) channelUpdate(ev *gateway.ChannelUpdateEvent) {
 		return
 	}
 
-	webhook.New(wh.ID, wh.Token).Execute(webhook.ExecuteData{
+	err = webhook.New(wh.ID, wh.Token).Execute(webhook.ExecuteData{
 		AvatarURL: bot.Router.Bot.AvatarURL(),
 		Embeds:    []discord.Embed{e},
 	})
+	if err != nil {
+		bot.DB.Report(db.ErrorContext{
+			Event:   "channel_update",
+			GuildID: ev.GuildID,
+		}, err)
+	}
 }
 
 func overwriteIn(s []discord.Overwrite, p discord.Overwrite) (exists bool) {

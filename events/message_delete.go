@@ -10,6 +10,7 @@ import (
 	"github.com/diamondburned/arikawa/v2/discord"
 	"github.com/diamondburned/arikawa/v2/gateway"
 	"github.com/starshine-sys/bcr"
+	"github.com/starshine-sys/catalogger/db"
 )
 
 // Messages with these prefixes will get ignored
@@ -22,8 +23,10 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 
 	ch, err := bot.DB.Channels(m.GuildID)
 	if err != nil {
-		bot.Sugar.Errorf("Error getting channels for %v: %v", m.GuildID, err)
-		return
+		bot.DB.Report(db.ErrorContext{
+			Event:   "message_delete",
+			GuildID: m.GuildID,
+		}, err)
 	}
 
 	if !ch["MESSAGE_DELETE"].IsValid() {
@@ -38,19 +41,27 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 
 	wh, err := bot.webhookCache("msg_delete", m.GuildID, ch["MESSAGE_DELETE"])
 	if err != nil {
-		bot.Sugar.Errorf("Error getting webhook: %v", err)
-		return
+		bot.DB.Report(db.ErrorContext{
+			Event:   "message_delete",
+			GuildID: m.GuildID,
+		}, err)
 	}
 
 	redirects, err := bot.DB.Redirects(m.GuildID)
 	if err != nil {
-		bot.Sugar.Errorf("Error getting redirects: %v", err)
+		bot.DB.Report(db.ErrorContext{
+			Event:   "message_delete",
+			GuildID: m.GuildID,
+		}, err)
 	}
+
 	if redirects[m.ChannelID.String()].IsValid() {
 		wh, err = bot.getRedirect(m.GuildID, redirects[m.ChannelID.String()])
 		if err != nil {
-			bot.Sugar.Errorf("Error getting webhook: %v", err)
-			return
+			bot.DB.Report(db.ErrorContext{
+				Event:   "message_delete",
+				GuildID: m.GuildID,
+			}, err)
 		}
 	}
 
@@ -137,6 +148,11 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 	})
 	if err == nil {
 		bot.DB.DeleteMessage(msg.MsgID)
+	} else {
+		bot.DB.Report(db.ErrorContext{
+			Event:   "message_delete",
+			GuildID: m.GuildID,
+		}, err)
 	}
 }
 

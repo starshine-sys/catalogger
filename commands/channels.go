@@ -15,8 +15,7 @@ func (bot *Bot) channels(ctx *bcr.Context) (err error) {
 
 	ch, err := bot.DB.Channels(ctx.Message.GuildID)
 	if err != nil {
-		_, err = ctx.Sendf("Error: %v", err)
-		return
+		return bot.DB.ReportCtx(ctx, err)
 	}
 
 	for k, v := range ch {

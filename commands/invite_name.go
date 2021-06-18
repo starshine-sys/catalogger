@@ -41,8 +41,7 @@ func (bot *Bot) renameInvite(ctx *bcr.Context) (err error) {
 		err = bot.DB.NameInvite(ctx.Message.GuildID, inv.Code, name)
 	}
 	if err != nil {
-		bot.Sugar.Errorf("Error setting invite name: %v", err)
-		_, err = ctx.Sendf("Internal error occurred.")
+		return bot.DB.ReportCtx(ctx, err)
 	}
 
 	if strings.EqualFold(name, "-clear") {

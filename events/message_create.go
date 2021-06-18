@@ -14,8 +14,10 @@ func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) {
 
 	ch, err := bot.DB.Channels(m.GuildID)
 	if err != nil {
-		bot.Sugar.Errorf("Error getting channels for %v: %v", m.GuildID, err)
-		return
+		bot.DB.Report(db.ErrorContext{
+			Event:   "message_create",
+			GuildID: m.GuildID,
+		}, err)
 	}
 
 	if !ch["MESSAGE_DELETE"].IsValid() && !ch["MESSAGE_UPDATE"].IsValid() {
@@ -45,6 +47,9 @@ func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) {
 
 	err = bot.DB.InsertMessage(msg)
 	if err != nil {
-		bot.Sugar.Errorf("Error inserting message: %v", err)
+		bot.DB.Report(db.ErrorContext{
+			Event:   "message_create",
+			GuildID: m.GuildID,
+		}, err)
 	}
 }
