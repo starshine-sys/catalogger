@@ -5,9 +5,11 @@ import (
 	"strconv"
 	"time"
 
+	"emperror.dev/errors"
 	"github.com/diamondburned/arikawa/v2/api/webhook"
 	"github.com/diamondburned/arikawa/v2/discord"
 	"github.com/diamondburned/arikawa/v2/gateway"
+	"github.com/jackc/pgx/v4"
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/db"
 )
@@ -194,9 +196,78 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) {
 		}
 	}
 
-	err = webhook.New(wh.ID, wh.Token).Execute(webhook.ExecuteData{
+	// we create a client separately because we might need to send 2 messages
+	client := webhook.New(wh.ID, wh.Token)
+
+	err = client.Execute(webhook.ExecuteData{
 		AvatarURL: bot.Router.Bot.AvatarURL(),
 		Embeds:    embeds,
+	})
+	if err != nil {
+		bot.DB.Report(db.ErrorContext{
+			Event:   "guild_member_add",
+			GuildID: m.GuildID,
+		}, err)
+	}
+
+	wl, err := bot.DB.UserWatchlist(m.GuildID, m.User.ID)
+	if err != nil || wl == nil {
+		if errors.Cause(err) != pgx.ErrNoRows {
+			bot.DB.Report(db.ErrorContext{
+				Event:   "guild_member_add",
+				GuildID: m.GuildID,
+			}, err)
+		}
+		return
+	}
+
+	e = discord.Embed{
+		Title:       "⚠️ User on watchlist",
+		Color:       bcr.ColourRed,
+		Description: fmt.Sprintf("**%v#%v** is on this server's watchlist.", m.User.Username, m.User.Discriminator),
+		Footer: &discord.EmbedFooter{
+			Text: fmt.Sprintf("ID: %v | Added", m.User.ID),
+		},
+		Timestamp: discord.NewTimestamp(wl.Added),
+	}
+
+	field := discord.EmbedField{
+		Name: "Reason",
+	}
+
+	for _, s := range wl.Reason {
+		if len(field.Value) > 1000 {
+			field.Value += "..."
+			e.Fields = append(e.Fields, field)
+
+			field = discord.EmbedField{
+				Name:  "Reason (cont.)",
+				Value: "...",
+			}
+		}
+		field.Value += string(s)
+	}
+
+	if len(field.Value) > 0 {
+		e.Fields = append(e.Fields, field)
+	}
+
+	mod, err := bot.State.User(wl.Moderator)
+	if err == nil {
+		e.Fields = append(e.Fields, discord.EmbedField{
+			Name:  "Moderator",
+			Value: fmt.Sprintf("%v#%v (%v)", mod.Username, mod.Discriminator, mod.Mention()),
+		})
+	} else {
+		e.Fields = append(e.Fields, discord.EmbedField{
+			Name:  "Moderator",
+			Value: wl.Moderator.Mention(),
+		})
+	}
+
+	err = client.Execute(webhook.ExecuteData{
+		AvatarURL: bot.Router.Bot.AvatarURL(),
+		Embeds:    []discord.Embed{e},
 	})
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{

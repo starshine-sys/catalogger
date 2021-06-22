@@ -150,4 +150,33 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 		OwnerOnly: true,
 		Command:   b.adminStats,
 	})
+
+	wl := b.AddCommand(&bcr.Command{
+		Name:    "watchlist",
+		Aliases: []string{"wl"},
+		Summary: "Show or manage this server's user watchlist.",
+
+		Permissions: discord.PermissionKickMembers,
+		Command:     b.watchlist,
+	})
+
+	wl.AddSubcommand(&bcr.Command{
+		Name:    "add",
+		Summary: "Add a user to the watchlist.",
+		Usage:   "<user> [reason]",
+		Args:    bcr.MinArgs(1),
+
+		Permissions: discord.PermissionKickMembers,
+		Command:     b.watchlistAdd,
+	})
+
+	wl.AddSubcommand(&bcr.Command{
+		Name:    "remove",
+		Summary: "Remove a user from the watchlist.",
+		Usage:   "<user>",
+		Args:    bcr.MinArgs(1),
+
+		Permissions: discord.PermissionKickMembers,
+		Command:     b.watchlistRemove,
+	})
 }

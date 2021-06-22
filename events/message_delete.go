@@ -78,6 +78,7 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 	// trigger messages should be ignored too
 	bot.ProxiedTriggersMu.Lock()
 	if _, ok := bot.ProxiedTriggers[m.ID]; ok {
+		bot.DB.DeleteMessage(m.ID)
 		delete(bot.ProxiedTriggers, m.ID)
 		bot.ProxiedTriggersMu.Unlock()
 		return
@@ -105,6 +106,7 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 
 	// ignore any pk;edit messages
 	if hasAnyPrefixLower(msg.Content, editPrefixes...) {
+		bot.DB.DeleteMessage(m.ID)
 		return
 	}
 

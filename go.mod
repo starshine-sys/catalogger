@@ -3,6 +3,7 @@ module github.com/starshine-sys/catalogger
 go 1.16
 
 require (
+	emperror.dev/errors v0.8.0
 	github.com/ReneKroon/ttlcache/v2 v2.1.0
 	github.com/diamondburned/arikawa/v2 v2.0.7-0.20210411235605-20166f33cc8d
 	github.com/dustin/go-humanize v1.0.0

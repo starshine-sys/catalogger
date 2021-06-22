@@ -34,6 +34,12 @@ You can do this with the `cl!redirect` command, for example: `cl!redirect #the-v
 **Note:** there *must* be a default log channel for the event for redirecting to work.  
 **Note 2:** you can remove a redirect by replacing the second channel link in the redirect command with `clear`.
 
+### Watchlist
+
+You can use the `cl!watchlist` command (and its `cl!watchlist add` and `cl!watchlist remove` subcommands) to manage your server's user watchlist.  
+This can be used to notify mods of potentially suspicious members (re)joining the server.  
+Users on the watchlist will have a note attached to their join notification.
+
 ## Troubleshooting
 
 If the bot stops logging an event, try the `cl!permcheck` command;
