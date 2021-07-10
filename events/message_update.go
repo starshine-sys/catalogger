@@ -107,16 +107,49 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 	}
 
 	if len(msg.Content) > 1000 {
-		e.Fields = append(e.Fields, []discord.EmbedField{
-			{
-				Name:  "Old content",
-				Value: msg.Content[:1000] + "...",
-			},
-			{
+		e.Fields = append(e.Fields, discord.EmbedField{
+			Name:  "Old content",
+			Value: msg.Content[:1000] + "...",
+		})
+		if len(msg.Content) > 2000 {
+			if len(msg.Content) > 3000 {
+				val := msg.Content[3000:]
+				if len(val) > 500 {
+					val = val[:500] + "..."
+				}
+
+				e.Fields = append(e.Fields, []discord.EmbedField{
+					{
+						Name:  "Old content (cont.)",
+						Value: "..." + msg.Content[1000:2000] + "...",
+					},
+					{
+						Name:  "Old content (cont.)",
+						Value: "..." + msg.Content[2000:3000],
+					},
+					{
+						Name:  "Old content (cont.)",
+						Value: "..." + val,
+					},
+				}...)
+			} else {
+				e.Fields = append(e.Fields, []discord.EmbedField{
+					{
+						Name:  "Old content (cont.)",
+						Value: "..." + msg.Content[1000:2000] + "...",
+					},
+					{
+						Name:  "Old content (cont.)",
+						Value: "..." + msg.Content[2000:],
+					},
+				}...)
+			}
+		} else {
+			e.Fields = append(e.Fields, discord.EmbedField{
 				Name:  "Old content (cont.)",
 				Value: "..." + msg.Content[1000:],
-			},
-		}...)
+			})
+		}
 	} else {
 		e.Fields = append(e.Fields, discord.EmbedField{
 			Name:  "Old content",
@@ -127,16 +160,26 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 	e.Fields = append(e.Fields, discord.EmbedField{Name: "​", Value: "​"})
 
 	if len(updated) > 1000 {
-		e.Fields = append(e.Fields, []discord.EmbedField{
-			{
-				Name:  "New content",
-				Value: updated[:1000] + "...",
-			},
-			{
+		e.Fields = append(e.Fields, discord.EmbedField{
+			Name:  "New content",
+			Value: updated[:1000] + "...",
+		})
+		if len(updated) > 2000 {
+			val := updated[1000:]
+			if len(val) > 1024 {
+				val = val[:1015] + "..."
+			}
+
+			e.Fields = append(e.Fields, discord.EmbedField{
 				Name:  "New content (cont.)",
+				Value: "..." + val,
+			})
+		} else {
+			e.Fields = append(e.Fields, discord.EmbedField{
+				Name:  "Old content (cont.)",
 				Value: "..." + updated[1000:],
-			},
-		}...)
+			})
+		}
 	} else {
 		e.Fields = append(e.Fields, discord.EmbedField{
 			Name:  "New content",
@@ -192,6 +235,11 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 			},
 		}...)
 	}
+
+	e.Fields = append(e.Fields, discord.EmbedField{
+		Name:  "Link",
+		Value: fmt.Sprintf("https://discord.com/channels/%v/%v/%v", m.GuildID, m.ChannelID, m.ID),
+	})
 
 	err = webhook.New(wh.ID, wh.Token).Execute(webhook.ExecuteData{
 		AvatarURL: bot.Router.Bot.AvatarURL(),
