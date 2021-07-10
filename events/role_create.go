@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/diamondburned/arikawa/v2/api/webhook"
-	"github.com/diamondburned/arikawa/v2/discord"
-	"github.com/diamondburned/arikawa/v2/gateway"
+	"github.com/diamondburned/arikawa/v3/api/webhook"
+	"github.com/diamondburned/arikawa/v3/discord"
+	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/db"
 )

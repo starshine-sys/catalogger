@@ -2,7 +2,9 @@ package commands
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/dustin/go-humanize"
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/db"
@@ -20,18 +22,17 @@ func (bot *Bot) clearData(ctx *bcr.Context) (err error) {
 		return bot.DB.ReportCtx(ctx, err)
 	}
 
-	m, err := ctx.Sendf("⚠️ **Are you sure you want to clear this server's data?** This will delete all logged messages (%v messages) and will clear your settings.", humanize.Comma(msgCount))
-	if err != nil {
-		return err
-	}
-
-	yes, timeout := ctx.YesNoHandler(*m, ctx.Author.ID)
+	yes, timeout := ctx.ConfirmButton(ctx.Author.ID, bcr.ConfirmData{
+		Message:   fmt.Sprintf("⚠️ **Are you sure you want to clear this server's data?** This will delete all logged messages (%v messages) and will clear your settings.", humanize.Comma(msgCount)),
+		YesPrompt: "Delete data",
+		YesStyle:  discord.DangerButton,
+	})
 	if timeout {
-		_, err = ctx.Send("Operation timed out.", nil)
+		_, err = ctx.Send("Operation timed out.")
 		return
 	}
 	if !yes {
-		_, err = ctx.Send("Operation cancelled.", nil)
+		_, err = ctx.Send("Operation cancelled.")
 		return
 	}
 

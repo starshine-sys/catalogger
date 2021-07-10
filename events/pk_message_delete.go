@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/diamondburned/arikawa/v2/api/webhook"
-	"github.com/diamondburned/arikawa/v2/discord"
-	"github.com/diamondburned/arikawa/v2/gateway"
+	"github.com/diamondburned/arikawa/v3/api/webhook"
+	"github.com/diamondburned/arikawa/v3/discord"
+	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/db"
 )
@@ -68,7 +68,7 @@ func (bot *Bot) pkMessageDelete(m *gateway.MessageDeleteEvent) {
 
 	mention := msg.UserID.Mention()
 	var author *discord.EmbedAuthor
-	u, err := bot.State.User(msg.UserID)
+	u, err := bot.State(m.GuildID).User(msg.UserID)
 	if err == nil {
 		mention = fmt.Sprintf("%v\n%v#%v\nID: %v", u.Mention(), u.Username, u.Discriminator, u.ID)
 		author = &discord.EmbedAuthor{

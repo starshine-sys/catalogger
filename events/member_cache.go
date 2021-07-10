@@ -1,8 +1,8 @@
 package events
 
 import (
-	"github.com/diamondburned/arikawa/v2/discord"
-	"github.com/diamondburned/arikawa/v2/gateway"
+	"github.com/diamondburned/arikawa/v3/discord"
+	"github.com/diamondburned/arikawa/v3/gateway"
 )
 
 type memberCacheKey struct {
@@ -23,9 +23,9 @@ func (bot *Bot) requestGuildMembers(g *gateway.GuildCreateEvent) {
 	}
 	bot.RolesMu.Unlock()
 
-	bot.State.Gateway.RequestGuildMembers(gateway.RequestGuildMembersData{
-		GuildID: []discord.GuildID{g.ID},
-		Limit:   0,
+	bot.State(g.ID).Gateway.RequestGuildMembers(gateway.RequestGuildMembersData{
+		GuildIDs: []discord.GuildID{g.ID},
+		Limit:    0,
 	})
 }
 

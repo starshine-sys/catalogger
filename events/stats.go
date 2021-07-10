@@ -6,7 +6,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/diamondburned/arikawa/v2/discord"
+	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/dustin/go-humanize"
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/starshine-sys/bcr"
@@ -18,7 +18,7 @@ func (bot *Bot) ping(ctx *bcr.Context) (err error) {
 
 	t := time.Now()
 
-	m, err := ctx.Send("...", nil)
+	m, err := ctx.Send("...")
 	if err != nil {
 		return err
 	}
@@ -103,6 +103,6 @@ Cached %v members, %v channels, and %v roles`,
 	bot.ChannelsMu.Unlock()
 	bot.RolesMu.Unlock()
 
-	_, err = ctx.Edit(m, "", &e)
+	_, err = ctx.Edit(m, "", true, e)
 	return err
 }

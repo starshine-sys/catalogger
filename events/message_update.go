@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/diamondburned/arikawa/v2/api/webhook"
-	"github.com/diamondburned/arikawa/v2/discord"
-	"github.com/diamondburned/arikawa/v2/gateway"
+	"github.com/diamondburned/arikawa/v3/api/webhook"
+	"github.com/diamondburned/arikawa/v3/discord"
+	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/db"
 )
@@ -160,7 +160,7 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 	if msg.System != "" && msg.Member != "" {
 		e.Title = fmt.Sprintf("Message by \"%v\" updated", m.Author.Username)
 
-		u, err := bot.State.User(msg.UserID)
+		u, err := bot.State(m.GuildID).User(msg.UserID)
 		if err == nil {
 			e.Fields[len(e.Fields)-1] = discord.EmbedField{
 				Name:   "Linked Discord account",

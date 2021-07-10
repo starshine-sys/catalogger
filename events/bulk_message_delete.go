@@ -7,16 +7,18 @@ import (
 	"strings"
 	"time"
 
-	"github.com/diamondburned/arikawa/v2/api/webhook"
-	"github.com/diamondburned/arikawa/v2/discord"
-	"github.com/diamondburned/arikawa/v2/gateway"
-	"github.com/diamondburned/arikawa/v2/utils/sendpart"
+	"github.com/diamondburned/arikawa/v3/api/webhook"
+	"github.com/diamondburned/arikawa/v3/discord"
+	"github.com/diamondburned/arikawa/v3/gateway"
+	"github.com/diamondburned/arikawa/v3/utils/sendpart"
 	"github.com/starshine-sys/bcr"
 
 	"github.com/starshine-sys/catalogger/db"
 )
 
 func (bot *Bot) bulkMessageDelete(ev *gateway.MessageDeleteBulkEvent) {
+	s, _ := bot.StateFromGuildID(ev.GuildID)
+
 	if !ev.GuildID.IsValid() {
 		return
 	}
@@ -58,7 +60,7 @@ func (bot *Bot) bulkMessageDelete(ev *gateway.MessageDeleteBulkEvent) {
 			if u, ok := users[m.UserID]; ok {
 				m.Username = u.Username + "#" + u.Discriminator
 			} else {
-				u, err := bot.State.User(m.UserID)
+				u, err := s.User(m.UserID)
 				if err == nil {
 					m.Username = u.Username + "#" + u.Discriminator
 					users[u.ID] = u
@@ -77,7 +79,7 @@ func (bot *Bot) bulkMessageDelete(ev *gateway.MessageDeleteBulkEvent) {
 			if u, ok := users[m.UserID]; ok {
 				m.Username = fmt.Sprintf("%v (%v#%v)", m.Username, u.Username, u.Discriminator)
 			} else {
-				u, err := bot.State.User(m.UserID)
+				u, err := s.User(m.UserID)
 				if err == nil {
 					m.Username = fmt.Sprintf("%v (%v#%v)", m.Username, u.Username, u.Discriminator)
 					users[u.ID] = u

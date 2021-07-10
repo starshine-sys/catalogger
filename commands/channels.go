@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/diamondburned/arikawa/v2/discord"
+	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/starshine-sys/bcr"
 )
 
@@ -26,7 +26,7 @@ func (bot *Bot) channels(ctx *bcr.Context) (err error) {
 		}
 	}
 
-	e := &discord.Embed{
+	e := discord.Embed{
 		Title:       "Events",
 		Description: strings.Join(setChannels, "\n"),
 		Color:       bcr.ColourPurple,

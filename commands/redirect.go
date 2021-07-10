@@ -3,7 +3,7 @@ package commands
 import (
 	"fmt"
 
-	"github.com/diamondburned/arikawa/v2/discord"
+	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/starshine-sys/bcr"
 )
 
@@ -15,7 +15,7 @@ func (bot *Bot) redirect(ctx *bcr.Context) (err error) {
 		}
 
 		if len(m) == 0 {
-			_, err = ctx.Send("No channels are having their logs redirected.", nil)
+			_, err = ctx.Send("No channels are having their logs redirected.")
 			return err
 		}
 
@@ -31,7 +31,7 @@ func (bot *Bot) redirect(ctx *bcr.Context) (err error) {
 	}
 
 	if len(ctx.Args) < 2 {
-		_, err = ctx.Send("You must give both a source and destination channel.", nil)
+		_, err = ctx.Send("You must give both a source and destination channel.")
 		return
 	}
 
@@ -42,7 +42,7 @@ func (bot *Bot) redirect(ctx *bcr.Context) (err error) {
 
 	src, err := ctx.ParseChannel(ctx.Args[0])
 	if err != nil || src.GuildID != ctx.Message.GuildID {
-		_, err = ctx.Send("Source channel not found.", nil)
+		_, err = ctx.Send("Source channel not found.")
 		return
 	}
 
@@ -51,8 +51,8 @@ func (bot *Bot) redirect(ctx *bcr.Context) (err error) {
 		dest = 0
 	} else {
 		destCh, err := ctx.ParseChannel(ctx.Args[1])
-		if err != nil || destCh.GuildID != ctx.Message.GuildID {
-			_, err = ctx.Send("Destination channel not found.", nil)
+		if err != nil || destCh.GuildID != ctx.Message.GuildID || destCh.Type != discord.GuildText {
+			_, err = ctx.Send("Destination channel not found.")
 			return err
 		}
 

@@ -3,12 +3,12 @@ package commands
 import (
 	"fmt"
 
-	"github.com/diamondburned/arikawa/v2/discord"
+	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/starshine-sys/bcr"
 )
 
 func (bot *Bot) listInvites(ctx *bcr.Context) (err error) {
-	is, err := bot.State.GuildInvites(ctx.Message.GuildID)
+	is, err := ctx.State.GuildInvites(ctx.Message.GuildID)
 	if err != nil {
 		bot.Sugar.Errorf("Error getting guild invites: %v", err)
 		_, err = ctx.Sendf("Could not get this server's invites. Are you sure I have the **Manage Server** permission?")
@@ -16,7 +16,7 @@ func (bot *Bot) listInvites(ctx *bcr.Context) (err error) {
 	}
 
 	if len(is) == 0 {
-		_, err = ctx.Send("This server has no invites.", nil)
+		_, err = ctx.Send("This server has no invites.")
 		return
 	}
 

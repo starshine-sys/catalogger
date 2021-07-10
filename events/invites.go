@@ -4,11 +4,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/diamondburned/arikawa/v2/gateway"
+	"github.com/diamondburned/arikawa/v3/gateway"
 )
 
 func (bot *Bot) invitesReady(g *gateway.GuildCreateEvent) {
-	inv, err := bot.State.GuildInvites(g.ID)
+	inv, err := bot.State(g.ID).GuildInvites(g.ID)
 	if err != nil {
 		bot.Sugar.Errorf("Error getting invites for %v: %v", g.ID, err)
 		return
@@ -20,7 +20,7 @@ func (bot *Bot) invitesReady(g *gateway.GuildCreateEvent) {
 }
 
 func (bot *Bot) inviteCreate(g *gateway.InviteCreateEvent) {
-	inv, err := bot.State.GuildInvites(g.GuildID)
+	inv, err := bot.State(g.GuildID).GuildInvites(g.GuildID)
 	if err != nil {
 		bot.Sugar.Errorf("Error getting invites for %v: %v", g.GuildID, err)
 		return
@@ -40,7 +40,7 @@ func (bot *Bot) inviteDelete(g *gateway.InviteDeleteEvent) {
 		bot.Sugar.Errorf("Error deleting invite name: %v", err)
 	}
 
-	inv, err := bot.State.GuildInvites(g.GuildID)
+	inv, err := bot.State(g.GuildID).GuildInvites(g.GuildID)
 	if err != nil {
 		bot.Sugar.Errorf("Error getting invites for %v: %v", g.GuildID, err)
 		return

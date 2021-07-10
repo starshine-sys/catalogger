@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/diamondburned/arikawa/v2/discord"
+	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/dustin/go-humanize"
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/starshine-sys/bcr"
@@ -24,7 +24,7 @@ func (bot *Bot) adminStats(ctx *bcr.Context) (err error) {
 	}
 
 	if len(stats) == 0 {
-		_, err = ctx.Send("No servers.", nil)
+		_, err = ctx.Send("No servers.")
 		return
 	}
 

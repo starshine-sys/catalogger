@@ -3,7 +3,7 @@ package commands
 import (
 	"fmt"
 
-	"github.com/diamondburned/arikawa/v2/discord"
+	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/db"
 )
@@ -24,19 +24,19 @@ func (bot *Bot) watchlist(ctx *bcr.Context) (err error) {
 	fields := []discord.EmbedField{}
 
 	for _, wl := range watchlist {
-		fields = append(fields, bot.watchlistField(m, wl))
+		fields = append(fields, bot.watchlistField(ctx, m, wl))
 	}
 
 	_, err = ctx.PagedEmbed(bcr.FieldPaginator("Watchlist", "", bcr.ColourPurple, fields, 5), false)
 	return
 }
 
-func (bot *Bot) watchlistField(m map[discord.UserID]*discord.User, wl db.WatchlistUser) (field discord.EmbedField) {
+func (bot *Bot) watchlistField(ctx *bcr.Context, m map[discord.UserID]*discord.User, wl db.WatchlistUser) (field discord.EmbedField) {
 	var err error
 
 	u, ok := m[wl.UserID]
 	if !ok {
-		u, err = bot.State.User(wl.UserID)
+		u, err = ctx.State.User(wl.UserID)
 		if err == nil {
 			m[wl.UserID] = u
 		}
@@ -50,7 +50,7 @@ func (bot *Bot) watchlistField(m map[discord.UserID]*discord.User, wl db.Watchli
 
 	mod, ok := m[wl.Moderator]
 	if !ok {
-		mod, err = bot.State.User(wl.Moderator)
+		mod, err = ctx.State.User(wl.Moderator)
 		if err == nil {
 			m[wl.Moderator] = u
 		}

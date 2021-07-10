@@ -4,9 +4,9 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/diamondburned/arikawa/v2/api"
-	"github.com/diamondburned/arikawa/v2/discord"
-	"github.com/diamondburned/arikawa/v2/gateway"
+	"github.com/diamondburned/arikawa/v3/api"
+	"github.com/diamondburned/arikawa/v3/discord"
+	"github.com/diamondburned/arikawa/v3/gateway"
 )
 
 // ErrNotExists ...
@@ -151,8 +151,8 @@ func (bot *Bot) ResetCache(id discord.GuildID, channels ...discord.ChannelID) {
 	}
 }
 
-func (bot *Bot) getWebhook(id discord.ChannelID, name string) (*discord.Webhook, error) {
-	ws, err := bot.State.ChannelWebhooks(id)
+func (bot *Bot) getWebhook(guildID discord.GuildID, channelID discord.ChannelID, name string) (*discord.Webhook, error) {
+	ws, err := bot.State(guildID).ChannelWebhooks(channelID)
 	if err == nil {
 		for _, w := range ws {
 			if w.Name == name && (w.User.ID == bot.Bot.ID || !w.User.ID.IsValid()) {
@@ -163,7 +163,7 @@ func (bot *Bot) getWebhook(id discord.ChannelID, name string) (*discord.Webhook,
 		return nil, err
 	}
 
-	w, err := bot.State.CreateWebhook(id, api.CreateWebhookData{
+	w, err := bot.State(guildID).CreateWebhook(channelID, api.CreateWebhookData{
 		Name: name,
 	})
 	return w, err
@@ -175,7 +175,7 @@ func (bot *Bot) webhookCache(t string, guildID discord.GuildID, ch discord.Chann
 
 	w, err := bot.GetWebhooks(t, guildID)
 	if err != nil {
-		wh, err = bot.getWebhook(ch, bot.Router.Bot.Username)
+		wh, err = bot.getWebhook(guildID, ch, bot.Router.Bot.Username)
 		if err != nil {
 			return nil, err
 		}
@@ -203,7 +203,7 @@ func (bot *Bot) getRedirect(guildID discord.GuildID, ch discord.ChannelID) (*dis
 		return v.(*discord.Webhook), nil
 	}
 
-	wh, err = bot.getWebhook(ch, bot.Router.Bot.Username)
+	wh, err = bot.getWebhook(guildID, ch, bot.Router.Bot.Username)
 	if err != nil {
 		return nil, err
 	}

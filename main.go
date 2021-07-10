@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
@@ -8,8 +9,10 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/diamondburned/arikawa/v2/discord"
-	"github.com/diamondburned/arikawa/v2/gateway"
+	"github.com/diamondburned/arikawa/v3/discord"
+	"github.com/diamondburned/arikawa/v3/gateway"
+	"github.com/diamondburned/arikawa/v3/gateway/shard"
+	"github.com/diamondburned/arikawa/v3/state"
 	"github.com/getsentry/sentry-go"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/starshine-sys/bcr"
@@ -58,18 +61,22 @@ func main() {
 	r.EmbedColor = bcr.ColourPurple
 
 	// add message create handler
-	r.State.AddHandler(r.MessageCreate)
+	r.AddHandler(r.MessageCreate)
 
 	// set status
-	r.State.AddHandler(func(ev *gateway.ReadyEvent) {
-		err = r.State.Gateway.UpdateStatus(gateway.UpdateStatusData{
-			Activities: []discord.Activity{{
-				Name: fmt.Sprintf("%vhelp", strings.Split(os.Getenv("PREFIXES"), ",")[0]),
-			}},
+	r.ShardManager.ForEach(func(s shard.Shard) {
+		state := s.(*state.State)
+
+		state.AddHandler(func(_ *gateway.ReadyEvent) {
+			err = state.Gateway.UpdateStatus(gateway.UpdateStatusData{
+				Activities: []discord.Activity{{
+					Name: fmt.Sprintf("%vhelp", strings.Split(os.Getenv("PREFIXES"), ",")[0]),
+				}},
+			})
+			if err != nil {
+				sugar.Errorf("Error setting bot status: %v", err)
+			}
 		})
-		if err != nil {
-			sugar.Errorf("Error setting bot status: %v", err)
-		}
 	})
 
 	// sentry, if enabled
@@ -96,7 +103,7 @@ func main() {
 	events.Init(r, db, sugar)
 
 	// connect to discord
-	if err := r.State.Open(); err != nil {
+	if err := r.ShardManager.Open(context.Background()); err != nil {
 		sugar.Fatal("Failed to connect:", err)
 	}
 
@@ -104,14 +111,14 @@ func main() {
 	defer func() {
 		db.Pool.Close()
 		sugar.Info("Closed database connection.")
-		r.State.Close()
-		r.State.Gateway.Close()
+		r.ShardManager.Close()
 		sugar.Info("Disconnected from Discord.")
 	}()
 
 	sugar.Info("Connected to Discord. Press Ctrl-C or send an interrupt signal to stop.")
 
-	botUser, _ := r.State.Me()
+	s, _ := r.StateFromGuildID(0)
+	botUser, _ := s.Me()
 	sugar.Infof("User: %v#%v (%v)", botUser.Username, botUser.Discriminator, botUser.ID)
 	r.Bot = botUser
 	// normally creating a Context would do this, but as we set the user above, that doesn't work

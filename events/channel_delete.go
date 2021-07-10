@@ -3,9 +3,9 @@ package events
 import (
 	"fmt"
 
-	"github.com/diamondburned/arikawa/v2/api/webhook"
-	"github.com/diamondburned/arikawa/v2/discord"
-	"github.com/diamondburned/arikawa/v2/gateway"
+	"github.com/diamondburned/arikawa/v3/api/webhook"
+	"github.com/diamondburned/arikawa/v3/discord"
+	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/db"
 )
@@ -35,7 +35,7 @@ func (bot *Bot) channelDelete(ev *gateway.ChannelDeleteEvent) {
 	}
 
 	desc := fmt.Sprintf("**Name:** #%v", ev.Name)
-	if cat, err := bot.State.Channel(ev.CategoryID); err == nil {
+	if cat, err := bot.State(ev.GuildID).Channel(ev.CategoryID); err == nil {
 		desc += fmt.Sprintf("\n**Category:** %v", cat.Name)
 	} else {
 		desc += "\n**Category:** None"

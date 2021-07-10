@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/diamondburned/arikawa/v2/api"
-	"github.com/diamondburned/arikawa/v2/api/webhook"
-	"github.com/diamondburned/arikawa/v2/discord"
-	"github.com/diamondburned/arikawa/v2/gateway"
+	"github.com/diamondburned/arikawa/v3/api"
+	"github.com/diamondburned/arikawa/v3/api/webhook"
+	"github.com/diamondburned/arikawa/v3/discord"
+	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/db"
 	"github.com/starshine-sys/pkgo"
@@ -63,7 +63,7 @@ func (bot *Bot) guildBanRemove(ev *gateway.GuildBanRemoveEvent) {
 	// get ban reason/moderator
 	// we need to sleep for this because discord can be slow
 	time.Sleep(time.Second)
-	logs, err := bot.State.AuditLog(ev.GuildID, api.AuditLogData{
+	logs, err := bot.State(ev.GuildID).AuditLog(ev.GuildID, api.AuditLogData{
 		ActionType: discord.MemberBanRemove,
 		Limit:      100,
 	})
@@ -74,7 +74,7 @@ func (bot *Bot) guildBanRemove(ev *gateway.GuildBanRemoveEvent) {
 					e.Fields[0].Value = l.Reason
 				}
 
-				mod, err := bot.State.User(l.UserID)
+				mod, err := bot.State(ev.GuildID).User(l.UserID)
 				if err != nil {
 					e.Fields[1].Value = l.UserID.String()
 					break

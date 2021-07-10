@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/diamondburned/arikawa/v2/api/webhook"
-	"github.com/diamondburned/arikawa/v2/discord"
-	"github.com/diamondburned/arikawa/v2/gateway"
+	"github.com/diamondburned/arikawa/v3/api/webhook"
+	"github.com/diamondburned/arikawa/v3/discord"
+	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/db"
 )
@@ -57,7 +57,7 @@ func (bot *Bot) channelCreate(ev *gateway.ChannelCreateEvent) {
 	if !ev.CategoryID.IsValid() {
 		e.Description = fmt.Sprintf("**Name:** %v\n**Category:** None", ev.Name)
 	} else {
-		cat, err := bot.State.Channel(ev.CategoryID)
+		cat, err := bot.State(ev.GuildID).Channel(ev.CategoryID)
 		if err == nil {
 			e.Description = fmt.Sprintf("**Name:** %v\n**Category:** %v", ev.Name, cat.Name)
 		}
@@ -70,12 +70,12 @@ func (bot *Bot) channelCreate(ev *gateway.ChannelCreateEvent) {
 		}
 
 		if p.Type == discord.OverwriteRole {
-			r, err := bot.State.Role(ev.GuildID, discord.RoleID(p.ID))
+			r, err := bot.State(ev.GuildID).Role(ev.GuildID, discord.RoleID(p.ID))
 			if err == nil {
 				f.Name = "Role override for " + r.Name
 			}
 		} else if p.Type == discord.OverwriteMember {
-			u, err := bot.State.User(discord.UserID(p.ID))
+			u, err := bot.State(ev.GuildID).User(discord.UserID(p.ID))
 			if err == nil {
 				f.Name = "Role override for " + u.Username + "#" + u.Discriminator
 			}

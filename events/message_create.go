@@ -3,7 +3,7 @@ package events
 import (
 	"context"
 
-	"github.com/diamondburned/arikawa/v2/gateway"
+	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/catalogger/db"
 )
 

@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/diamondburned/arikawa/v2/discord"
+	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/dustin/go-humanize/english"
 	"github.com/starshine-sys/bcr"
 )
@@ -17,7 +17,7 @@ func (bot *Bot) help(ctx *bcr.Context) (err error) {
 		return ctx.Help(ctx.Args)
 	}
 
-	e := &discord.Embed{
+	e := discord.Embed{
 		Title: "Help",
 		Description: fmt.Sprintf(`A logging bot that integrates with PluralKit's message proxying.
 The bot's prefixes are %v.
@@ -91,7 +91,7 @@ func (bot *Bot) perms(ctx *bcr.Context) (err error) {
 		Color: bcr.ColourPurple,
 	}
 
-	_, err = ctx.Send("", &e)
+	_, err = ctx.Send("", e)
 	return
 }
 

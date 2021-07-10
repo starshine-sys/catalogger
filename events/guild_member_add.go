@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"emperror.dev/errors"
-	"github.com/diamondburned/arikawa/v2/api/webhook"
-	"github.com/diamondburned/arikawa/v2/discord"
-	"github.com/diamondburned/arikawa/v2/gateway"
+	"github.com/diamondburned/arikawa/v3/api/webhook"
+	"github.com/diamondburned/arikawa/v3/discord"
+	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/jackc/pgx/v4"
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/db"
@@ -66,7 +66,7 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) {
 		Timestamp: discord.NowTimestamp(),
 	}
 
-	g, err := bot.State.GuildWithCount(m.GuildID)
+	g, err := bot.State(m.GuildID).GuildWithCount(m.GuildID)
 	if err == nil {
 		e.Fields = append(e.Fields, discord.EmbedField{
 			Name:   "Current member count",
@@ -105,7 +105,7 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) {
 	}
 
 	if !m.User.Bot {
-		is, err := bot.State.GuildInvites(m.GuildID)
+		is, err := bot.State(m.GuildID).GuildInvites(m.GuildID)
 		if err == nil {
 			bot.InviteMu.Lock()
 			var (
@@ -253,7 +253,7 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) {
 		e.Fields = append(e.Fields, field)
 	}
 
-	mod, err := bot.State.User(wl.Moderator)
+	mod, err := bot.State(m.GuildID).User(wl.Moderator)
 	if err == nil {
 		e.Fields = append(e.Fields, discord.EmbedField{
 			Name:  "Moderator",

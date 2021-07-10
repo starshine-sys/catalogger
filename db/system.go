@@ -3,7 +3,7 @@ package db
 import (
 	"context"
 
-	"github.com/diamondburned/arikawa/v2/discord"
+	"github.com/diamondburned/arikawa/v3/discord"
 )
 
 // IsSystemBanned returns true if the system is banned

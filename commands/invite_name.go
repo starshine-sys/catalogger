@@ -4,12 +4,12 @@ import (
 	"context"
 	"strings"
 
-	"github.com/diamondburned/arikawa/v2/discord"
+	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/starshine-sys/bcr"
 )
 
 func (bot *Bot) renameInvite(ctx *bcr.Context) (err error) {
-	is, err := bot.State.GuildInvites(ctx.Message.GuildID)
+	is, err := ctx.State.GuildInvites(ctx.Message.GuildID)
 	if err != nil {
 		bot.Sugar.Errorf("Error getting guild invites: %v", err)
 		_, err = ctx.Sendf("Could not get this server's invites. Are you sure I have the **Manage Server** permission?")
@@ -45,9 +45,9 @@ func (bot *Bot) renameInvite(ctx *bcr.Context) (err error) {
 	}
 
 	if strings.EqualFold(name, "-clear") {
-		_, err = ctx.Send("Invite name reset!", nil)
+		_, err = ctx.Send("Invite name reset!")
 		return
 	}
-	_, err = ctx.Send("Invite name set!", nil)
+	_, err = ctx.Send("Invite name set!")
 	return
 }

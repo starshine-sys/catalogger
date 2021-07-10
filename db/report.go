@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/diamondburned/arikawa/v2/discord"
+	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/getsentry/sentry-go"
 	"github.com/starshine-sys/bcr"
 )
@@ -63,7 +63,7 @@ func (db *DB) Report(ctx ErrorContext, err error) *sentry.EventID {
 // ReportCtx reports an error and sends the event ID to the context channel, if possible
 func (db *DB) ReportCtx(ctx *bcr.Context, e error) (err error) {
 	var s string
-	var embed *discord.Embed
+	var embeds []discord.Embed
 
 	id := db.Report(ErrorContext{
 		Command: ctx.Command,
@@ -75,7 +75,7 @@ func (db *DB) ReportCtx(ctx *bcr.Context, e error) (err error) {
 		s = "Internal error occurred."
 	} else {
 		s = fmt.Sprintf("Error code: ``%v``", bcr.EscapeBackticks(string(*id)))
-		embed = &discord.Embed{
+		embeds = append(embeds, discord.Embed{
 			Title:       "Internal error occurred",
 			Description: "An internal error has occurred. If this issue persists, please contact the bot developer with the error code above.",
 			Color:       bcr.ColourRed,
@@ -84,13 +84,13 @@ func (db *DB) ReportCtx(ctx *bcr.Context, e error) (err error) {
 				Text: string(*id),
 			},
 			Timestamp: discord.NowTimestamp(),
-		}
+		})
 		// oh look! spaghetti!
 		if os.Getenv("SUPPORT_SERVER") != "" {
-			embed.Description = strings.NewReplacer("the bot developer", fmt.Sprintf("the bot developer in the [support server](%v)", os.Getenv("SUPPORT_SERVER"))).Replace(embed.Description)
+			embeds[0].Description = strings.NewReplacer("the bot developer", fmt.Sprintf("the bot developer in the [support server](%v)", os.Getenv("SUPPORT_SERVER"))).Replace(embeds[0].Description)
 		}
 	}
 
-	_, err = ctx.Send(s, embed)
+	_, err = ctx.Send(s, embeds...)
 	return
 }

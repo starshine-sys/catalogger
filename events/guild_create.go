@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/diamondburned/arikawa/v2/discord"
-	"github.com/diamondburned/arikawa/v2/gateway"
+	"github.com/diamondburned/arikawa/v3/discord"
+	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
 )
 
@@ -30,7 +30,7 @@ func (bot *Bot) guildCreate(g *gateway.GuildCreateEvent) {
 	}
 
 	owner := g.OwnerID.Mention()
-	if o, err := bot.State.User(g.OwnerID); err == nil {
+	if o, err := bot.State(g.ID).User(g.OwnerID); err == nil {
 		owner = fmt.Sprintf("%v#%v (%v)", o.Username, o.Discriminator, o.Mention())
 	}
 
@@ -54,7 +54,7 @@ func (bot *Bot) guildCreate(g *gateway.GuildCreateEvent) {
 		Timestamp: discord.NowTimestamp(),
 	}
 
-	_, err := bot.State.SendEmbed(bot.BotJoinLeaveLog, e)
+	_, err := bot.State(g.ID).SendEmbeds(bot.BotJoinLeaveLog, e)
 	if err != nil {
 		bot.Sugar.Errorf("Error sending join log message: %v", err)
 	}

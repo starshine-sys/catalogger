@@ -1,7 +1,7 @@
 package commands
 
 import (
-	"github.com/diamondburned/arikawa/v2/discord"
+	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/spf13/pflag"
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/db"

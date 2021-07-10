@@ -3,7 +3,7 @@ package db
 import (
 	"context"
 
-	"github.com/diamondburned/arikawa/v2/discord"
+	"github.com/diamondburned/arikawa/v3/discord"
 )
 
 // Events is a list of all available events

@@ -3,9 +3,9 @@ package events
 import (
 	"fmt"
 
-	"github.com/diamondburned/arikawa/v2/api/webhook"
-	"github.com/diamondburned/arikawa/v2/discord"
-	"github.com/diamondburned/arikawa/v2/gateway"
+	"github.com/diamondburned/arikawa/v3/api/webhook"
+	"github.com/diamondburned/arikawa/v3/discord"
+	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/db"
 )
@@ -69,12 +69,12 @@ func (bot *Bot) guildUpdate(ev *gateway.GuildUpdateEvent) {
 	}
 
 	if ev.OwnerID != old.OwnerID {
-		newOwner, err := bot.State.User(ev.OwnerID)
+		newOwner, err := bot.State(ev.ID).User(ev.OwnerID)
 		if err != nil {
 			bot.Sugar.Errorf("Error getting new owner: %v", err)
 			return
 		}
-		oldOwner, err := bot.State.User(old.OwnerID)
+		oldOwner, err := bot.State(ev.ID).User(old.OwnerID)
 		if err != nil {
 			bot.Sugar.Errorf("Error getting old owner: %v", err)
 			return

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/diamondburned/arikawa/v2/api/webhook"
-	"github.com/diamondburned/arikawa/v2/discord"
-	"github.com/diamondburned/arikawa/v2/gateway"
+	"github.com/diamondburned/arikawa/v3/api/webhook"
+	"github.com/diamondburned/arikawa/v3/discord"
+	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/db"
 )
@@ -67,12 +67,12 @@ func (bot *Bot) channelUpdate(ev *gateway.ChannelUpdateEvent) {
 			Value: "",
 		}
 
-		oldCat, err := bot.State.Channel(old.CategoryID)
+		oldCat, err := bot.State(ev.GuildID).Channel(old.CategoryID)
 		if err == nil {
 			f.Value += fmt.Sprintf("**Before:** %v", oldCat.Name)
 		}
 
-		newCat, err := bot.State.Channel(ev.CategoryID)
+		newCat, err := bot.State(ev.GuildID).Channel(ev.CategoryID)
 		if err == nil {
 			f.Value += fmt.Sprintf("\n**After:** %v", newCat.Name)
 		}
@@ -141,12 +141,12 @@ func (bot *Bot) channelUpdate(ev *gateway.ChannelUpdateEvent) {
 
 		for _, r := range removedRoles {
 			if r.Type == discord.OverwriteRole {
-				r, err := bot.State.Role(ev.GuildID, discord.RoleID(r.ID))
+				r, err := bot.State(ev.GuildID).Role(ev.GuildID, discord.RoleID(r.ID))
 				if err == nil {
 					f.Value += r.Name + ", "
 				}
 			} else if r.Type == discord.OverwriteMember {
-				u, err := bot.State.User(discord.UserID(r.ID))
+				u, err := bot.State(ev.GuildID).User(discord.UserID(r.ID))
 				if err == nil {
 					f.Value += u.Username + "#" + u.Discriminator + ", "
 				}
@@ -163,12 +163,12 @@ func (bot *Bot) channelUpdate(ev *gateway.ChannelUpdateEvent) {
 		}
 
 		if p.Type == discord.OverwriteRole {
-			r, err := bot.State.Role(ev.GuildID, discord.RoleID(p.ID))
+			r, err := bot.State(ev.GuildID).Role(ev.GuildID, discord.RoleID(p.ID))
 			if err == nil {
 				f.Name = "Role override for " + r.Name
 			}
 		} else if p.Type == discord.OverwriteMember {
-			u, err := bot.State.User(discord.UserID(p.ID))
+			u, err := bot.State(ev.GuildID).User(discord.UserID(p.ID))
 			if err == nil {
 				f.Name = "Role override for " + u.Username + "#" + u.Discriminator
 			}

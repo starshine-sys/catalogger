@@ -3,8 +3,8 @@ package events
 import (
 	"fmt"
 
-	"github.com/diamondburned/arikawa/v2/discord"
-	"github.com/diamondburned/arikawa/v2/gateway"
+	"github.com/diamondburned/arikawa/v3/discord"
+	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
 )
 
@@ -13,7 +13,7 @@ func (bot *Bot) guildDelete(g *gateway.GuildDeleteEvent) {
 		return
 	}
 
-	guild, err := bot.Router.State.Guild(g.ID)
+	guild, err := bot.State(g.ID).Guild(g.ID)
 	if err != nil {
 		// didn't find the guild, so just run this normally
 		bot.guildDeleteNoState(g)
@@ -21,7 +21,7 @@ func (bot *Bot) guildDelete(g *gateway.GuildDeleteEvent) {
 	}
 
 	owner := guild.OwnerID.Mention()
-	if o, err := bot.State.User(guild.OwnerID); err == nil {
+	if o, err := bot.State(g.ID).User(guild.OwnerID); err == nil {
 		owner = fmt.Sprintf("%v#%v (%v)", o.Username, o.Discriminator, o.Mention())
 	}
 
@@ -45,7 +45,7 @@ func (bot *Bot) guildDelete(g *gateway.GuildDeleteEvent) {
 		Timestamp: discord.NowTimestamp(),
 	}
 
-	_, err = bot.State.SendEmbed(bot.BotJoinLeaveLog, e)
+	_, err = bot.State(g.ID).SendEmbeds(bot.BotJoinLeaveLog, e)
 	if err != nil {
 		bot.Sugar.Errorf("Error sending leave log message: %v", err)
 	}
@@ -61,7 +61,7 @@ func (bot *Bot) guildDeleteNoState(g *gateway.GuildDeleteEvent) {
 		return
 	}
 
-	_, err := bot.Router.State.SendEmbed(bot.BotJoinLeaveLog, discord.Embed{
+	_, err := bot.State(g.ID).SendEmbeds(bot.BotJoinLeaveLog, discord.Embed{
 		Title:       "Left server",
 		Description: fmt.Sprintf("Left server **%v**", g.ID),
 

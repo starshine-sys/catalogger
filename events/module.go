@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/ReneKroon/ttlcache/v2"
-	"github.com/diamondburned/arikawa/v2/discord"
-	"github.com/diamondburned/arikawa/v2/utils/handler"
+	"github.com/diamondburned/arikawa/v3/discord"
+	"github.com/diamondburned/arikawa/v3/state"
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/db"
 	"go.uber.org/zap"
@@ -146,62 +146,62 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 	b.RedirectCache.SetTTL(10 * time.Minute)
 
 	// add member cache handlers
-	b.Router.State.AddHandler(b.requestGuildMembers)
-	b.Router.State.AddHandler(b.guildMemberChunk)
+	b.AddHandler(b.requestGuildMembers)
+	b.AddHandler(b.guildMemberChunk)
 
 	// add join/leave log handlers
-	b.Router.State.PreHandler = handler.New()
-	b.Router.State.PreHandler.Synchronous = true
-	b.Router.State.PreHandler.AddHandler(b.guildDelete)
-	b.Router.State.AddHandler(b.guildCreate)
+	// b.PreHandler = handler.New()
+	// b.PreHandler.Synchronous = true
+	// b.PreHandler.AddHandler(b.guildDelete)
+	// b.AddHandler(b.guildCreate)
 
 	// add guild create handler
-	b.State.AddHandler(b.DB.CreateServerIfNotExists)
+	b.AddHandler(b.DB.CreateServerIfNotExists)
 
 	// add pluralkit message create/delete handlers
-	b.State.AddHandler(b.pkMessageCreate)
-	b.State.AddHandler(b.pkMessageCreateFallback)
-	b.State.AddHandler(b.pkMessageDelete)
+	b.AddHandler(b.pkMessageCreate)
+	b.AddHandler(b.pkMessageCreateFallback)
+	b.AddHandler(b.pkMessageDelete)
 
 	// add message create/update/delete handlers
-	b.State.AddHandler(b.messageCreate)
-	b.State.AddHandler(b.messageUpdate)
-	b.State.AddHandler(b.messageDelete)
-	b.State.AddHandler(b.bulkMessageDelete)
+	b.AddHandler(b.messageCreate)
+	b.AddHandler(b.messageUpdate)
+	b.AddHandler(b.messageDelete)
+	b.AddHandler(b.bulkMessageDelete)
 
 	// add guild member handlers
-	b.State.AddHandler(b.guildMemberAdd)
-	b.State.AddHandler(b.guildMemberUpdate)
-	b.State.AddHandler(b.guildMemberRemove)
+	b.AddHandler(b.guildMemberAdd)
+	b.AddHandler(b.guildMemberUpdate)
+	b.AddHandler(b.guildMemberRemove)
 
 	// add invite handlers
-	b.State.AddHandler(b.invitesReady)
-	b.State.AddHandler(b.inviteCreate)
-	b.State.AddHandler(b.inviteDelete)
+	b.AddHandler(b.invitesReady)
+	b.AddHandler(b.inviteCreate)
+	b.AddHandler(b.inviteDelete)
 
 	// add invite create/delete handlers
-	b.State.AddHandler(b.inviteCreateEvent)
-	b.State.AddHandler(b.inviteDeleteEvent)
+	b.AddHandler(b.inviteCreateEvent)
+	b.AddHandler(b.inviteDeleteEvent)
 
 	// add ban handlers
-	b.State.AddHandler(b.guildBanAdd)
-	b.State.AddHandler(b.guildBanRemove)
+	b.AddHandler(b.guildBanAdd)
+	b.AddHandler(b.guildBanRemove)
 
 	// add channel handlers
-	b.State.AddHandler(b.channelCreate)
-	b.State.AddHandler(b.channelUpdate)
-	b.State.AddHandler(b.channelDelete)
+	b.AddHandler(b.channelCreate)
+	b.AddHandler(b.channelUpdate)
+	b.AddHandler(b.channelDelete)
 
 	// add role handlers
-	b.State.AddHandler(b.guildRoleCreate)
-	b.State.AddHandler(b.guildRoleUpdate)
-	b.State.AddHandler(b.guildRoleDelete)
+	b.AddHandler(b.guildRoleCreate)
+	b.AddHandler(b.guildRoleUpdate)
+	b.AddHandler(b.guildRoleDelete)
 
 	// add guild handlers
-	b.State.AddHandler(b.guildUpdate)
+	b.AddHandler(b.guildUpdate)
 
 	// add webhook update handler
-	b.State.AddHandler(b.webhooksUpdate)
+	b.AddHandler(b.webhooksUpdate)
 
 	// add clear cache command
 	b.AddCommand(&bcr.Command{
@@ -221,7 +221,7 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 			}
 
 			b.ResetCache(ctx.Message.GuildID, ch...)
-			_, err = ctx.Send("Reset the webhook cache for this server.", nil)
+			_, err = ctx.Send("Reset the webhook cache for this server.")
 			return
 		},
 	})
@@ -235,6 +235,12 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 	})
 
 	go b.cleanMessages()
+}
+
+// State gets a state.State for the guild
+func (bot *Bot) State(id discord.GuildID) *state.State {
+	s, _ := bot.StateFromGuildID(id)
+	return s
 }
 
 func (bot *Bot) cleanMessages() {

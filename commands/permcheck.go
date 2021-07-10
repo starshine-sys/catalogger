@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/diamondburned/arikawa/v2/discord"
+	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/starshine-sys/bcr"
 )
 
@@ -48,7 +48,7 @@ func (bot *Bot) permcheck(ctx *bcr.Context) (err error) {
 	}
 
 	// global perms first
-	perms, err := bot.globalPerms(ctx.Message.GuildID, ctx.Bot.ID)
+	perms, err := bot.globalPerms(ctx, ctx.Message.GuildID, ctx.Bot.ID)
 	if err == nil {
 		for _, p := range requiredPerms {
 			if perms.Has(p.Permission) {
@@ -112,18 +112,23 @@ If that doesn't work, contact the developer.`, ctx.Prefix),
 		}
 	}
 
-	_, err = ctx.Send("", &e)
+	_, err = ctx.Send("", e)
 	return
 }
 
-func (bot *Bot) globalPerms(guildID discord.GuildID, userID discord.UserID) (perms discord.Permissions, err error) {
+func (bot *Bot) globalPerms(ctx *bcr.Context, guildID discord.GuildID, userID discord.UserID) (perms discord.Permissions, err error) {
 	// global perms first
-	m, err := bot.State.Member(guildID, userID)
+	m, err := ctx.State.Member(guildID, userID)
 	if err != nil {
 		return
 	}
 
-	g, err := bot.State.Session.Guild(guildID)
+	g, err := ctx.State.Guild(guildID)
+	if err != nil {
+		return
+	}
+
+	g.Roles, err = ctx.State.Roles(g.ID)
 	if err != nil {
 		return
 	}

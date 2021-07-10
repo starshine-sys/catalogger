@@ -19,7 +19,7 @@ func (bot *Bot) ignore(ctx *bcr.Context) (err error) {
 			return bot.DB.ReportCtx(ctx, err)
 		}
 
-		_, err = ctx.Send("Stopped ignoring this channel.", nil)
+		_, err = ctx.Send("Stopped ignoring this channel.")
 		return
 	}
 
@@ -28,6 +28,6 @@ func (bot *Bot) ignore(ctx *bcr.Context) (err error) {
 		return bot.DB.ReportCtx(ctx, err)
 	}
 
-	_, err = ctx.Send("Now ignoring this channel. Events here will not be logged.", nil)
+	_, err = ctx.Send("Now ignoring this channel. Events here will not be logged.")
 	return
 }

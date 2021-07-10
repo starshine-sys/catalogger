@@ -3,8 +3,8 @@ package events
 import (
 	"regexp"
 
-	"github.com/diamondburned/arikawa/v2/discord"
-	"github.com/diamondburned/arikawa/v2/gateway"
+	"github.com/diamondburned/arikawa/v3/discord"
+	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/catalogger/db"
 )
 
@@ -80,7 +80,7 @@ func (bot *Bot) pkMessageCreate(m *gateway.MessageCreateEvent) {
 	}
 
 	// get full message
-	msg, err := bot.State.Message(channelID, msgID)
+	msg, err := bot.State(m.GuildID).Message(channelID, msgID)
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
 			Event:   "pk_message_create",

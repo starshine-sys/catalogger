@@ -3,7 +3,7 @@ package db
 import (
 	"context"
 
-	"github.com/diamondburned/arikawa/v2/gateway"
+	"github.com/diamondburned/arikawa/v3/gateway"
 )
 
 // CreateServerIfNotExists ...
