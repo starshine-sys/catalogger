@@ -124,7 +124,7 @@ func (bot *Bot) GetWebhooks(t string, id discord.GuildID) (*Webhook, error) {
 }
 
 // ResetCache ...
-func (bot *Bot) ResetCache(id discord.GuildID) {
+func (bot *Bot) ResetCache(id discord.GuildID, channels ...discord.ChannelID) {
 	bot.MessageDeleteCache.Remove(id.String())
 	bot.MessageUpdateCache.Remove(id.String())
 	bot.GuildMemberAddCache.Remove(id.String())
@@ -144,6 +144,11 @@ func (bot *Bot) ResetCache(id discord.GuildID) {
 	bot.GuildRoleUpdateCache.Remove(id.String())
 	bot.GuildRoleDeleteCache.Remove(id.String())
 	bot.MessageDeleteBulkCache.Remove(id.String())
+
+	for _, ch := range channels {
+		bot.MessageDeleteCache.Remove(ch.String())
+		bot.MessageUpdateCache.Remove(ch.String())
+	}
 }
 
 func (bot *Bot) getWebhook(id discord.ChannelID, name string) (*discord.Webhook, error) {
@@ -209,6 +214,6 @@ func (bot *Bot) getRedirect(guildID discord.GuildID, ch discord.ChannelID) (*dis
 }
 
 func (bot *Bot) webhooksUpdate(ev *gateway.WebhooksUpdateEvent) {
-	bot.ResetCache(ev.GuildID)
+	bot.ResetCache(ev.GuildID, ev.ChannelID)
 	bot.RedirectCache.Remove(ev.ChannelID.String())
 }

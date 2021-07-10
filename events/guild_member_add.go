@@ -12,6 +12,7 @@ import (
 	"github.com/jackc/pgx/v4"
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/db"
+	"github.com/starshine-sys/pkgo"
 )
 
 func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) {
@@ -74,7 +75,7 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) {
 		})
 	}
 
-	sys, err := pk.GetSystemByUserID(m.User.ID.String())
+	sys, err := pk.Account(pkgo.Snowflake(m.User.ID))
 	if err == nil {
 		e.Fields = append(e.Fields, discord.EmbedField{
 			Name:   "​",

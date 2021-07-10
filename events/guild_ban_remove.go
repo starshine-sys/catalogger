@@ -10,6 +10,7 @@ import (
 	"github.com/diamondburned/arikawa/v2/gateway"
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/db"
+	"github.com/starshine-sys/pkgo"
 )
 
 func (bot *Bot) guildBanRemove(ev *gateway.GuildBanRemoveEvent) {
@@ -86,7 +87,7 @@ func (bot *Bot) guildBanRemove(ev *gateway.GuildBanRemoveEvent) {
 		}
 	}
 
-	sys, err := pk.GetSystemByUserID(ev.User.ID.String())
+	sys, err := pk.Account(pkgo.Snowflake(ev.User.ID))
 	if err == nil {
 		if sys.Name != "" {
 			e.Fields = append(e.Fields, discord.EmbedField{

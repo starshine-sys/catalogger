@@ -10,7 +10,7 @@ import (
 	"github.com/starshine-sys/pkgo"
 )
 
-var pk = pkgo.NewSession(nil)
+var pk = pkgo.New("")
 
 func (bot *Bot) pkMessageCreateFallback(m *gateway.MessageCreateEvent) {
 	// only check webhook messages
@@ -33,22 +33,19 @@ func (bot *Bot) pkMessageCreateFallback(m *gateway.MessageCreateEvent) {
 		return
 	}
 
-	pkm, err := pk.GetMessage(m.ID.String())
+	pkm, err := pk.Message(pkgo.Snowflake(m.ID))
 	if err != nil {
 		// Message is either not proxied or we got an error from the PK API. Either way, return
 		return
 	}
 
-	u, _ := discord.ParseSnowflake(pkm.Sender)
-
-	orig, _ := discord.ParseSnowflake(pkm.Original)
 	bot.ProxiedTriggersMu.Lock()
-	bot.ProxiedTriggers[discord.MessageID(orig)] = struct{}{}
+	bot.ProxiedTriggers[discord.MessageID(pkm.Original)] = struct{}{}
 	bot.ProxiedTriggersMu.Unlock()
 
 	msg := db.Message{
 		MsgID:     m.ID,
-		UserID:    discord.UserID(u),
+		UserID:    discord.UserID(pkm.Sender),
 		ChannelID: m.ChannelID,
 		ServerID:  m.GuildID,
 

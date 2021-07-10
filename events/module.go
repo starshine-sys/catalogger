@@ -211,7 +211,16 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 
 		Permissions: discord.PermissionManageGuild,
 		Command: func(ctx *bcr.Context) (err error) {
-			b.ResetCache(ctx.Message.GuildID)
+			channels, err := ctx.State.Channels(ctx.Message.GuildID)
+			if err != nil {
+				return b.DB.ReportCtx(ctx, err)
+			}
+			ch := []discord.ChannelID{}
+			for _, c := range channels {
+				ch = append(ch, c.ID)
+			}
+
+			b.ResetCache(ctx.Message.GuildID, ch...)
 			_, err = ctx.Send("Reset the webhook cache for this server.", nil)
 			return
 		},
