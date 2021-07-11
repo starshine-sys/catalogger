@@ -11,8 +11,12 @@ require (
 	github.com/getsentry/sentry-go v0.11.0
 	github.com/jackc/pgx/v4 v4.11.0
 	github.com/joho/godotenv v1.3.0
+	github.com/julienschmidt/httprouter v1.2.0
 	github.com/spf13/pflag v1.0.5
 	github.com/starshine-sys/bcr v0.19.1
 	github.com/starshine-sys/pkgo v1.0.0
 	go.uber.org/zap v1.16.0
+	golang.org/x/oauth2 v0.0.0-20210628180205-a41e5a781914
+	google.golang.org/grpc v1.35.0
+	google.golang.org/protobuf v1.25.0
 )

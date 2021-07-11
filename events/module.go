@@ -2,13 +2,16 @@ package events
 
 import (
 	"context"
+	"errors"
 	"os"
 	"sync"
 	"time"
 
 	"github.com/ReneKroon/ttlcache/v2"
 	"github.com/diamondburned/arikawa/v3/discord"
+	"github.com/diamondburned/arikawa/v3/gateway/shard"
 	"github.com/diamondburned/arikawa/v3/state"
+	"github.com/diamondburned/arikawa/v3/utils/handler"
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/db"
 	"go.uber.org/zap"
@@ -76,7 +79,7 @@ type Bot struct {
 }
 
 // Init ...
-func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
+func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) (clearCacheFunc func(discord.GuildID, ...discord.ChannelID), memberFunc func() int64, guildPermFunc func(discord.GuildID, discord.UserID) (discord.Guild, discord.Permissions, error)) {
 	joinLeaveLog, _ := discord.ParseSnowflake(os.Getenv("JOIN_LEAVE_LOG"))
 
 	b := &Bot{
@@ -150,10 +153,14 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 	b.AddHandler(b.guildMemberChunk)
 
 	// add join/leave log handlers
-	// b.PreHandler = handler.New()
-	// b.PreHandler.Synchronous = true
-	// b.PreHandler.AddHandler(b.guildDelete)
-	// b.AddHandler(b.guildCreate)
+	b.Router.ShardManager.ForEach(func(s shard.Shard) {
+		state := s.(*state.State)
+
+		state.PreHandler = handler.New()
+		state.PreHandler.Synchronous = true
+		state.PreHandler.AddHandler(b.guildDelete)
+		state.AddHandler(b.guildCreate)
+	})
 
 	// add guild create handler
 	b.AddHandler(b.DB.CreateServerIfNotExists)
@@ -235,6 +242,17 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 	})
 
 	go b.cleanMessages()
+
+	clearCacheFunc = b.ResetCache
+	memberFunc = func() int64 {
+		b.MembersMu.Lock()
+		n := int64(len(b.Members))
+		b.MembersMu.Unlock()
+		return n
+	}
+	guildPermFunc = b.guildPerms
+
+	return clearCacheFunc, memberFunc, guildPermFunc
 }
 
 // State gets a state.State for the guild
@@ -271,4 +289,45 @@ func (bot *Bot) cleanMessages() {
 
 		time.Sleep(1 * time.Minute)
 	}
+}
+
+func (bot *Bot) guildPerms(guildID discord.GuildID, userID discord.UserID) (g discord.Guild, perms discord.Permissions, err error) {
+	bot.GuildsMu.Lock()
+	g, ok := bot.Guilds[guildID]
+	bot.GuildsMu.Unlock()
+	if !ok {
+		return g, 0, errors.New("guild not found")
+	}
+
+	s, _ := bot.StateFromGuildID(guildID)
+	g.Roles, err = s.Roles(guildID)
+	if err != nil {
+		return g, 0, err
+	}
+
+	bot.MembersMu.Lock()
+	m, ok := bot.Members[memberCacheKey{guildID, userID}]
+	bot.MembersMu.Unlock()
+	if !ok {
+		return g, 0, errors.New("member not found")
+	}
+
+	if g.OwnerID == userID {
+		return g, discord.PermissionAll, nil
+	}
+
+	for _, r := range g.Roles {
+		for _, id := range m.RoleIDs {
+			if r.ID == id {
+				if r.Permissions.Has(discord.PermissionAdministrator) {
+					return g, discord.PermissionAll, nil
+				}
+
+				perms |= r.Permissions
+				break
+			}
+		}
+	}
+
+	return g, perms, nil
 }
