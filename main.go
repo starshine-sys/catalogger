@@ -109,8 +109,8 @@ func main() {
 	// actually load events + commands
 	commands.Init(r, db, sugar)
 
-	cacheFunc, countFunc, guildPermFunc := events.Init(r, db, sugar)
-	server.NewServer(r, db, cacheFunc, countFunc, guildPermFunc)
+	cacheFunc, countFunc, guildPermFunc, joinedFunc := events.Init(r, db, sugar)
+	server.NewServer(r, db, cacheFunc, countFunc, guildPermFunc, joinedFunc)
 
 	// connect to discord
 	if err := r.ShardManager.Open(context.Background()); err != nil {

@@ -6,16 +6,15 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"net/url"
 	"os"
 	"strconv"
 	"time"
 
-	"github.com/ReneKroon/ttlcache/v2"
 	"github.com/diamondburned/arikawa/v3/api"
 	"github.com/julienschmidt/httprouter"
+	"github.com/mediocregopher/radix/v4"
 	"golang.org/x/oauth2"
 )
 
@@ -41,9 +40,46 @@ func init() {
 	}
 }
 
+func (s *server) createCSRFToken(ctx context.Context) (token string, err error) {
+	token = RandBase64(32)
+
+	err = s.multiRedis(ctx,
+		radix.Cmd(nil, "LPUSH", "csrf", token),
+		radix.Cmd(nil, "LTRIM", "csrf", "0", "999"),
+	)
+	if err != nil {
+		return "", err
+	}
+	return token, nil
+}
+
+func (s *server) checkCSRFToken(ctx context.Context, token string) (matched bool, err error) {
+	var num int
+	err = s.Redis.Do(ctx, radix.Cmd(&num, "LREM", "CSRF", "1", token))
+	if err != nil {
+		return
+	}
+	return num > 0, nil
+}
+
 func (s *server) handleLogin(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	csrf := RandBase64(32)
-	s.CSRFTokens.Set(csrf, r.FormValue("goto"))
+	ctx := r.Context()
+
+	csrf, err := s.createCSRFToken(ctx)
+	if err != nil {
+		s.Sugar.Errorf("Error setting CSRF token: %v", err)
+		return
+	}
+
+	redir := r.FormValue("goto")
+	if redir == "" {
+		redir = "/servers"
+	}
+
+	err = s.Redis.Do(ctx, radix.Cmd(nil, "SET", "csrf-redir:"+csrf, redir, "EX", "600"))
+	if err != nil {
+		s.Sugar.Errorf("Error setting redirect: %v", err)
+	}
 
 	url := oauthConfig.AuthCodeURL(csrf, oauth2.AccessTypeOnline) + "&prompt=none"
 
@@ -51,25 +87,20 @@ func (s *server) handleLogin(w http.ResponseWriter, r *http.Request, _ httproute
 }
 
 func (s *server) handleAuthorize(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	state := r.FormValue("state")
-	v, err := s.CSRFTokens.Get(state)
-	if err != nil {
-		if err == ttlcache.ErrNotFound {
-			fmt.Fprintln(w, "Couldn't validate your CSRF token.")
-			return
-		}
+	ctx := r.Context()
 
-		s.Sugar.Errorf("Error validating state: %v", err)
+	state := r.FormValue("state")
+
+	if ok, err := s.checkCSRFToken(ctx, state); !ok {
+		if err != nil {
+			s.Sugar.Errorf("Error validating state: %v", err)
+		} else {
+			s.Sugar.Infof("Invalid state %v", state)
+		}
+		http.Redirect(w, r, "/?error=bad-csrf", http.StatusTemporaryRedirect)
 		return
 	}
-	redir := v.(string)
-	if redir == "" {
-		redir = "/servers"
-	}
 
-	s.CSRFTokens.Remove(state)
-
-	ctx := r.Context()
 	code := r.FormValue("code")
 	token, err := oauthConfig.Exchange(ctx, code)
 	if err != nil {
@@ -83,6 +114,14 @@ func (s *server) handleAuthorize(w http.ResponseWriter, r *http.Request, _ httpr
 		return
 	}
 	http.SetCookie(w, cookie)
+
+	var redir string
+	err = s.Redis.Do(ctx, radix.Cmd(&redir, "GET", "csrf-redir:"+state))
+	if err != nil {
+		redir = "/servers"
+	} else {
+		s.Redis.Do(ctx, radix.Cmd(nil, "DEL", "csrf-redir:"+state))
+	}
 
 	http.Redirect(w, r, redir, http.StatusTemporaryRedirect)
 }
@@ -152,9 +191,24 @@ func (s *server) RequireSession(inner httprouter.Handle) httprouter.Handle {
 			return
 		}
 
-		client := api.NewClient(t.Type() + " " + t.AccessToken)
+		cache, ok := s.getUser(cookie.Value)
+		if !ok {
+			client := api.NewClient(t.Type() + " " + t.AccessToken)
+			u, err := client.Me()
+			if err != nil {
+				s.Sugar.Errorf("Error getting Discord user: %v", err)
+				loginRedirect(w, r)
+				return
+			}
 
-		ctx = context.WithValue(ctx, contextKeyDiscord, client)
+			cache = &userCache{
+				Client: client,
+				User:   u,
+			}
+			s.setUser(cookie.Value, cache)
+		}
+
+		ctx = context.WithValue(ctx, contextKeyDiscord, cache)
 
 		inner(w, r.Clone(ctx), params)
 	}

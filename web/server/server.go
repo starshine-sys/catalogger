@@ -24,18 +24,20 @@ type RPCServer struct {
 	clearCache  func(discord.GuildID, ...discord.ChannelID)
 	memberCount func() int64
 	guildPerms  func(discord.GuildID, discord.UserID) (discord.Guild, discord.Permissions, error)
+	guildJoined func(discord.GuildID) bool
 
 	proto.UnimplementedGuildInfoServiceServer
 }
 
 // NewServer creates a new RPCServer, starts it, and returns it
-func NewServer(bot *bcr.Router, db *db.DB, clearCacheFunc func(discord.GuildID, ...discord.ChannelID), memberCountFunc func() int64, guildPermFunc func(discord.GuildID, discord.UserID) (discord.Guild, discord.Permissions, error)) *RPCServer {
+func NewServer(bot *bcr.Router, db *db.DB, clearCacheFunc func(discord.GuildID, ...discord.ChannelID), memberCountFunc func() int64, guildPermFunc func(discord.GuildID, discord.UserID) (discord.Guild, discord.Permissions, error), joinedFunc func(discord.GuildID) bool) *RPCServer {
 	s := &RPCServer{
 		Bot:         bot,
 		DB:          db,
 		clearCache:  clearCacheFunc,
 		memberCount: memberCountFunc,
 		guildPerms:  guildPermFunc,
+		guildJoined: joinedFunc,
 	}
 
 	port := strings.TrimPrefix(os.Getenv("RPC_PORT"), ":")

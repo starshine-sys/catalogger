@@ -18,7 +18,7 @@ message GuildUserCountResponse {
 
 // user guild list -> filtered guild list with joined info
 message UserGuildListRequest {
-    repeated uint64 guild_id = 1;
+    repeated uint64 guild_ids = 1;
 }
 
 message UserGuildListResponse {
@@ -33,6 +33,7 @@ message GuildListGuild {
 
 message GuildRequest {
     uint64 id = 1;
+    uint64 user_id = 2;
 }
 
 // A stripped-down discord.Guild object
@@ -42,6 +43,8 @@ message GuildResponse {
     string icon = 3;
 
     repeated GuildChannel channels = 4;
+
+    uint64 permissions = 5;
 }
 
 // A stripped-down discord.Channel object

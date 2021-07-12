@@ -79,7 +79,7 @@ type Bot struct {
 }
 
 // Init ...
-func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) (clearCacheFunc func(discord.GuildID, ...discord.ChannelID), memberFunc func() int64, guildPermFunc func(discord.GuildID, discord.UserID) (discord.Guild, discord.Permissions, error)) {
+func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) (clearCacheFunc func(discord.GuildID, ...discord.ChannelID), memberFunc func() int64, guildPermFunc func(discord.GuildID, discord.UserID) (discord.Guild, discord.Permissions, error), joinedFunc func(discord.GuildID) bool) {
 	joinLeaveLog, _ := discord.ParseSnowflake(os.Getenv("JOIN_LEAVE_LOG"))
 
 	b := &Bot{
@@ -251,8 +251,14 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) (clearCacheFunc func(d
 		return n
 	}
 	guildPermFunc = b.guildPerms
+	joinedFunc = func(id discord.GuildID) bool {
+		b.GuildsMu.Lock()
+		_, ok := b.Guilds[id]
+		b.GuildsMu.Unlock()
+		return ok
+	}
 
-	return clearCacheFunc, memberFunc, guildPermFunc
+	return clearCacheFunc, memberFunc, guildPermFunc, joinedFunc
 }
 
 // State gets a state.State for the guild

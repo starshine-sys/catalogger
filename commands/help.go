@@ -57,6 +57,11 @@ To get started, use `+"`%vsetchannel`"+` with one or more events.
 		})
 	}
 
+	dashboard := os.Getenv("DASHBOARD_BASE")
+	if dashboard != "" {
+		e.Description += fmt.Sprintf("\n\nYou can also use the [dashboard](%v/servers) to configure the bot!", dashboard)
+	}
+
 	_, err = ctx.Send("", e)
 	return
 }

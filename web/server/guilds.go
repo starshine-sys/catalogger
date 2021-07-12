@@ -14,38 +14,12 @@ import (
 func (s *RPCServer) UserGuildList(_ context.Context, req *proto.UserGuildListRequest) (resp *proto.UserGuildListResponse, err error) {
 	resp = &proto.UserGuildListResponse{}
 
-	for _, i := range req.GetGuildId() {
-		id := discord.GuildID(i)
-		s, _ := s.Bot.StateFromGuildID(id)
-		if s == nil {
-			resp.Guilds = append(resp.Guilds, &proto.GuildListGuild{
-				Id:     i,
-				Joined: false,
-			})
-			continue
-		} else {
-			guilds, err := s.GuildStore.Guilds()
-			if err != nil {
-				resp.Guilds = append(resp.Guilds, &proto.GuildListGuild{
-					Id:     i,
-					Joined: false,
-				})
-				continue
-			}
-
-			joined := false
-			for _, g := range guilds {
-				if g.ID == id {
-					joined = true
-					break
-				}
-			}
-
-			resp.Guilds = append(resp.Guilds, &proto.GuildListGuild{
-				Id:     i,
-				Joined: joined,
-			})
-		}
+	for _, i := range req.GetGuildIds() {
+		joined := s.guildJoined(discord.GuildID(i))
+		resp.Guilds = append(resp.Guilds, &proto.GuildListGuild{
+			Id:     i,
+			Joined: joined,
+		})
 	}
 
 	return resp, nil
@@ -104,6 +78,12 @@ func (s *RPCServer) Guild(ctx context.Context, req *proto.GuildRequest) (resp *p
 
 		resp.Channels = append(resp.Channels, protoCh)
 	}
+
+	_, perms, err := s.guildPerms(g.ID, discord.UserID(req.GetUserId()))
+	if err != nil {
+		return resp, err
+	}
+	resp.Permissions = uint64(perms)
 
 	return resp, nil
 }

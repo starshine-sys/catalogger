@@ -2,18 +2,19 @@ package main
 
 import (
 	"context"
-
-	"github.com/diamondburned/arikawa/v3/api"
 )
 
 type contextKey int
 
-var contextKeyDiscord contextKey = 1
+var (
+	contextKeyDiscord contextKey = 1
+	contextKeyUser    contextKey = 2
+)
 
-// DiscordAPIFromSession ...
-func DiscordAPIFromSession(ctx context.Context) (client *api.Client) {
+// discordAPIFromSession ...
+func discordAPIFromSession(ctx context.Context) (cache *userCache) {
 	if val := ctx.Value(contextKeyDiscord); val != nil {
-		if cast, ok := val.(*api.Client); ok {
+		if cast, ok := val.(*userCache); ok {
 			return cast
 		}
 	}

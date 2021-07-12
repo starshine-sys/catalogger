@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Catalogger</title>
+	<meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+
+	<style>
+		.guild-icon {
+			border-radius: 64px;
+			border-width: 5px;
+			border-style: solid;
+		}
+		.joined {
+			border-color: #2ca018;
+		}
+		.unjoined {
+			border-color: #bf8916;
+		}
+	</style>
+</head>
+<body>
+	<h1>Hi {{.User.Username}}#{{.User.Discriminator}}</h1>
+
+	<h1>Server list</h1>
+
+	<div class="container">
+		<div class="row g-3">
+			{{range .Guilds}}
+			<div class="col-md-3">
+				<a href="{{.Link}}">
+					<img class="guild-icon {{if .Joined}}joined{{else}}unjoined{{end}}" src="{{.IconURL}}" alt="{{.Name}}" height="128"><br />
+					{{.Name}}
+				</a>
+			</div>
+			{{end}}
+		</div>
+	</div>
+
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+</body>
+</html>
