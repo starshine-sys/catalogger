@@ -8,7 +8,9 @@ import (
 
 	"github.com/ReneKroon/ttlcache/v2"
 	"github.com/diamondburned/arikawa/v3/discord"
+	"github.com/diamondburned/arikawa/v3/gateway/shard"
 	"github.com/diamondburned/arikawa/v3/state"
+	"github.com/diamondburned/arikawa/v3/utils/handler"
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/db"
 	"go.uber.org/zap"
@@ -150,10 +152,14 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 	b.AddHandler(b.guildMemberChunk)
 
 	// add join/leave log handlers
-	// b.PreHandler = handler.New()
-	// b.PreHandler.Synchronous = true
-	// b.PreHandler.AddHandler(b.guildDelete)
-	// b.AddHandler(b.guildCreate)
+	b.Router.ShardManager.ForEach(func(s shard.Shard) {
+		state := s.(*state.State)
+
+		state.PreHandler = handler.New()
+		state.PreHandler.Synchronous = true
+		state.AddHandler(b.guildCreate)
+		state.PreHandler.AddHandler(b.guildDelete)
+	})
 
 	// add guild create handler
 	b.AddHandler(b.DB.CreateServerIfNotExists)
