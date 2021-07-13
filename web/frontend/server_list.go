@@ -17,13 +17,29 @@ import (
 //go:embed templates
 var fs embed.FS
 
-var tmpl = template.Must(template.New("servers").ParseFS(fs, "templates/*"))
+var tmpl = template.Must(template.New("servers").Funcs(funcs).ParseFS(fs, "templates/*"))
 
 type guildList struct {
+	ID      discord.GuildID
 	Name    string
 	Link    string
 	Joined  bool
 	IconURL string
+}
+
+func (s *server) guilds(ctx context.Context, client *userCache) (guilds []discord.Guild, err error) {
+	guilds, err = s.guildList(ctx, client.User.ID)
+	if err != nil {
+		guilds, err = client.Guilds(200)
+		if err != nil {
+			return
+		}
+		err = s.setGuildList(ctx, client.User.ID, guilds)
+		if err != nil {
+			return
+		}
+	}
+	return guilds, err
 }
 
 func (s *server) serverList(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
@@ -36,67 +52,31 @@ func (s *server) serverList(w http.ResponseWriter, r *http.Request, _ httprouter
 		return
 	}
 
-	guilds, err := s.guildList(ctx, client.User.ID)
+	guilds, err := s.guilds(ctx, client)
 	if err != nil {
-		guilds, err = client.Guilds(200)
-		if err != nil {
-			s.Sugar.Errorf("Error getting guilds: %v", err)
-			fmt.Fprintf(w, "Error getting guilds: %v", err)
-			return
-		}
-		err = s.setGuildList(ctx, client.User.ID, guilds)
-		if err != nil {
-			s.Sugar.Errorf("Error setting guild list: %v", err)
-			fmt.Fprintf(w, "Error setting guild list: %v", err)
-			return
-		}
+		s.Sugar.Errorf("Error getting guilds: %v", err)
+		fmt.Fprintf(w, "Error getting guilds: %v", err)
+		return
 	}
 
-	old := guilds
-	guilds = nil
-	guildIDs := []uint64{}
-	for _, g := range old {
-		if g.Owner || g.Permissions.Has(discord.PermissionAdministrator) || g.Permissions.Has(discord.PermissionManageGuild) {
-			guildIDs = append(guildIDs, uint64(g.ID))
-			guilds = append(guilds, g)
-		}
-	}
-
-	data := struct {
-		User   *discord.User
-		Guilds []guildList
-	}{User: client.User}
-
-	resp, err := s.RPC.UserGuildList(r.Context(), &proto.UserGuildListRequest{GuildIds: guildIDs})
+	filtered, joined, unjoined, err := s.filterGuilds(ctx, guilds)
 	if err != nil {
 		s.Sugar.Errorf("Error filtering guilds: %v", err)
 		fmt.Fprintf(w, "Error filtering guilds: %v", err)
 		return
 	}
 
-	for _, g := range resp.GetGuilds() {
-		for _, dg := range guilds {
-			if g.GetId() == uint64(dg.ID) {
-				link := "/servers/" + dg.ID.String()
-				if !g.GetJoined() {
-					link = inviteLink(dg.ID)
-				}
+	data := struct {
+		User   *discord.User
+		Guilds []guildList
 
-				icon := dg.IconURLWithType(discord.PNGImage)
-				if icon == "" {
-					icon = "https://cdn.discordapp.com/embed/avatars/1.png"
-				}
-
-				data.Guilds = append(data.Guilds, guildList{
-					Name:    dg.Name,
-					Link:    link,
-					Joined:  g.GetJoined(),
-					IconURL: icon + "?size=128",
-				})
-
-				break
-			}
-		}
+		JoinedGuilds   []guildList
+		UnjoinedGuilds []guildList
+	}{
+		User:           client.User,
+		Guilds:         filtered,
+		JoinedGuilds:   joined,
+		UnjoinedGuilds: unjoined,
 	}
 
 	err = tmpl.ExecuteTemplate(w, "server_list.html", data)
@@ -135,4 +115,57 @@ func (s *server) setGuildList(ctx context.Context, id discord.UserID, guilds []d
 	// TODO: change timeout
 	err = s.Redis.Do(ctx, radix.Cmd(nil, "SET", "user-guilds:"+id.String(), string(b), "EX", "3600"))
 	return err
+}
+
+func (s *server) filterGuilds(ctx context.Context, gs []discord.Guild) (guilds []guildList, joinedGuilds []guildList, unjoinedGuilds []guildList, err error) {
+	old := gs
+	gs = nil
+	guildIDs := []uint64{}
+	for _, g := range old {
+		if g.Owner || g.Permissions.Has(discord.PermissionAdministrator) || g.Permissions.Has(discord.PermissionManageGuild) {
+			guildIDs = append(guildIDs, uint64(g.ID))
+			gs = append(gs, g)
+		}
+	}
+
+	resp, err := s.RPC.UserGuildList(ctx, &proto.UserGuildListRequest{GuildIds: guildIDs})
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	for _, g := range resp.GetGuilds() {
+		for _, dg := range gs {
+			if g.GetId() == uint64(dg.ID) {
+				link := "/servers/" + dg.ID.String()
+				if !g.GetJoined() {
+					link = inviteLink(dg.ID)
+				}
+
+				icon := dg.IconURLWithType(discord.PNGImage)
+				if icon == "" {
+					icon = "https://cdn.discordapp.com/embed/avatars/1.png"
+				}
+
+				gl := guildList{
+					ID:      dg.ID,
+					Name:    dg.Name,
+					Link:    link,
+					Joined:  g.GetJoined(),
+					IconURL: icon + "?size=128",
+				}
+
+				guilds = append(guilds, gl)
+
+				if g.GetJoined() {
+					joinedGuilds = append(joinedGuilds, gl)
+				} else {
+					unjoinedGuilds = append(unjoinedGuilds, gl)
+				}
+
+				break
+			}
+		}
+	}
+
+	return
 }

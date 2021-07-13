@@ -1,44 +1,105 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 	<title>Catalogger</title>
 	<meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
 
-	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+		integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
 
 	<style>
-		.guild-icon {
-			border-radius: 64px;
-			border-width: 5px;
-			border-style: solid;
-		}
-		.joined {
-			border-color: #2ca018;
-		}
-		.unjoined {
-			border-color: #bf8916;
+		.dropdown-menu {
+			max-height: 30em;
+			overflow-y: auto;
 		}
 	</style>
 </head>
-<body>
-	<h1>Hi {{.User.Username}}#{{.User.Discriminator}}</h1>
 
-	<h1>Server list</h1>
+<body>
+	<nav class="navbar sticky-top navbar-dark bg-dark navbar-expand-md">
+		<div class="container-fluid">
+			<a href="/" class="navbar-brand">Catalogger</a>
+			<button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+				data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
+				aria-label="Toggle navigation">
+				<span class="navbar-toggler-icon"></span>
+			</button>
+			<div class="collapse navbar-collapse" id="navbarSupportedContent">
+				<ul class="navbar-nav">
+					<li class="nav-item">
+						<a href="/" class="nav-link">Home</a>
+					</li>
+					<li class="nav-item">
+						<a href="https://github.com/starshine-sys/catalogger/blob/main/docs/USAGE.md"
+							class="nav-link">Documentation</a>
+					</li>
+					<li class="nav-item dropdown">
+						<a class="nav-link dropdown-toggle" href="#" id="serverListLink" role="button"
+							data-bs-toggle="dropdown" aria-expanded="false">
+							Your servers
+						</a>
+						<ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="serverListLink">
+							<li><a class="dropdown-item active" href="/servers">Server list</a></li>
+							{{if .JoinedGuilds}}
+							<li>
+								<hr class="dropdown-divider">
+							</li>
+							<li>
+								<h6 class="dropdown-header">Servers you can manage</h6>
+							</li>
+							{{end}}
+							{{range .JoinedGuilds}}
+							<li><a class="dropdown-item" href="{{.Link}}">{{.Name}}</a></li>
+							{{end}}
+							{{if .UnjoinedGuilds}}
+							<li>
+								<hr class="dropdown-divider">
+							</li>
+							<li>
+								<h6 class="dropdown-header">Servers you can add Catalogger to</h6>
+							</li>
+							{{end}}
+							{{range .UnjoinedGuilds}}
+							<li><a class="dropdown-item" href="{{.Link}}">{{.Name}}</a></li>
+							{{end}}
+						</ul>
+					</li>
+				</ul>
+				<ul class="navbar-nav ms-auto">
+					<li class="nav-item dropdown">
+						<a class="nav-link dropdown-toggle" href="#" id="accountMenuLink" role="button"
+							data-bs-toggle="dropdown" aria-expanded="false">
+							<img src="{{.User.AvatarURL}}" alt="Your avatar"
+								style="border-radius: 0.75em; height: 1.5em;">
+							{{.User.Username}}#{{.User.Discriminator}}
+						</a>
+						<ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="accountMenuLink">
+							<li><a class="dropdown-item" href="/logout">Logout</a></li>
+						</ul>
+					</li>
+				</ul>
+			</div>
+		</div>
+	</nav>
 
 	<div class="container">
-		<div class="row g-3">
+		<h1>Server list</h1>
+
+		<div class="list-group">
 			{{range .Guilds}}
-			<div class="col-md-3">
-				<a href="{{.Link}}">
-					<img class="guild-icon {{if .Joined}}joined{{else}}unjoined{{end}}" src="{{.IconURL}}" alt="{{.Name}}" height="128"><br />
-					{{.Name}}
-				</a>
-			</div>
+			<a href="{{.Link}}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+				<span><img src="{{.IconURL}}" alt="{{.Name}}" style="border-radius: 0.75em; height: 1.5em;">
+				{{.Name}}</span> {{if (not .Joined)}}<span class="badge bg-secondary rounded-pill ms-auto">click to add</span>{{end}}
+			</a>
 			{{end}}
 		</div>
 	</div>
 
-	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+		integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+		crossorigin="anonymous"></script>
 </body>
+
 </html>

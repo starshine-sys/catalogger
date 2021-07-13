@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"os"
+
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/spf13/pflag"
 	"github.com/starshine-sys/bcr"
@@ -149,6 +151,26 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 		Hidden:    true,
 		OwnerOnly: true,
 		Command:   b.adminStats,
+	})
+
+	b.AddCommand(&bcr.Command{
+		Name:    "dashboard",
+		Summary: "Get a link to the bot dashboard.",
+
+		Command: func(ctx *bcr.Context) (err error) {
+			dashboard := os.Getenv("DASHBOARD_BASE")
+			if dashboard == "" {
+				return
+			}
+
+			if !ctx.GuildPerms().Has(discord.PermissionManageGuild) {
+				_, err = ctx.Sendf("The bot dashboard is available here: <%v/servers>", dashboard)
+				return
+			}
+
+			_, err = ctx.Sendf("The dashboard for this server is available here: <%v/servers/%v>", dashboard, ctx.Message.GuildID)
+			return
+		},
 	})
 
 	wl := b.AddCommand(&bcr.Command{
