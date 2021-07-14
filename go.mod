@@ -13,9 +13,11 @@ require (
 	github.com/joho/godotenv v1.3.0
 	github.com/julienschmidt/httprouter v1.2.0
 	github.com/mediocregopher/radix/v4 v4.0.0-beta.1
+	github.com/rubenv/sql-migrate v0.0.0-20210614095031-55d5740dbbcc
 	github.com/spf13/pflag v1.0.5
 	github.com/starshine-sys/bcr v0.19.1
 	github.com/starshine-sys/pkgo v1.0.0
+	github.com/ziutek/mymysql v1.5.4 // indirect
 	go.uber.org/zap v1.16.0
 	golang.org/x/oauth2 v0.0.0-20210628180205-a41e5a781914
 	google.golang.org/grpc v1.35.0
