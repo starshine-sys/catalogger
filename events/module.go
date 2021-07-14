@@ -75,6 +75,9 @@ type Bot struct {
 	BotJoinLeaveLog discord.ChannelID
 
 	Start time.Time
+
+	Queues  map[discord.ChannelID]*Queue
+	QueueMu sync.Mutex
 }
 
 // Init ...
@@ -95,6 +98,7 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 		Channels: map[discord.ChannelID]discord.Channel{},
 		Roles:    map[discord.RoleID]discord.Role{},
 		Guilds:   map[discord.GuildID]discord.Guild{},
+		Queues:   map[discord.ChannelID]*Queue{},
 
 		MessageDeleteCache: ttlcache.NewCache(),
 		MessageUpdateCache: ttlcache.NewCache(),
