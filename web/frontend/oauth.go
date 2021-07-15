@@ -31,6 +31,11 @@ var oauthConfig = oauth2.Config{
 	Scopes: []string{"identify", "guilds"},
 }
 
+// literally only used to add the bot and applications.commands scopes
+var oauthBotConfig = oauth2.Config{
+	Scopes: []string{"identify", "guilds", "bot", "applications.commands"},
+}
+
 func init() {
 	https, _ := strconv.ParseBool(os.Getenv("HTTPS"))
 	if https {
@@ -38,6 +43,10 @@ func init() {
 	} else {
 		oauthConfig.RedirectURL = "http://" + os.Getenv("HOST") + "/authorize"
 	}
+
+	oauthBotConfig.ClientID = oauthConfig.ClientID
+	oauthBotConfig.ClientSecret = oauthConfig.ClientSecret
+	oauthBotConfig.Endpoint = oauthConfig.Endpoint
 }
 
 func (s *server) createCSRFToken(ctx context.Context) (token string, err error) {
@@ -55,7 +64,7 @@ func (s *server) createCSRFToken(ctx context.Context) (token string, err error) 
 
 func (s *server) checkCSRFToken(ctx context.Context, token string) (matched bool, err error) {
 	var num int
-	err = s.Redis.Do(ctx, radix.Cmd(&num, "LREM", "CSRF", "1", token))
+	err = s.Redis.Do(ctx, radix.Cmd(&num, "LREM", "csrf", "1", token))
 	if err != nil {
 		return
 	}
@@ -82,6 +91,10 @@ func (s *server) handleLogin(w http.ResponseWriter, r *http.Request, _ httproute
 	}
 
 	url := oauthConfig.AuthCodeURL(csrf, oauth2.AccessTypeOnline) + "&prompt=none"
+
+	if r.FormValue("add") != "" {
+		url = oauthBotConfig.AuthCodeURL(csrf, oauth2.AccessTypeOnline) + "&prompt=none&permissions=537259248"
+	}
 
 	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 }
@@ -170,7 +183,6 @@ func (s *server) RequireSession(inner httprouter.Handle) httprouter.Handle {
 
 		cookie, err := r.Cookie(sessionCookieName)
 		if err != nil {
-			s.Sugar.Errorf("Error getting cookie: %v", err)
 			loginRedirect(w, r)
 			return
 		}

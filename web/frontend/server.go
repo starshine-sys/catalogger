@@ -66,7 +66,7 @@ func (s *server) serverPage(w http.ResponseWriter, r *http.Request, params httpr
 	}
 
 	resp, err := s.RPC.Guild(r.Context(), &proto.GuildRequest{Id: uint64(guildID), UserId: uint64(client.User.ID)})
-	if err != nil {
+	if err != nil || !discord.Permissions(resp.GetPermissions()).Has(discord.PermissionManageGuild) {
 		fmt.Fprint(w, "You're not in that server.")
 		return
 	}

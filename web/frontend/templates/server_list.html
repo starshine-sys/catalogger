@@ -10,6 +10,11 @@
 		integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
 
 	<style>
+		.container {
+            margin-top: 1em;
+            margin-bottom: 1em;
+        }
+
 		.dropdown-menu {
 			max-height: 30em;
 			overflow-y: auto;
@@ -32,9 +37,8 @@
 						<a href="/" class="nav-link">Home</a>
 					</li>
 					<li class="nav-item">
-						<a href="https://github.com/starshine-sys/catalogger/blob/main/docs/USAGE.md"
-							class="nav-link">Documentation</a>
-					</li>
+                        <a href="/docs" class="nav-link active">Documentation</a>
+                    </li>
 					<li class="nav-item dropdown">
 						<a class="nav-link dropdown-toggle" href="#" id="serverListLink" role="button"
 							data-bs-toggle="dropdown" aria-expanded="false">
@@ -89,12 +93,23 @@
 
 		<div class="list-group">
 			{{range .Guilds}}
-			<a href="{{.Link}}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+			<a href="{{.Link}}"
+				class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
 				<span><img src="{{.IconURL}}" alt="{{.Name}}" style="border-radius: 0.75em; height: 1.5em;">
-				{{.Name}}</span> {{if (not .Joined)}}<span class="badge bg-secondary rounded-pill ms-auto">click to add</span>{{end}}
+					{{.Name}}</span> {{if (not .Joined)}}<span class="badge bg-secondary rounded-pill ms-auto">click to
+					add</span>{{end}}
 			</a>
 			{{end}}
 		</div>
+
+		<hr>
+		<footer>
+			<p>
+				<a href="/privacy">Privacy</a>
+				&middot;
+				<a href="https://github.com/starshine-sys/catalogger">Source code</a>
+			</p>
+		</footer>
 	</div>
 
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"

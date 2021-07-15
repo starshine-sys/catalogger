@@ -16,14 +16,21 @@
         }
 
         .panel-form {
-            background-color: #ccc;
-            border: 1px solid #999;
+            background-color: #eee;
+            border: 1px solid #ccc;
             border-radius: 10px;
             padding: 10px 10px;
+            box-shadow: 5px 5px 5px -2px #dbdbdb;
+            margin-bottom: 1em;
         }
 
         .channel-entry {
             padding: 0.5em 0;
+        }
+
+        .container {
+            margin-top: 1em;
+            margin-bottom: 1em;
         }
     </style>
 </head>
@@ -43,8 +50,7 @@
                         <a href="/" class="nav-link">Home</a>
                     </li>
                     <li class="nav-item">
-                        <a href="https://github.com/starshine-sys/catalogger/blob/main/docs/USAGE.md"
-                            class="nav-link">Documentation</a>
+                        <a href="/docs" class="nav-link active">Documentation</a>
                     </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="serverListLink" role="button"
@@ -98,15 +104,17 @@
 
     <div class="container">
         <div class="row">
-            <div class="col">
+            <div class="col-md">
                 <div class="panel-form">
                     <h3>Default log channels</h3>
-                    <form action="/servers/{{.Guild.ID}}/save-channels" method="post">
+                    <form action="/servers/{{.Guild.ID}}/save-channels" method="post"
+                        onsubmit="sendChannels(event, this)">
                         <h5>Messages</h5>
 
                         <div class="channel-entry">
                             <div class="form-floating">
-                                <select id="MESSAGE_UPDATE" class="form-select" aria-label="Edited messages">
+                                <select id="MESSAGE_UPDATE" name="MESSAGE_UPDATE" class="form-select"
+                                    aria-label="Edited messages">
                                     {{selectOptions .Guild.Channels $.CurrentChannels.MESSAGE_UPDATE}}
                                 </select>
                                 <label for="MESSAGE_UPDATE">Edited messages</label>
@@ -115,7 +123,8 @@
 
                         <div class="channel-entry">
                             <div class="form-floating">
-                                <select id="MESSAGE_DELETE" class="form-select" aria-label="Deleted messages">
+                                <select id="MESSAGE_DELETE" name="MESSAGE_DELETE" class="form-select"
+                                    aria-label="Deleted messages">
                                     {{selectOptions .Guild.Channels $.CurrentChannels.MESSAGE_DELETE}}
                                 </select>
                                 <label for="MESSAGE_DELETE">Deleted messages</label>
@@ -124,8 +133,9 @@
 
                         <div class="channel-entry">
                             <div class="form-floating">
-                                <select id="MESSAGE_DELETE_BULK" aria-describedby="messageDeleteBulkHelp"
-                                    class="form-select" aria-label="Bulk deleted messages">
+                                <select id="MESSAGE_DELETE_BULK" name="MESSAGE_DELETE_BULK"
+                                    aria-describedby="messageDeleteBulkHelp" class="form-select"
+                                    aria-label="Bulk deleted messages">
                                     {{selectOptions .Guild.Channels $.CurrentChannels.MESSAGE_DELETE_BULK}}
                                 </select>
                                 <label for="MESSAGE_DELETE_BULK">Bulk deleted messages</label>
@@ -140,8 +150,8 @@
 
                         <div class="channel-entry">
                             <div class="form-floating">
-                                <select id="GUILD_MEMBER_ADD" aria-describedby="memberAddHelp" class="form-select"
-                                    aria-label="Members joining">
+                                <select id="GUILD_MEMBER_ADD" name="GUILD_MEMBER_ADD" aria-describedby="memberAddHelp"
+                                    class="form-select" aria-label="Members joining">
                                     {{selectOptions .Guild.Channels $.CurrentChannels.GUILD_MEMBER_ADD}}
                                 </select>
                                 <label for="GUILD_MEMBER_ADD">Members joining</label>
@@ -155,7 +165,8 @@
 
                         <div class="channel-entry">
                             <div class="form-floating">
-                                <select id="GUILD_MEMBER_REMOVE" class="form-select" aria-label="Members leaving">
+                                <select id="GUILD_MEMBER_REMOVE" name="GUILD_MEMBER_REMOVE" class="form-select"
+                                    aria-label="Members leaving">
                                     {{selectOptions .Guild.Channels $.CurrentChannels.GUILD_MEMBER_REMOVE}}
                                 </select>
                                 <label for="GUILD_MEMBER_REMOVE">Members leaving</label>
@@ -164,7 +175,8 @@
 
                         <div class="channel-entry">
                             <div class="form-floating">
-                                <select id="GUILD_BAN_ADD" class="form-select" aria-label="Bans" describedby="banHelp">
+                                <select id="GUILD_BAN_ADD" name="GUILD_BAN_ADD" class="form-select" aria-label="Bans"
+                                    aria-describedby="banHelp">
                                     {{selectOptions .Guild.Channels $.CurrentChannels.GUILD_BAN_ADD}}
                                 </select>
                                 <label for="GUILD_BAN_ADD">Bans</label>
@@ -178,7 +190,8 @@
 
                         <div class="channel-entry">
                             <div class="form-floating">
-                                <select id="GUILD_BAN_REMOVE" class="form-select" aria-label="Unbans">
+                                <select id="GUILD_BAN_REMOVE" name="GUILD_BAN_REMOVE" class="form-select"
+                                    aria-label="Unbans">
                                     {{selectOptions .Guild.Channels $.CurrentChannels.GUILD_BAN_REMOVE}}
                                 </select>
                                 <label for="GUILD_BAN_REMOVE">Unbans</label>
@@ -187,7 +200,8 @@
 
                         <div class="channel-entry">
                             <div class="form-floating">
-                                <select id="GUILD_MEMBER_UPDATE" class="form-select" aria-label="Member role changes">
+                                <select id="GUILD_MEMBER_UPDATE" name="GUILD_MEMBER_UPDATE" class="form-select"
+                                    aria-label="Member role changes">
                                     {{selectOptions .Guild.Channels $.CurrentChannels.GUILD_MEMBER_UPDATE}}
                                 </select>
                                 <label for="GUILD_MEMBER_UPDATE">Member role changes</label>
@@ -196,8 +210,8 @@
 
                         <div class="channel-entry">
                             <div class="form-floating">
-                                <select id="GUILD_MEMBER_NICK_UPDATE" class="form-select"
-                                    aria-label="Member name/avatar changes">
+                                <select id="GUILD_MEMBER_NICK_UPDATE" name="GUILD_MEMBER_NICK_UPDATE"
+                                    class="form-select" aria-label="Member name/avatar changes">
                                     {{selectOptions .Guild.Channels $.CurrentChannels.GUILD_MEMBER_NICK_UPDATE}}
                                 </select>
                                 <label for="GUILD_MEMBER_NICK_UPDATE">Member name/avatar changes</label>
@@ -208,7 +222,8 @@
 
                         <div class="channel-entry">
                             <div class="form-floating">
-                                <select id="INVITE_CREATE" class="form-select" aria-label="Created invites">
+                                <select id="INVITE_CREATE" name="INVITE_CREATE" class="form-select"
+                                    aria-label="Created invites">
                                     {{selectOptions .Guild.Channels $.CurrentChannels.INVITE_CREATE}}
                                 </select>
                                 <label for="INVITE_CREATE">Created invites</label>
@@ -217,7 +232,8 @@
 
                         <div class="channel-entry">
                             <div class="form-floating">
-                                <select id="INVITE_DELETE" class="form-select" aria-label="Deleted invites">
+                                <select id="INVITE_DELETE" name="INVITE_DELETE" class="form-select"
+                                    aria-label="Deleted invites">
                                     {{selectOptions .Guild.Channels $.CurrentChannels.INVITE_DELETE}}
                                 </select>
                                 <label for="INVITE_DELETE">Deleted invites</label>
@@ -226,7 +242,8 @@
 
                         <div class="channel-entry">
                             <div class="form-floating">
-                                <select id="CHANNEL_CREATE" class="form-select" aria-label="Created channels">
+                                <select id="CHANNEL_CREATE" name="CHANNEL_CREATE" class="form-select"
+                                    aria-label="Created channels">
                                     {{selectOptions .Guild.Channels $.CurrentChannels.CHANNEL_CREATE}}
                                 </select>
                                 <label for="CHANNEL_CREATE">Created channels</label>
@@ -235,7 +252,8 @@
 
                         <div class="channel-entry">
                             <div class="form-floating">
-                                <select id="CHANNEL_UPDATE" class="form-select" aria-label="Edited channels">
+                                <select id="CHANNEL_UPDATE" name="CHANNEL_UPDATE" class="form-select"
+                                    aria-label="Edited channels">
                                     {{selectOptions .Guild.Channels $.CurrentChannels.CHANNEL_UPDATE}}
                                 </select>
                                 <label for="CHANNEL_UPDATE">Edited channels</label>
@@ -244,7 +262,8 @@
 
                         <div class="channel-entry">
                             <div class="form-floating">
-                                <select id="CHANNEL_DELETE" class="form-select" aria-label="Deleted channels">
+                                <select id="CHANNEL_DELETE" name="CHANNEL_DELETE" class="form-select"
+                                    aria-label="Deleted channels">
                                     {{selectOptions .Guild.Channels $.CurrentChannels.CHANNEL_DELETE}}
                                 </select>
                                 <label for="CHANNEL_DELETE">Deleted channels</label>
@@ -253,7 +272,8 @@
 
                         <div class="channel-entry">
                             <div class="form-floating">
-                                <select id="GUILD_ROLE_CREATE" class="form-select" aria-label="Created roles">
+                                <select id="GUILD_ROLE_CREATE" name="GUILD_ROLE_CREATE" class="form-select"
+                                    aria-label="Created roles">
                                     {{selectOptions .Guild.Channels $.CurrentChannels.GUILD_ROLE_CREATE}}
                                 </select>
                                 <label for="GUILD_ROLE_CREATE">Created roles</label>
@@ -262,7 +282,8 @@
 
                         <div class="channel-entry">
                             <div class="form-floating">
-                                <select id="GUILD_ROLE_UPDATE" class="form-select" aria-label="Edited roles">
+                                <select id="GUILD_ROLE_UPDATE" name="GUILD_ROLE_UPDATE" class="form-select"
+                                    aria-label="Edited roles">
                                     {{selectOptions .Guild.Channels $.CurrentChannels.GUILD_ROLE_UPDATE}}
                                 </select>
                                 <label for="GUILD_ROLE_UPDATE">Edited roles</label>
@@ -271,7 +292,8 @@
 
                         <div class="channel-entry">
                             <div class="form-floating">
-                                <select id="GUILD_ROLE_DELETE" class="form-select" aria-label="Deleted roles">
+                                <select id="GUILD_ROLE_DELETE" name="GUILD_ROLE_DELETE" class="form-select"
+                                    aria-label="Deleted roles">
                                     {{selectOptions .Guild.Channels $.CurrentChannels.GUILD_ROLE_DELETE}}
                                 </select>
                                 <label for="GUILD_ROLE_DELETE">Deleted roles</label>
@@ -280,10 +302,25 @@
 
                         <div class="channel-entry">
                             <div class="form-floating">
-                                <select id="GUILD_UPDATE" class="form-select" aria-label="Server updates">
+                                <select id="GUILD_UPDATE" name="GUILD_UPDATE" class="form-select"
+                                    aria-label="Server updates">
                                     {{selectOptions .Guild.Channels $.CurrentChannels.GUILD_UPDATE}}
                                 </select>
                                 <label for="GUILD_UPDATE">Server updates</label>
+                            </div>
+                        </div>
+
+                        <div class="channel-entry">
+                            <div class="form-floating">
+                                <select id="GUILD_EMOJIS_UPDATE" name="GUILD_EMOJIS_UPDATE" class="form-select"
+                                    aria-label="Changes to emotes" aria-describedby="emojiHelp" disabled>
+                                    {{selectOptions .Guild.Channels $.CurrentChannels.GUILD_EMOJIS_UPDATE}}
+                                </select>
+                                <label for="GUILD_EMOJIS_UPDATE">Changes to emotes</label>
+                                <div id="emojiHelp" class="form-text">
+                                    <strong>Note:</strong> this event isn't logged (yet!), so you can't set a channel
+                                    for it.
+                                </div>
                             </div>
                         </div>
 
@@ -291,34 +328,44 @@
                     </form>
                 </div>
             </div>
-            <div class="col">
+            <div class="col-md">
                 <div class="panel-form">
+                    <h3>Ignored channels</h3>
+
+                    <p>Coming to the dashboard Soon! For now, use the <code>cl!ignore</code> command in the channel(s)
+                        you want to ignore.</p>
+                </div>
+
+                <!-- <div class="panel-form">
                     <h3>Ignored channels</h3>
                     <p>
                         Channels selected here will not have any messages logged.
                         This only applies to the <strong>Edited messages</strong>, <strong>Deleted messages</strong>,
                         and <strong>Bulk deleted messages</strong> logs.
                     </p>
-                    <form action="/servers/{{.Guild.ID}}/save-ignored" method="post">
+                    <form action="/servers/{{.Guild.ID}}/save-ignored" method="post"
+                        onsubmit="ignoreChannels(event, this)">
                         <div class="channel-entry">
                             <select id="ignored-channels" multiple class="form-select" aria-label="Ignored channels"
-                                size="10">
+                                size="10" name="ignored-channels">
                                 {{multiselectOptions .Guild.Channels $.IgnoredChannels}}
                             </select>
                         </div>
 
                         <button type="submit" class="btn btn-success">Save</button>
                     </form>
-                </div>
+                </div> -->
 
                 <div class="panel-form">
                     <h3>Redirected channels</h3>
-                    <form action="/servers/{{.Guild.ID}}/add-redirect" method="post">
+                    <form action="/servers/{{.Guild.ID}}/add-redirect" method="post"
+                        onsubmit="addRedirect(event, this)">
                         <h5>Add a redirect</h5>
                         <div class="row">
                             <div class="col">
                                 <div class="form-floating">
-                                    <select id="from-channel" class="form-select" aria-label="From channel">
+                                    <select id="from-channel" class="form-select" aria-label="From channel"
+                                        name="from-channel">
                                         {{selectOptionsIgnoreMultiple .Guild.Channels $.RedirectedChannels}}
                                     </select>
                                     <label for="from-channel">From</label>
@@ -326,7 +373,8 @@
                             </div>
                             <div class="col">
                                 <div class="form-floating">
-                                    <select id="to-channel" class="form-select" aria-label="To channel">
+                                    <select id="to-channel" class="form-select" aria-label="To channel"
+                                        name="to-channel">
                                         {{selectOptions .Guild.Channels 0}}
                                     </select>
                                     <label for="to-channel">To</label>
@@ -335,17 +383,108 @@
                         </div>
                         <button type="submit" class="btn btn-success">Add redirect</button>
                     </form>
-                    {{if .Redirects}}
                     <div class="redirects">
                         <h5>Currently redirected channels</h5>
-                        <ul>
+                        <ul id="redirectList">
                             {{range .Redirects}}
-                            <li>#{{.From.Name}} logging to #{{.To.Name}} <a href="/servers/{{$.Guild.ID}}/delete-redirect/{{.From.ID}}">(delete)</a></li>
+                            <li id="{{.From.ID}}">#{{.From.Name}} logging to #{{.To.Name}} <a
+                                    href="/servers/{{$.Guild.ID}}/delete-redirect/{{.From.ID}}"
+                                    onclick="delRedirect(this.parentElement.id, this.href, event)">(delete)</a></li>
                             {{end}}
                         </ul>
                     </div>
-                    {{end}}
                 </div>
+            </div>
+        </div>
+
+        <hr>
+        <footer>
+            <p>
+                <a href="/privacy">Privacy</a>
+                &middot;
+                <a href="https://github.com/starshine-sys/catalogger">Source code</a>
+            </p>
+        </footer>
+    </div>
+
+    <div class="position-fixed bottom-0 end-0 p-3">
+        <div class="toast hide align-items-center text-white bg-success" role="alert" aria-live="assertive"
+            aria-atomic="true" id="saveChannelSuccess">
+            <div class="d-flex">
+                <div class="toast-body">
+                    Successfully saved log channels!
+                </div>
+                <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+
+        <div class="toast hide align-items-center text-white bg-danger" role="alert" aria-live="assertive"
+            aria-atomic="true" id="saveChannelError">
+            <div class="d-flex">
+                <div class="toast-body">
+                    An error occurred while saving log channels.
+                </div>
+                <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+
+        <div class="toast hide align-items-center text-white bg-success" role="alert" aria-live="assertive"
+            aria-atomic="true" id="ignoreChannelSuccess">
+            <div class="d-flex">
+                <div class="toast-body">
+                    Successfully saved ignored channels!
+                </div>
+                <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+
+        <div class="toast hide align-items-center text-white bg-danger" role="alert" aria-live="assertive"
+            aria-atomic="true" id="ignoreChannelError">
+            <div class="d-flex">
+                <div class="toast-body">
+                    An error occurred while saving ignored channels.
+                </div>
+                <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+
+        <div class="toast hide align-items-center text-white bg-success" role="alert" aria-live="assertive"
+            aria-atomic="true" id="addRedirectSuccess">
+            <div class="d-flex">
+                <div class="toast-body">
+                    Successfully added redirect!
+                </div>
+                <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+
+        <div class="toast hide align-items-center text-white bg-danger" role="alert" aria-live="assertive"
+            aria-atomic="true" id="addRedirectError">
+            <div class="d-flex">
+                <div class="toast-body">
+                    An error occurred while adding that redirect.
+                </div>
+                <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+
+        <div class="toast hide align-items-center text-white bg-success" role="alert" aria-live="assertive"
+            aria-atomic="true" id="delRedirectSuccess">
+            <div class="d-flex">
+                <div class="toast-body">
+                    Successfully removed redirect!
+                </div>
+                <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+
+        <div class="toast hide align-items-center text-white bg-danger" role="alert" aria-live="assertive"
+            aria-atomic="true" id="delRedirectError">
+            <div class="d-flex">
+                <div class="toast-body">
+                    An error occurred while removing that redirect.
+                </div>
+                <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
             </div>
         </div>
     </div>
@@ -353,6 +492,91 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
         crossorigin="anonymous"></script>
+
+    <script>
+        function sendChannels(e, form) {
+            fetch(form.action, { method: 'post', body: new FormData(form), credentials: 'same-origin' })
+                .then(resp => {
+                    let toast;
+
+                    if (resp.ok) {
+                        toast = new bootstrap.Toast(document.getElementById('saveChannelSuccess'))
+                    } else {
+                        toast = new bootstrap.Toast(document.getElementById('saveChannelError'))
+                    }
+
+                    toast.show();
+                })
+                .catch(e => console.log(e));
+
+            e.preventDefault();
+        }
+
+        // function ignoreChannels(e, form) {
+        //     console.log("Setting ignored channels...")
+
+        //     fetch(form.action, { method: 'post', body: new FormData(form), credentials: 'same-origin' })
+        //         .then(resp => {
+        //             let toast;
+
+        //             if (resp.ok) {
+        //                 toast = new bootstrap.Toast(document.getElementById('ignoredChannelSuccess'))
+        //             } else {
+        //                 toast = new bootstrap.Toast(document.getElementById('ignoredChannelError'))
+        //             }
+
+        //             toast.show();
+        //         })
+        //         .catch(e => console.log(e));
+
+        //     e.preventDefault();
+        // }
+
+        function addRedirect(e, form) {
+            fetch(form.action, { method: 'post', body: new FormData(form), credentials: 'same-origin' })
+                .then(resp => {
+                    let toast;
+
+                    if (resp.ok) {
+                        toast = new bootstrap.Toast(document.getElementById('addRedirectSuccess'))
+
+                        resp.json().then(data => {
+                            const node = document.getElementById('redirectList');
+                            node.insertAdjacentHTML('beforeend', `<li id="${data.from.id}">#${data.from.name} logging to ${data.to.name} <a
+                                    href="/servers/${data.guild_id}/delete-redirect/${data.from.id}" onclick="delRedirect(this.parentElement.id, this.href, event)">(delete)</a></li>`)
+                        });
+                    } else {
+                        toast = new bootstrap.Toast(document.getElementById('addRedirectError'))
+                    }
+
+                    toast.show();
+                })
+                .catch(e => console.log(e));
+
+            e.preventDefault();
+        }
+
+        function delRedirect(id, url, e) {
+            fetch(url, { method: 'post', credentials: 'same-origin' })
+                .then(resp => {
+                    let toast;
+
+                    if (resp.ok) {
+                        toast = new bootstrap.Toast(document.getElementById('delRedirectSuccess'))
+
+                        const node = document.getElementById(id);
+                        node.remove()
+                    } else {
+                        toast = new bootstrap.Toast(document.getElementById('delRedirectError'))
+                    }
+
+                    toast.show();
+                })
+                .catch(e => console.log(e))
+
+            e.preventDefault();
+        }
+    </script>
 </body>
 
 </html>

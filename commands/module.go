@@ -77,7 +77,7 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 
 	b.AddCommand(&bcr.Command{
 		Name:    "ignore-channel",
-		Aliases: []string{"ignorechannel"},
+		Aliases: []string{"ignorechannel", "ignore"},
 		Summary: "Ignore the current channel.",
 
 		Permissions: discord.PermissionManageGuild,

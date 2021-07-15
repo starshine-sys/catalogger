@@ -14,6 +14,7 @@ require (
 	github.com/julienschmidt/httprouter v1.2.0
 	github.com/mediocregopher/radix/v4 v4.0.0-beta.1
 	github.com/rubenv/sql-migrate v0.0.0-20210614095031-55d5740dbbcc
+	github.com/russross/blackfriday/v2 v2.0.1
 	github.com/spf13/pflag v1.0.5
 	github.com/starshine-sys/bcr v0.19.1
 	github.com/starshine-sys/pkgo v1.0.0
