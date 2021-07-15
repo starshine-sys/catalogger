@@ -16,8 +16,18 @@ To invite the bot to your server, use [this link](https://discord.com/api/oauth2
 1. Create a database
 2. Copy `.env.example` to `.env` and fill it in
 3. `go build`
-4. Run the migrations in `migrations/` (using [tern](https://github.com/jackc/tern))
-5. Run the executable
+4. Run the executable
+
+### Dashboard
+
+The dashboard really isn't made with self-hosting in mind; the entire bot can be configured through commands and *securely* setting up the dashboard is too complicated to go into detail here. That being said, the dashboard requires the following extra software:
+
+- Redis, only v6.2 tested
+- A reverse proxy
+
+To run the dashboard, copy `web/frontend/.env.example` to `web/frontend/.env`, fill it in, build that directory, and run the executable.
+
+You'll also want to set `DASHBOARD_BASE` in the bot's `.env` file. (Optional, but highly recommended, so the `cl!dashboard` command works)
 
 ## License
 

@@ -2,12 +2,22 @@ package db
 
 import (
 	"context"
+	"database/sql"
+	"embed"
 	"os"
 
 	"github.com/getsentry/sentry-go"
 	"github.com/jackc/pgx/v4/pgxpool"
+	migrate "github.com/rubenv/sql-migrate"
+
+	// pgx driver for migrations
+	_ "github.com/jackc/pgx/v4/stdlib"
+
 	"go.uber.org/zap"
 )
+
+//go:embed migrations
+var fs embed.FS
 
 // DB ...
 type DB struct {
@@ -22,6 +32,10 @@ type DB struct {
 
 // New ...
 func New(url string, sugar *zap.SugaredLogger, hub *sentry.Hub) (*DB, error) {
+	err := runMigrations(url, sugar)
+	if err != nil {
+		return nil, err
+	}
 
 	pool, err := pgxpool.Connect(context.Background(), url)
 	if err != nil {
@@ -37,4 +51,33 @@ func New(url string, sugar *zap.SugaredLogger, hub *sentry.Hub) (*DB, error) {
 	copy(db.AESKey[:], []byte(os.Getenv("AES_KEY")))
 
 	return db, nil
+}
+
+func runMigrations(url string, sugar *zap.SugaredLogger) (err error) {
+	db, err := sql.Open("pgx", url)
+	if err != nil {
+		return err
+	}
+
+	err = db.Ping()
+	if err != nil {
+		return err
+	}
+
+	migrations := &migrate.EmbedFileSystemMigrationSource{
+		FileSystem: fs,
+		Root:       "migrations",
+	}
+
+	n, err := migrate.Exec(db, "postgres", migrations, migrate.Up)
+	if err != nil {
+		return err
+	}
+
+	if n != 0 {
+		sugar.Infof("Performed %v migrations!", n)
+	}
+
+	err = db.Close()
+	return err
 }

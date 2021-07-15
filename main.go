@@ -19,6 +19,7 @@ import (
 	"github.com/starshine-sys/catalogger/commands"
 	"github.com/starshine-sys/catalogger/db"
 	"github.com/starshine-sys/catalogger/events"
+	"github.com/starshine-sys/catalogger/web/server"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -26,14 +27,21 @@ import (
 func main() {
 	debug, _ := strconv.ParseBool(os.Getenv("DEBUG_LOGGING"))
 
-	zapConf := zap.NewDevelopmentConfig()
+	// set up a logger
+	zcfg := zap.NewProductionConfig()
+	zcfg.Encoding = "console"
+	zcfg.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	zcfg.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+	zcfg.EncoderConfig.EncodeCaller = zapcore.ShortCallerEncoder
+	zcfg.EncoderConfig.EncodeDuration = zapcore.StringDurationEncoder
+
 	if debug {
-		zapConf.Level = zap.NewAtomicLevelAt(zapcore.DebugLevel)
+		zcfg.Level.SetLevel(zapcore.DebugLevel)
 	} else {
-		zapConf.Level = zap.NewAtomicLevelAt(zapcore.InfoLevel)
+		zcfg.Level.SetLevel(zapcore.InfoLevel)
 	}
 
-	zap, err := zapConf.Build()
+	zap, err := zcfg.Build(zap.AddStacktrace(zapcore.ErrorLevel))
 	if err != nil {
 		panic(err)
 	}
@@ -100,7 +108,9 @@ func main() {
 
 	// actually load events + commands
 	commands.Init(r, db, sugar)
-	events.Init(r, db, sugar)
+
+	cacheFunc, countFunc, guildPermFunc, joinedFunc := events.Init(r, db, sugar)
+	server.NewServer(r, db, cacheFunc, countFunc, guildPermFunc, joinedFunc)
 
 	// connect to discord
 	if err := r.ShardManager.Open(context.Background()); err != nil {

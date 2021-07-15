@@ -1,0 +1,76 @@
+syntax = "proto3";
+
+option go_package = "github.com/starshine-sys/catalogger/web/proto";
+
+service GuildInfoService {
+    rpc UserGuildList(UserGuildListRequest) returns (UserGuildListResponse);
+    rpc Guild(GuildRequest) returns (GuildResponse);
+    rpc ClearCache(ClearCacheRequest) returns (ClearCacheResponse);
+    rpc GuildUserCount(GuildUserCountRequest) returns (GuildUserCountResponse);
+}
+
+message GuildUserCountRequest {}
+
+message GuildUserCountResponse {
+    int64 guild_count = 1;
+    int64 user_count = 2;
+}
+
+// user guild list -> filtered guild list with joined info
+message UserGuildListRequest {
+    repeated uint64 guild_ids = 1;
+}
+
+message UserGuildListResponse {
+    repeated GuildListGuild guilds = 1;
+}
+
+// A single guild in the filtered list. "joined" is true if the bot is a member of the guild, false otherwise.
+message GuildListGuild {
+    uint64 id = 1;
+    bool joined = 2;
+}
+
+message GuildRequest {
+    uint64 id = 1;
+    uint64 user_id = 2;
+}
+
+// A stripped-down discord.Guild object
+message GuildResponse {
+    uint64 id = 1;
+    string name = 2;
+    string icon = 3;
+
+    repeated GuildChannel channels = 4;
+
+    uint64 permissions = 5;
+}
+
+// A stripped-down discord.Channel object
+message GuildChannel {
+    uint64 id = 1;
+    uint64 category_id = 2;
+    string name = 3;
+    int32 position = 4;
+
+    enum ChannelType {
+        UNKNOWN = 0;
+        TEXT = 1;
+        NEWS = 2;
+        CATEGORY = 3;
+        VOICE = 4;
+        THREAD = 5;
+    }
+    ChannelType type = 5;
+}
+
+message ClearCacheRequest {
+    uint64 guild_id = 1;
+    repeated uint64 channel_ids = 2;
+}
+
+message ClearCacheResponse {
+    bool ok = 1;
+    string error = 2;
+}
