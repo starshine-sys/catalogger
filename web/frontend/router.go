@@ -74,6 +74,13 @@ func newRouter(s *server) *httprouter.Router {
 		}
 	})
 
+	r.GET("/robots.txt", func(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
+		w.Write([]byte(`User-agent: *
+Disallow: /servers/
+Disallow: /login
+Disallow: /authorize`))
+	})
+
 	r.ServeFiles("/static/*filepath", http.FS(static))
 
 	return r
