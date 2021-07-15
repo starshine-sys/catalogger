@@ -241,8 +241,16 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 		Value: fmt.Sprintf("https://discord.com/channels/%v/%v/%v", m.GuildID, m.ChannelID, m.ID),
 	})
 
-	client := webhook.New(wh.ID, wh.Token)
-	bot.Queue(wh, "message_update", client, e)
+	err = webhook.New(wh.ID, wh.Token).Execute(webhook.ExecuteData{
+		AvatarURL: bot.Router.Bot.AvatarURL(),
+		Embeds:    []discord.Embed{e},
+	})
+	if err != nil {
+		bot.DB.Report(db.ErrorContext{
+			Event:   "message_update",
+			GuildID: m.GuildID,
+		}, err)
+	}
 
 	// update the message
 	if msg.System != "" {
