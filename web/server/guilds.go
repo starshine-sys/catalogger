@@ -105,3 +105,18 @@ func (s *RPCServer) GuildUserCount(ctx context.Context, req *proto.GuildUserCoun
 
 	return resp, nil
 }
+
+// ClearCache ...
+func (s *RPCServer) ClearCache(_ context.Context, req *proto.ClearCacheRequest) (*proto.ClearCacheResponse, error) {
+	s.DB.Sugar.Infof("Clearing cache for %v and channels %v", req.GetGuildId(), req.GetChannelIds())
+
+	guildID := discord.GuildID(req.GetGuildId())
+	channelIDs := []discord.ChannelID{}
+	for _, id := range req.GetChannelIds() {
+		channelIDs = append(channelIDs, discord.ChannelID(id))
+	}
+
+	s.clearCache(guildID, channelIDs...)
+
+	return &proto.ClearCacheResponse{Ok: true}, nil
+}

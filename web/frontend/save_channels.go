@@ -66,6 +66,11 @@ func (s *server) saveChannels(w http.ResponseWriter, r *http.Request, params htt
 		events[ev] = discord.ChannelID(id)
 	}
 
+	_, err = s.RPC.ClearCache(ctx, &proto.ClearCacheRequest{GuildId: resp.GetId()})
+	if err != nil {
+		s.Sugar.Errorf("Error clearing cache for %v: %v", resp.GetId(), err)
+	}
+
 	err = s.DB.SetChannels(discord.GuildID(resp.GetId()), events)
 	if err != nil {
 		http.Error(w, "Error setting channels.", http.StatusInternalServerError)

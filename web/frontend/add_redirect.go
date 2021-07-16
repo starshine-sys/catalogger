@@ -85,6 +85,11 @@ func (s *server) addRedirect(w http.ResponseWriter, r *http.Request, params http
 		return
 	}
 
+	_, err = s.RPC.ClearCache(ctx, &proto.ClearCacheRequest{GuildId: resp.GetId(), ChannelIds: []uint64{fromID, toID}})
+	if err != nil {
+		s.Sugar.Errorf("Error clearing cache for %v: %v", resp.GetId(), err)
+	}
+
 	type ch struct {
 		ID   discord.ChannelID `json:"id"`
 		Name string            `json:"name"`

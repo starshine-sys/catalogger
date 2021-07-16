@@ -67,5 +67,10 @@ func (s *server) delRedirect(w http.ResponseWriter, r *http.Request, params http
 		return
 	}
 
+	_, err = s.RPC.ClearCache(ctx, &proto.ClearCacheRequest{GuildId: resp.GetId(), ChannelIds: []uint64{chID}})
+	if err != nil {
+		s.Sugar.Errorf("Error clearing cache for %v: %v", resp.GetId(), err)
+	}
+
 	fmt.Fprint(w, "Success!")
 }
