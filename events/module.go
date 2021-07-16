@@ -245,6 +245,14 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) (clearCacheFunc func(d
 		Command: b.ping,
 	})
 
+	b.AddCommand(&bcr.Command{
+		Name:      "admin-users",
+		Summary:   "Show user/bot count for all servers. **Bot owner only**",
+		OwnerOnly: true,
+		Hidden:    true,
+		Command:   b.adminInspectUsers,
+	})
+
 	go b.cleanMessages()
 
 	clearCacheFunc = b.ResetCache
