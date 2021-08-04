@@ -17,6 +17,15 @@ func (bot *Bot) pkMessageDelete(m *gateway.MessageDeleteEvent) {
 		return
 	}
 
+	channel, err := bot.State(m.GuildID).Channel(m.ChannelID)
+	if err != nil {
+		bot.DB.Report(db.ErrorContext{
+			Event:   "pk_message_delete",
+			GuildID: m.GuildID,
+		}, err)
+		return
+	}
+
 	ch, err := bot.DB.Channels(m.GuildID)
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
@@ -29,9 +38,13 @@ func (bot *Bot) pkMessageDelete(m *gateway.MessageDeleteEvent) {
 		return
 	}
 
-	// if the channels is blacklisted, return
+	// if the channel is blacklisted, return
+	channelID := m.ChannelID
+	if channel.Type == discord.GuildNewsThread || channel.Type == discord.GuildPrivateThread || channel.Type == discord.GuildPublicThread {
+		channelID = channel.CategoryID
+	}
 	var blacklisted bool
-	if bot.DB.Pool.QueryRow(context.Background(), "select exists(select id from guilds where $1 = any(ignored_channels) and id = $2)", m.ChannelID, m.GuildID).Scan(&blacklisted); blacklisted {
+	if bot.DB.Pool.QueryRow(context.Background(), "select exists(select id from guilds where $1 = any(ignored_channels) and id = $2)", channelID, m.GuildID).Scan(&blacklisted); blacklisted {
 		return
 	}
 
@@ -59,8 +72,8 @@ func (bot *Bot) pkMessageDelete(m *gateway.MessageDeleteEvent) {
 		return
 	}
 
-	if redirects[m.ChannelID.String()].IsValid() {
-		wh, err = bot.getRedirect(m.GuildID, redirects[m.ChannelID.String()])
+	if redirects[channelID.String()].IsValid() {
+		wh, err = bot.getRedirect(m.GuildID, redirects[channelID.String()])
 		if err != nil {
 			bot.DB.Report(db.ErrorContext{
 				Event:   "pk_message_delete",
@@ -116,6 +129,10 @@ func (bot *Bot) pkMessageDelete(m *gateway.MessageDeleteEvent) {
 			Text: fmt.Sprintf("ID: %v", msg.MsgID),
 		},
 		Timestamp: discord.NewTimestamp(msg.MsgID.Time()),
+	}
+
+	if channel.Type == discord.GuildNewsThread || channel.Type == discord.GuildPrivateThread || channel.Type == discord.GuildPublicThread {
+		e.Fields[0].Value = fmt.Sprintf("%v\nID: %v\n\nThread: %v (%v)", channel.CategoryID.Mention(), channel.CategoryID, channel.Name, channel.Mention())
 	}
 
 	_, err = webhook.New(wh.ID, wh.Token).ExecuteAndWait(webhook.ExecuteData{

@@ -23,6 +23,15 @@ func (bot *Bot) bulkMessageDelete(ev *gateway.MessageDeleteBulkEvent) {
 		return
 	}
 
+	channel, err := bot.State(ev.GuildID).Channel(ev.ChannelID)
+	if err != nil {
+		bot.DB.Report(db.ErrorContext{
+			Event:   "bulk_message_delete",
+			GuildID: ev.GuildID,
+		}, err)
+		return
+	}
+
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
@@ -37,8 +46,12 @@ func (bot *Bot) bulkMessageDelete(ev *gateway.MessageDeleteBulkEvent) {
 	}
 
 	// if the channels is blacklisted, return
+	channelID := ev.ChannelID
+	if channel.Type == discord.GuildNewsThread || channel.Type == discord.GuildPrivateThread || channel.Type == discord.GuildPublicThread {
+		channelID = channel.CategoryID
+	}
 	var blacklisted bool
-	if bot.DB.Pool.QueryRow(context.Background(), "select exists(select id from guilds where $1 = any(ignored_channels) and id = $2)", ev.ChannelID, ev.GuildID).Scan(&blacklisted); blacklisted {
+	if bot.DB.Pool.QueryRow(context.Background(), "select exists(select id from guilds where $1 = any(ignored_channels) and id = $2)", channelID, ev.GuildID).Scan(&blacklisted); blacklisted {
 		return
 	}
 
@@ -49,6 +62,26 @@ func (bot *Bot) bulkMessageDelete(ev *gateway.MessageDeleteBulkEvent) {
 			GuildID: ev.GuildID,
 		}, err)
 		return
+	}
+
+	redirects, err := bot.DB.Redirects(ev.GuildID)
+	if err != nil {
+		bot.DB.Report(db.ErrorContext{
+			Event:   "bulk_message_delete",
+			GuildID: ev.GuildID,
+		}, err)
+		return
+	}
+
+	if redirects[channelID.String()].IsValid() {
+		wh, err = bot.getRedirect(ev.GuildID, redirects[channelID.String()])
+		if err != nil {
+			bot.DB.Report(db.ErrorContext{
+				Event:   "bulk_message_delete",
+				GuildID: ev.GuildID,
+			}, err)
+			return
+		}
 	}
 
 	var msgs []*db.Message

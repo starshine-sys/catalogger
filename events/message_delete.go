@@ -43,7 +43,7 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 		return
 	}
 
-	// if the channels is blacklisted, return
+	// if the channel is blacklisted, return
 	channelID := m.ChannelID
 	if channel.Type == discord.GuildNewsThread || channel.Type == discord.GuildPrivateThread || channel.Type == discord.GuildPublicThread {
 		channelID = channel.CategoryID
@@ -143,23 +143,29 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 		Title:       "Message deleted",
 		Description: msg.Content,
 		Color:       bcr.ColourRed,
-		Fields: []discord.EmbedField{
-			{
-				Name:   "Channel",
-				Value:  fmt.Sprintf("%v\nID: %v", msg.ChannelID.Mention(), msg.ChannelID),
-				Inline: true,
-			},
-			{
-				Name:   "Sender",
-				Value:  mention,
-				Inline: true,
-			},
-		},
 		Footer: &discord.EmbedFooter{
 			Text: fmt.Sprintf("ID: %v", msg.MsgID),
 		},
 		Timestamp: discord.NewTimestamp(msg.MsgID.Time()),
 	}
+
+	value := fmt.Sprintf("%v\nID: %v", msg.ChannelID.Mention(), msg.ChannelID)
+	if channel.Type == discord.GuildNewsThread || channel.Type == discord.GuildPrivateThread || channel.Type == discord.GuildPublicThread {
+		value = fmt.Sprintf("%v\nID: %v\n\nThread: %v (%v)", channel.CategoryID.Mention(), channel.CategoryID, channel.Name, channel.Mention())
+	}
+
+	e.Fields = append(e.Fields, []discord.EmbedField{
+		{
+			Name:   "Channel",
+			Value:  value,
+			Inline: true,
+		},
+		{
+			Name:   "Sender",
+			Value:  mention,
+			Inline: true,
+		},
+	}...)
 
 	_, err = webhook.New(wh.ID, wh.Token).ExecuteAndWait(webhook.ExecuteData{
 		AvatarURL: bot.Router.Bot.AvatarURL(),

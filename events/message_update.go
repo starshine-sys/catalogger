@@ -22,6 +22,15 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 		return
 	}
 
+	channel, err := bot.State(m.GuildID).Channel(m.ChannelID)
+	if err != nil {
+		bot.DB.Report(db.ErrorContext{
+			Event:   "message_update",
+			GuildID: m.GuildID,
+		}, err)
+		return
+	}
+
 	ch, err := bot.DB.Channels(m.GuildID)
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
@@ -36,8 +45,12 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 	}
 
 	// if the channel is blacklisted, return
+	channelID := m.ChannelID
+	if channel.Type == discord.GuildNewsThread || channel.Type == discord.GuildPrivateThread || channel.Type == discord.GuildPublicThread {
+		channelID = channel.CategoryID
+	}
 	var blacklisted bool
-	if bot.DB.Pool.QueryRow(context.Background(), "select exists(select id from guilds where $1 = any(ignored_channels) and id = $2)", m.ChannelID, m.GuildID).Scan(&blacklisted); blacklisted {
+	if bot.DB.Pool.QueryRow(context.Background(), "select exists(select id from guilds where $1 = any(ignored_channels) and id = $2)", channelID, m.GuildID).Scan(&blacklisted); blacklisted {
 		return
 	}
 
@@ -77,8 +90,8 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 		return
 	}
 
-	if redirects[m.ChannelID.String()].IsValid() {
-		wh, err = bot.getRedirect(m.GuildID, redirects[m.ChannelID.String()])
+	if redirects[channelID.String()].IsValid() {
+		wh, err = bot.getRedirect(m.GuildID, redirects[channelID.String()])
 		if err != nil {
 			bot.DB.Report(db.ErrorContext{
 				Event:   "message_update",
@@ -197,14 +210,19 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 		})
 	}
 
+	value := fmt.Sprintf("%v\nID: %v", msg.ChannelID.Mention(), msg.ChannelID)
+	if channel.Type == discord.GuildNewsThread || channel.Type == discord.GuildPrivateThread || channel.Type == discord.GuildPublicThread {
+		value = fmt.Sprintf("%v\nID: %v\n\nThread: %v (%v)", channel.CategoryID.Mention(), channel.CategoryID, channel.Name, channel.Mention())
+	}
+
 	e.Fields = append(e.Fields, []discord.EmbedField{
 		{
 			Name:   "Channel",
-			Value:  fmt.Sprintf("%v\nID: %v", msg.ChannelID.Mention(), msg.ChannelID),
+			Value:  value,
 			Inline: true,
 		},
 		{
-			Name:   "Author",
+			Name:   "Sender",
 			Value:  mention,
 			Inline: true,
 		},
