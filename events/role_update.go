@@ -29,6 +29,7 @@ func (bot *Bot) guildRoleUpdate(ev *gateway.GuildRoleUpdateEvent) {
 			Event:   "role_update",
 			GuildID: ev.GuildID,
 		}, err)
+		return
 	}
 
 	if !ch["GUILD_ROLE_UPDATE"].IsValid() {
@@ -41,6 +42,7 @@ func (bot *Bot) guildRoleUpdate(ev *gateway.GuildRoleUpdateEvent) {
 			Event:   "role_update",
 			GuildID: ev.GuildID,
 		}, err)
+		return
 	}
 
 	e := discord.Embed{
@@ -114,5 +116,6 @@ func (bot *Bot) guildRoleUpdate(ev *gateway.GuildRoleUpdateEvent) {
 			Event:   "role_update",
 			GuildID: ev.GuildID,
 		}, err)
+		return
 	}
 }

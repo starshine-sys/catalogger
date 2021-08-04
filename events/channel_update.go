@@ -28,6 +28,7 @@ func (bot *Bot) channelUpdate(ev *gateway.ChannelUpdateEvent) {
 			Event:   "channel_update",
 			GuildID: ev.GuildID,
 		}, err)
+		return
 	}
 	if !ch["CHANNEL_UPDATE"].IsValid() {
 		return
@@ -198,6 +199,7 @@ func (bot *Bot) channelUpdate(ev *gateway.ChannelUpdateEvent) {
 			Event:   "channel_update",
 			GuildID: ev.GuildID,
 		}, err)
+		return
 	}
 }
 

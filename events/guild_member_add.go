@@ -29,6 +29,7 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) {
 			Event:   "guild_member_add",
 			GuildID: m.GuildID,
 		}, err)
+		return
 	}
 
 	if !ch["GUILD_MEMBER_ADD"].IsValid() {
@@ -41,6 +42,7 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) {
 			Event:   "guild_member_add",
 			GuildID: m.GuildID,
 		}, err)
+		return
 	}
 
 	e := discord.Embed{
@@ -175,6 +177,14 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) {
 
 	embeds := []discord.Embed{e}
 
+	if m.User.CreatedAt().After(time.Now().UTC().Add(-168 * time.Hour)) {
+		embeds = append(embeds, discord.Embed{
+			Title:       "New account",
+			Description: fmt.Sprintf("⚠️ This account was created only **%v** (%v)", bcr.HumanizeTime(bcr.DurationPrecisionSeconds, m.User.CreatedAt()), m.User.CreatedAt().Format(time.RFC1123)),
+			Color:       bcr.ColourOrange,
+		})
+	}
+
 	if sys != nil && sys.ID != "" {
 		if banned, _ := bot.DB.IsSystemBanned(m.GuildID, sys.ID); banned {
 			e := discord.Embed{
@@ -209,6 +219,7 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) {
 			Event:   "guild_member_add",
 			GuildID: m.GuildID,
 		}, err)
+		return
 	}
 
 	wl, err := bot.DB.UserWatchlist(m.GuildID, m.User.ID)
@@ -218,6 +229,7 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) {
 				Event:   "guild_member_add",
 				GuildID: m.GuildID,
 			}, err)
+			return
 		}
 		return
 	}
@@ -275,5 +287,6 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) {
 			Event:   "guild_member_add",
 			GuildID: m.GuildID,
 		}, err)
+		return
 	}
 }

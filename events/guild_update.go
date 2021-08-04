@@ -28,6 +28,7 @@ func (bot *Bot) guildUpdate(ev *gateway.GuildUpdateEvent) {
 			Event:   "guild_update",
 			GuildID: ev.ID,
 		}, err)
+		return
 	}
 
 	if !ch["GUILD_UPDATE"].IsValid() {
@@ -40,6 +41,7 @@ func (bot *Bot) guildUpdate(ev *gateway.GuildUpdateEvent) {
 			Event:   "guild_update",
 			GuildID: ev.ID,
 		}, err)
+		return
 	}
 
 	var changed bool
@@ -100,5 +102,6 @@ func (bot *Bot) guildUpdate(ev *gateway.GuildUpdateEvent) {
 			Event:   "guild_update",
 			GuildID: ev.ID,
 		}, err)
+		return
 	}
 }

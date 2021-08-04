@@ -20,6 +20,7 @@ func (bot *Bot) guildBanAdd(ev *gateway.GuildBanAddEvent) {
 			Event:   "guild_ban_add",
 			GuildID: ev.GuildID,
 		}, err)
+		return
 	}
 
 	if !ch["GUILD_BAN_ADD"].IsValid() {
@@ -32,6 +33,7 @@ func (bot *Bot) guildBanAdd(ev *gateway.GuildBanAddEvent) {
 			Event:   "guild_ban_add",
 			GuildID: ev.GuildID,
 		}, err)
+		return
 	}
 
 	e := discord.Embed{
@@ -138,5 +140,6 @@ func (bot *Bot) guildBanAdd(ev *gateway.GuildBanAddEvent) {
 			Event:   "guild_ban_add",
 			GuildID: ev.GuildID,
 		}, err)
+		return
 	}
 }

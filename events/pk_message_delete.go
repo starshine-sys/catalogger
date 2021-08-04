@@ -23,6 +23,7 @@ func (bot *Bot) pkMessageDelete(m *gateway.MessageDeleteEvent) {
 			Event:   "pk_message_delete",
 			GuildID: m.GuildID,
 		}, err)
+		return
 	}
 	if !ch["MESSAGE_DELETE"].IsValid() {
 		return
@@ -46,6 +47,7 @@ func (bot *Bot) pkMessageDelete(m *gateway.MessageDeleteEvent) {
 			Event:   "pk_message_delete",
 			GuildID: m.GuildID,
 		}, err)
+		return
 	}
 
 	redirects, err := bot.DB.Redirects(m.GuildID)
@@ -54,6 +56,7 @@ func (bot *Bot) pkMessageDelete(m *gateway.MessageDeleteEvent) {
 			Event:   "pk_message_delete",
 			GuildID: m.GuildID,
 		}, err)
+		return
 	}
 
 	if redirects[m.ChannelID.String()].IsValid() {
@@ -63,6 +66,7 @@ func (bot *Bot) pkMessageDelete(m *gateway.MessageDeleteEvent) {
 				Event:   "pk_message_delete",
 				GuildID: m.GuildID,
 			}, err)
+			return
 		}
 	}
 
@@ -127,5 +131,6 @@ func (bot *Bot) pkMessageDelete(m *gateway.MessageDeleteEvent) {
 			Event:   "pk_message_delete",
 			GuildID: m.GuildID,
 		}, err)
+		return
 	}
 }

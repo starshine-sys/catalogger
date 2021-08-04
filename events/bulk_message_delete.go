@@ -29,6 +29,7 @@ func (bot *Bot) bulkMessageDelete(ev *gateway.MessageDeleteBulkEvent) {
 			Event:   "bulk_message_delete",
 			GuildID: ev.GuildID,
 		}, err)
+		return
 	}
 
 	if !ch["MESSAGE_DELETE_BULK"].IsValid() {
@@ -47,6 +48,7 @@ func (bot *Bot) bulkMessageDelete(ev *gateway.MessageDeleteBulkEvent) {
 			Event:   "bulk_message_delete",
 			GuildID: ev.GuildID,
 		}, err)
+		return
 	}
 
 	var msgs []*db.Message
@@ -151,5 +153,6 @@ PK system: %v / PK member: %v
 			Event:   "bulk_message_delete",
 			GuildID: ev.GuildID,
 		}, err)
+		return
 	}
 }

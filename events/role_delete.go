@@ -28,6 +28,7 @@ func (bot *Bot) guildRoleDelete(ev *gateway.GuildRoleDeleteEvent) {
 			Event:   "role_delete",
 			GuildID: ev.GuildID,
 		}, err)
+		return
 	}
 
 	if !ch["GUILD_ROLE_DELETE"].IsValid() {
@@ -40,6 +41,7 @@ func (bot *Bot) guildRoleDelete(ev *gateway.GuildRoleDeleteEvent) {
 			Event:   "role_delete",
 			GuildID: ev.GuildID,
 		}, err)
+		return
 	}
 
 	e := discord.Embed{
@@ -74,5 +76,6 @@ Created %v`, old.Name, old.Color, old.Mentionable, old.Hoist, old.Position, bcr.
 			Event:   "role_delete",
 			GuildID: ev.GuildID,
 		}, err)
+		return
 	}
 }

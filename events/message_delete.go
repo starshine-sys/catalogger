@@ -21,12 +21,22 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 		return
 	}
 
+	channel, err := bot.State(m.GuildID).Channel(m.ChannelID)
+	if err != nil {
+		bot.DB.Report(db.ErrorContext{
+			Event:   "message_delete",
+			GuildID: m.GuildID,
+		}, err)
+		return
+	}
+
 	ch, err := bot.DB.Channels(m.GuildID)
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
 			Event:   "message_delete",
 			GuildID: m.GuildID,
 		}, err)
+		return
 	}
 
 	if !ch["MESSAGE_DELETE"].IsValid() {
@@ -34,8 +44,12 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 	}
 
 	// if the channels is blacklisted, return
+	channelID := m.ChannelID
+	if channel.Type == discord.GuildNewsThread || channel.Type == discord.GuildPrivateThread || channel.Type == discord.GuildPublicThread {
+		channelID = channel.CategoryID
+	}
 	var blacklisted bool
-	if bot.DB.Pool.QueryRow(context.Background(), "select exists(select id from guilds where $1 = any(ignored_channels) and id = $2)", m.ChannelID, m.GuildID).Scan(&blacklisted); blacklisted {
+	if bot.DB.Pool.QueryRow(context.Background(), "select exists(select id from guilds where $1 = any(ignored_channels) and id = $2)", channelID, m.GuildID).Scan(&blacklisted); blacklisted {
 		return
 	}
 
@@ -45,6 +59,7 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 			Event:   "message_delete",
 			GuildID: m.GuildID,
 		}, err)
+		return
 	}
 
 	redirects, err := bot.DB.Redirects(m.GuildID)
@@ -53,15 +68,17 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 			Event:   "message_delete",
 			GuildID: m.GuildID,
 		}, err)
+		return
 	}
 
-	if redirects[m.ChannelID.String()].IsValid() {
-		wh, err = bot.getRedirect(m.GuildID, redirects[m.ChannelID.String()])
+	if redirects[channelID.String()].IsValid() {
+		wh, err = bot.getRedirect(m.GuildID, redirects[channelID.String()])
 		if err != nil {
 			bot.DB.Report(db.ErrorContext{
 				Event:   "message_delete",
 				GuildID: m.GuildID,
 			}, err)
+			return
 		}
 	}
 
@@ -155,6 +172,7 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 			Event:   "message_delete",
 			GuildID: m.GuildID,
 		}, err)
+		return
 	}
 }
 

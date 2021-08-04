@@ -18,6 +18,7 @@ func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) {
 			Event:   "message_create",
 			GuildID: m.GuildID,
 		}, err)
+		return
 	}
 
 	if !ch["MESSAGE_DELETE"].IsValid() && !ch["MESSAGE_UPDATE"].IsValid() {
@@ -51,5 +52,6 @@ func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) {
 			Event:   "message_create",
 			GuildID: m.GuildID,
 		}, err)
+		return
 	}
 }

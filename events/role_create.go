@@ -22,6 +22,7 @@ func (bot *Bot) guildRoleCreate(ev *gateway.GuildRoleCreateEvent) {
 			Event:   "role_create",
 			GuildID: ev.GuildID,
 		}, err)
+		return
 	}
 	if !ch["GUILD_ROLE_CREATE"].IsValid() {
 		return
@@ -33,6 +34,7 @@ func (bot *Bot) guildRoleCreate(ev *gateway.GuildRoleCreateEvent) {
 			Event:   "role_create",
 			GuildID: ev.GuildID,
 		}, err)
+		return
 	}
 
 	e := discord.Embed{
@@ -66,5 +68,6 @@ func (bot *Bot) guildRoleCreate(ev *gateway.GuildRoleCreateEvent) {
 			Event:   "role_create",
 			GuildID: ev.GuildID,
 		}, err)
+		return
 	}
 }

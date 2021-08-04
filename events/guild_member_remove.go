@@ -18,6 +18,7 @@ func (bot *Bot) guildMemberRemove(ev *gateway.GuildMemberRemoveEvent) {
 			Event:   "guild_member_remove",
 			GuildID: ev.GuildID,
 		}, err)
+		return
 	}
 
 	if !ch["GUILD_MEMBER_REMOVE"].IsValid() {
@@ -30,6 +31,7 @@ func (bot *Bot) guildMemberRemove(ev *gateway.GuildMemberRemoveEvent) {
 			Event:   "guild_member_remove",
 			GuildID: ev.GuildID,
 		}, err)
+		return
 	}
 
 	e := discord.Embed{
@@ -87,5 +89,6 @@ func (bot *Bot) guildMemberRemove(ev *gateway.GuildMemberRemoveEvent) {
 			Event:   "guild_member_remove",
 			GuildID: ev.GuildID,
 		}, err)
+		return
 	}
 }

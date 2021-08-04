@@ -22,6 +22,7 @@ func (bot *Bot) channelCreate(ev *gateway.ChannelCreateEvent) {
 			Event:   "channel_create",
 			GuildID: ev.GuildID,
 		}, err)
+		return
 	}
 	if !ch["CHANNEL_CREATE"].IsValid() {
 		return
@@ -33,6 +34,7 @@ func (bot *Bot) channelCreate(ev *gateway.ChannelCreateEvent) {
 			Event:   "channel_create",
 			GuildID: ev.GuildID,
 		}, err)
+		return
 	}
 
 	e := discord.Embed{
@@ -101,5 +103,6 @@ func (bot *Bot) channelCreate(ev *gateway.ChannelCreateEvent) {
 			Event:   "channel_create",
 			GuildID: ev.GuildID,
 		}, err)
+		return
 	}
 }

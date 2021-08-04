@@ -26,6 +26,7 @@ func (bot *Bot) pkMessageCreate(m *gateway.MessageCreateEvent) {
 			Event:   "pk_message_create",
 			GuildID: m.GuildID,
 		}, err)
+		return
 	}
 
 	if !ch["MESSAGE_DELETE"].IsValid() {
@@ -86,6 +87,7 @@ func (bot *Bot) pkMessageCreate(m *gateway.MessageCreateEvent) {
 			Event:   "pk_message_create",
 			GuildID: m.GuildID,
 		}, err)
+		return
 	}
 
 	dbMsg := db.Message{
@@ -107,5 +109,6 @@ func (bot *Bot) pkMessageCreate(m *gateway.MessageCreateEvent) {
 			Event:   "pk_message_create",
 			GuildID: m.GuildID,
 		}, err)
+		return
 	}
 }

@@ -63,6 +63,7 @@ func (bot *Bot) guildMemberUpdate(ev *gateway.GuildMemberUpdateEvent) {
 			Event:   "guild_member_update",
 			GuildID: ev.GuildID,
 		}, err)
+		return
 	}
 
 	if !ch["GUILD_MEMBER_UPDATE"].IsValid() {
@@ -75,6 +76,7 @@ func (bot *Bot) guildMemberUpdate(ev *gateway.GuildMemberUpdateEvent) {
 			Event:   "guild_member_update",
 			GuildID: ev.GuildID,
 		}, err)
+		return
 	}
 
 	e := discord.Embed{
@@ -133,6 +135,7 @@ func (bot *Bot) guildMemberUpdate(ev *gateway.GuildMemberUpdateEvent) {
 			Event:   "guild_member_update",
 			GuildID: ev.GuildID,
 		}, err)
+		return
 	}
 }
 
@@ -143,6 +146,7 @@ func (bot *Bot) guildMemberNickUpdate(ev *gateway.GuildMemberUpdateEvent, m disc
 			Event:   "guild_member_nick_update",
 			GuildID: ev.GuildID,
 		}, err)
+		return
 	}
 
 	if !ch["GUILD_MEMBER_NICK_UPDATE"].IsValid() {
@@ -155,6 +159,7 @@ func (bot *Bot) guildMemberNickUpdate(ev *gateway.GuildMemberUpdateEvent, m disc
 			Event:   "guild_member_nick_update",
 			GuildID: ev.GuildID,
 		}, err)
+		return
 	}
 
 	e := discord.Embed{
@@ -214,6 +219,7 @@ func (bot *Bot) guildMemberNickUpdate(ev *gateway.GuildMemberUpdateEvent, m disc
 			Event:   "guild_member_nick_update",
 			GuildID: ev.GuildID,
 		}, err)
+		return
 	}
 }
 

@@ -50,6 +50,7 @@ func (bot *Bot) Queue(wh *discord.Webhook, event string, client *webhook.Client,
 				Event:   event,
 				GuildID: wh.GuildID,
 			}, err)
+			return
 		}
 	}
 
@@ -72,6 +73,7 @@ func (bot *Bot) Queue(wh *discord.Webhook, event string, client *webhook.Client,
 					Event:   event,
 					GuildID: wh.GuildID,
 				}, err)
+				return
 			}
 		})
 	}

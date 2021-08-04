@@ -18,6 +18,7 @@ func (bot *Bot) inviteCreateEvent(ev *gateway.InviteCreateEvent) {
 			Event:   "invite_create",
 			GuildID: ev.GuildID,
 		}, err)
+		return
 	}
 
 	if !ch["INVITE_CREATE"].IsValid() {
@@ -30,6 +31,7 @@ func (bot *Bot) inviteCreateEvent(ev *gateway.InviteCreateEvent) {
 			Event:   "invite_create",
 			GuildID: ev.GuildID,
 		}, err)
+		return
 	}
 
 	maxUses := fmt.Sprint(ev.MaxUses)
@@ -80,6 +82,7 @@ func (bot *Bot) inviteCreateEvent(ev *gateway.InviteCreateEvent) {
 			Event:   "invite_create",
 			GuildID: ev.GuildID,
 		}, err)
+		return
 	}
 }
 
@@ -108,6 +111,7 @@ func (bot *Bot) inviteDeleteEvent(ev *gateway.InviteDeleteEvent) {
 			Event:   "invite_delete",
 			GuildID: ev.GuildID,
 		}, err)
+		return
 	}
 
 	if !ch["INVITE_DELETE"].IsValid() {
@@ -120,6 +124,7 @@ func (bot *Bot) inviteDeleteEvent(ev *gateway.InviteDeleteEvent) {
 			Event:   "invite_delete",
 			GuildID: ev.GuildID,
 		}, err)
+		return
 	}
 
 	maxUses := fmt.Sprint(inv.MaxUses)
@@ -164,5 +169,6 @@ func (bot *Bot) inviteDeleteEvent(ev *gateway.InviteDeleteEvent) {
 			Event:   "invite_delete",
 			GuildID: ev.GuildID,
 		}, err)
+		return
 	}
 }

@@ -16,12 +16,19 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 		return
 	}
 
+	// sometimes we get message update events without any content
+	// so just ignore those
+	if m.Content == "" {
+		return
+	}
+
 	ch, err := bot.DB.Channels(m.GuildID)
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
 			Event:   "message_update",
 			GuildID: m.GuildID,
 		}, err)
+		return
 	}
 
 	if !ch["MESSAGE_UPDATE"].IsValid() {
@@ -58,6 +65,7 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 			Event:   "message_update",
 			GuildID: m.GuildID,
 		}, err)
+		return
 	}
 
 	redirects, err := bot.DB.Redirects(m.GuildID)
@@ -66,6 +74,7 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 			Event:   "message_update",
 			GuildID: m.GuildID,
 		}, err)
+		return
 	}
 
 	if redirects[m.ChannelID.String()].IsValid() {
@@ -75,6 +84,7 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 				Event:   "message_update",
 				GuildID: m.GuildID,
 			}, err)
+			return
 		}
 	}
 
@@ -250,6 +260,7 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 			Event:   "message_update",
 			GuildID: m.GuildID,
 		}, err)
+		return
 	}
 
 	// update the message

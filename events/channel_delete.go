@@ -21,6 +21,7 @@ func (bot *Bot) channelDelete(ev *gateway.ChannelDeleteEvent) {
 			Event:   "channel_delete",
 			GuildID: ev.GuildID,
 		}, err)
+		return
 	}
 	if !ch["CHANNEL_DELETE"].IsValid() {
 		return
@@ -32,6 +33,7 @@ func (bot *Bot) channelDelete(ev *gateway.ChannelDeleteEvent) {
 			Event:   "channel_delete",
 			GuildID: ev.GuildID,
 		}, err)
+		return
 	}
 
 	desc := fmt.Sprintf("**Name:** #%v", ev.Name)
@@ -68,5 +70,6 @@ func (bot *Bot) channelDelete(ev *gateway.ChannelDeleteEvent) {
 			Event:   "channel_delete",
 			GuildID: ev.GuildID,
 		}, err)
+		return
 	}
 }
