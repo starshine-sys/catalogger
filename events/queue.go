@@ -25,7 +25,10 @@ func (q *Queue) TotalLength() (length int) {
 }
 
 // Queue queues an embed.
-func (bot *Bot) Queue(wh *discord.Webhook, event string, client *webhook.Client, embed discord.Embed) {
+func (bot *Bot) Queue(wh *discord.Webhook, event string, embed discord.Embed) {
+	s := bot.State(wh.GuildID)
+	client := webhook.FromAPI(wh.ID, wh.Token, s.Client)
+
 	bot.QueueMu.Lock()
 	q, ok := bot.Queues[wh.ChannelID]
 	if !ok {

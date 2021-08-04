@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/diamondburned/arikawa/v3/api/webhook"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
@@ -73,17 +72,7 @@ func (bot *Bot) inviteCreateEvent(ev *gateway.InviteCreateEvent) {
 		Timestamp: discord.NowTimestamp(),
 	}
 
-	err = webhook.New(wh.ID, wh.Token).Execute(webhook.ExecuteData{
-		AvatarURL: bot.Router.Bot.AvatarURL(),
-		Embeds:    []discord.Embed{e},
-	})
-	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   "invite_create",
-			GuildID: ev.GuildID,
-		}, err)
-		return
-	}
+	bot.Queue(wh, "invite_create", e)
 }
 
 func (bot *Bot) inviteDeleteEvent(ev *gateway.InviteDeleteEvent) {
@@ -160,15 +149,5 @@ func (bot *Bot) inviteDeleteEvent(ev *gateway.InviteDeleteEvent) {
 		Timestamp: discord.NowTimestamp(),
 	}
 
-	err = webhook.New(wh.ID, wh.Token).Execute(webhook.ExecuteData{
-		AvatarURL: bot.Router.Bot.AvatarURL(),
-		Embeds:    []discord.Embed{e},
-	})
-	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   "invite_delete",
-			GuildID: ev.GuildID,
-		}, err)
-		return
-	}
+	bot.Queue(wh, "invite_delete", e)
 }

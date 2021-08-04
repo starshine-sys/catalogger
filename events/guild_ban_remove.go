@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/diamondburned/arikawa/v3/api"
-	"github.com/diamondburned/arikawa/v3/api/webhook"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
@@ -133,15 +132,5 @@ func (bot *Bot) guildBanRemove(ev *gateway.GuildBanRemoveEvent) {
 		}
 	}
 
-	err = webhook.New(wh.ID, wh.Token).Execute(webhook.ExecuteData{
-		AvatarURL: bot.Router.Bot.AvatarURL(),
-		Embeds:    []discord.Embed{e},
-	})
-	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   "guild_ban_remove",
-			GuildID: ev.GuildID,
-		}, err)
-		return
-	}
+	bot.Queue(wh, "guild_ban_remove", e)
 }
