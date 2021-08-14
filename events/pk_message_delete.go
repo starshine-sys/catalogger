@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/diamondburned/arikawa/v3/api/webhook"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
@@ -134,9 +135,19 @@ func (bot *Bot) pkMessageDelete(m *gateway.MessageDeleteEvent) {
 		e.Fields[0].Value = fmt.Sprintf("%v\nID: %v\n\nThread: %v (%v)", channel.CategoryID.Mention(), channel.CategoryID, channel.Name, channel.Mention())
 	}
 
-	bot.Queue(wh, "message_delete", e)
-
-	// give other message delete handler time to check the database
-	time.Sleep(1 * time.Second)
-	bot.DB.DeleteProxied(msg.MsgID)
+	_, err = webhook.New(wh.ID, wh.Token).ExecuteAndWait(webhook.ExecuteData{
+		AvatarURL: bot.Router.Bot.AvatarURL(),
+		Embeds:    []discord.Embed{e},
+	})
+	if err == nil {
+		// give other message delete handler time to check the database
+		time.Sleep(1 * time.Second)
+		bot.DB.DeleteProxied(msg.MsgID)
+	} else {
+		bot.DB.Report(db.ErrorContext{
+			Event:   "pk_message_delete",
+			GuildID: m.GuildID,
+		}, err)
+		return
+	}
 }

@@ -167,9 +167,19 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 		},
 	}...)
 
-	bot.Queue(wh, "message_delete", e)
-
-	bot.DB.DeleteMessage(msg.MsgID)
+	_, err = webhook.New(wh.ID, wh.Token).ExecuteAndWait(webhook.ExecuteData{
+		AvatarURL: bot.Router.Bot.AvatarURL(),
+		Embeds:    []discord.Embed{e},
+	})
+	if err == nil {
+		bot.DB.DeleteMessage(msg.MsgID)
+	} else {
+		bot.DB.Report(db.ErrorContext{
+			Event:   "message_delete",
+			GuildID: m.GuildID,
+		}, err)
+		return
+	}
 }
 
 func hasAnyPrefixLower(s string, prefixes ...string) bool {
