@@ -35,7 +35,14 @@ func (bot *Bot) pkMessageCreateFallback(m *gateway.MessageCreateEvent) {
 
 	pkm, err := pk.Message(pkgo.Snowflake(m.ID))
 	if err != nil {
-		// Message is either not proxied or we got an error from the PK API. Either way, return
+		if err == pkgo.ErrMsgNotFound {
+			return
+		}
+		bot.Sugar.Errorf("Error getting message info from the PK API: %v", err)
+		bot.DB.Report(db.ErrorContext{
+			Event:   "pk_message_create_fallback",
+			GuildID: m.GuildID,
+		}, err)
 		return
 	}
 
