@@ -572,6 +572,8 @@ github.com/starshine-sys/bcr v0.19.1 h1:cDD9NKdRdmH3lfYXTrvdnpuP50lMq+D6814t+zJA
 github.com/starshine-sys/bcr v0.19.1/go.mod h1:KjCu6F0tOKVLvPf0DagcxCkRTduXeTJ5YnwyhznA1c4=
 github.com/starshine-sys/pkgo v1.0.0 h1:NQ+g6LgY+tkQdxXGZ2oTH5Hp2n5/57Vo+RFcHbwkeHs=
 github.com/starshine-sys/pkgo v1.0.0/go.mod h1:w1ObBZa7/lOvCqOx9690uPM5uuaovH8nCZXpt84cAu4=
+github.com/starshine-sys/pkgo v1.1.1 h1:E2xTfJsgnw4TOYYDF182yKh42W42XlzHb+O8rRODI4o=
+github.com/starshine-sys/pkgo v1.1.1/go.mod h1:w1ObBZa7/lOvCqOx9690uPM5uuaovH8nCZXpt84cAu4=
 github.com/starshine-sys/snowflake/v2 v2.0.0 h1:rVDUw1tXe1nDcGTMMAU5RzU+mX4O9IDEEs9lds7BYtI=
 github.com/starshine-sys/snowflake/v2 v2.0.0/go.mod h1:6E5AYqTPb9DL7bp24tcbTLx0/thTcAmyLgscZIP7tzw=
 github.com/streadway/amqp v0.0.0-20190404075320-75d898a42a94/go.mod h1:AZpEONHx3DKn8O/DFsRAY58/XVQiIPMTMB1SddzLXVw=

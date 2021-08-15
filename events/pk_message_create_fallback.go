@@ -35,7 +35,7 @@ func (bot *Bot) pkMessageCreateFallback(m *gateway.MessageCreateEvent) {
 
 	pkm, err := pk.Message(pkgo.Snowflake(m.ID))
 	if err != nil {
-		if err == pkgo.ErrMsgNotFound {
+		if err == pkgo.ErrMsgNotFound || err == pkgo.ErrNotFound {
 			return
 		}
 		bot.Sugar.Errorf("Error getting message info from the PK API: %v", err)

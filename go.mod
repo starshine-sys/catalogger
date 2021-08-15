@@ -17,7 +17,7 @@ require (
 	github.com/russross/blackfriday/v2 v2.0.1
 	github.com/spf13/pflag v1.0.5
 	github.com/starshine-sys/bcr v0.19.1
-	github.com/starshine-sys/pkgo v1.0.0
+	github.com/starshine-sys/pkgo v1.1.1
 	github.com/ziutek/mymysql v1.5.4 // indirect
 	go.uber.org/zap v1.16.0
 	golang.org/x/oauth2 v0.0.0-20210628180205-a41e5a781914
