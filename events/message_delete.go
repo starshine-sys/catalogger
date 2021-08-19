@@ -46,7 +46,7 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 	// if the channel is blacklisted, return
 	channelID := m.ChannelID
 	if channel.Type == discord.GuildNewsThread || channel.Type == discord.GuildPrivateThread || channel.Type == discord.GuildPublicThread {
-		channelID = channel.CategoryID
+		channelID = channel.ParentID
 	}
 	var blacklisted bool
 	if bot.DB.Pool.QueryRow(context.Background(), "select exists(select id from guilds where $1 = any(ignored_channels) and id = $2)", channelID, m.GuildID).Scan(&blacklisted); blacklisted {
@@ -114,7 +114,7 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 			Timestamp: discord.NewTimestamp(m.ID.Time()),
 		}
 
-		webhook.New(wh.ID, wh.Token).Execute(webhook.ExecuteData{
+		webhook.FromAPI(wh.ID, wh.Token, bot.State(m.GuildID).Client).Execute(webhook.ExecuteData{
 			AvatarURL: bot.Router.Bot.AvatarURL(),
 			Embeds:    []discord.Embed{e},
 		})
@@ -151,7 +151,7 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 
 	value := fmt.Sprintf("%v\nID: %v", msg.ChannelID.Mention(), msg.ChannelID)
 	if channel.Type == discord.GuildNewsThread || channel.Type == discord.GuildPrivateThread || channel.Type == discord.GuildPublicThread {
-		value = fmt.Sprintf("%v\nID: %v\n\nThread: %v (%v)", channel.CategoryID.Mention(), channel.CategoryID, channel.Name, channel.Mention())
+		value = fmt.Sprintf("%v\nID: %v\n\nThread: %v (%v)", channel.ParentID.Mention(), channel.ParentID, channel.Name, channel.Mention())
 	}
 
 	e.Fields = append(e.Fields, []discord.EmbedField{
@@ -167,7 +167,7 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 		},
 	}...)
 
-	_, err = webhook.New(wh.ID, wh.Token).ExecuteAndWait(webhook.ExecuteData{
+	_, err = webhook.FromAPI(wh.ID, wh.Token, bot.State(m.GuildID).Client).ExecuteAndWait(webhook.ExecuteData{
 		AvatarURL: bot.Router.Bot.AvatarURL(),
 		Embeds:    []discord.Embed{e},
 	})

@@ -42,11 +42,11 @@ type guild struct {
 }
 
 type channel struct {
-	ID         discord.ChannelID
-	CategoryID discord.ChannelID
-	Name       string
-	Position   int32
-	Type       discord.ChannelType
+	ID       discord.ChannelID
+	ParentID discord.ChannelID
+	Name     string
+	Position int32
+	Type     discord.ChannelType
 }
 
 func (s *server) serverPage(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
@@ -100,10 +100,10 @@ func (s *server) serverPage(w http.ResponseWriter, r *http.Request, params httpr
 
 	for _, ch := range resp.GetChannels() {
 		c := channel{
-			ID:         discord.ChannelID(ch.GetId()),
-			CategoryID: discord.ChannelID(ch.GetCategoryId()),
-			Name:       ch.GetName(),
-			Position:   ch.GetPosition(),
+			ID:       discord.ChannelID(ch.GetId()),
+			ParentID: discord.ChannelID(ch.GetParentID()),
+			Name:     ch.GetName(),
+			Position: ch.GetPosition(),
 		}
 
 		switch ch.GetType() {

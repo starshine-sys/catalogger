@@ -37,7 +37,7 @@ func (bot *Bot) channelDelete(ev *gateway.ChannelDeleteEvent) {
 	}
 
 	desc := fmt.Sprintf("**Name:** #%v", ev.Name)
-	if cat, err := bot.State(ev.GuildID).Channel(ev.CategoryID); err == nil {
+	if cat, err := bot.State(ev.GuildID).Channel(ev.ParentID); err == nil {
 		desc += fmt.Sprintf("\n**Category:** %v", cat.Name)
 	} else {
 		desc += "\n**Category:** None"
@@ -61,7 +61,7 @@ func (bot *Bot) channelDelete(ev *gateway.ChannelDeleteEvent) {
 		})
 	}
 
-	err = webhook.New(wh.ID, wh.Token).Execute(webhook.ExecuteData{
+	err = webhook.FromAPI(wh.ID, wh.Token, bot.State(ev.GuildID).Client).Execute(webhook.ExecuteData{
 		AvatarURL: bot.Router.Bot.AvatarURL(),
 		Embeds:    []discord.Embed{e},
 	})

@@ -208,7 +208,7 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) {
 	}
 
 	// we create a client separately because we might need to send 2 messages
-	client := webhook.New(wh.ID, wh.Token)
+	client := webhook.FromAPI(wh.ID, wh.Token, bot.State(m.GuildID).Client)
 
 	err = client.Execute(webhook.ExecuteData{
 		AvatarURL: bot.Router.Bot.AvatarURL(),

@@ -62,18 +62,18 @@ func (bot *Bot) channelUpdate(ev *gateway.ChannelUpdateEvent) {
 
 	var changed bool
 
-	if ev.CategoryID != old.CategoryID {
+	if ev.ParentID != old.ParentID {
 		f := discord.EmbedField{
 			Name:  "Category updated",
 			Value: "",
 		}
 
-		oldCat, err := bot.State(ev.GuildID).Channel(old.CategoryID)
+		oldCat, err := bot.State(ev.GuildID).Channel(old.ParentID)
 		if err == nil {
 			f.Value += fmt.Sprintf("**Before:** %v", oldCat.Name)
 		}
 
-		newCat, err := bot.State(ev.GuildID).Channel(ev.CategoryID)
+		newCat, err := bot.State(ev.GuildID).Channel(ev.ParentID)
 		if err == nil {
 			f.Value += fmt.Sprintf("\n**After:** %v", newCat.Name)
 		}
@@ -112,20 +112,20 @@ func (bot *Bot) channelUpdate(ev *gateway.ChannelUpdateEvent) {
 	}
 
 	var addedRoles, removedRoles, editedRoles []discord.Overwrite
-	for _, oldRole := range old.Permissions {
-		if !overwriteIn(ev.Permissions, oldRole) {
+	for _, oldRole := range old.Overwrites {
+		if !overwriteIn(ev.Overwrites, oldRole) {
 			removedRoles = append(removedRoles, oldRole)
 			changed = true
 		}
 	}
-	for _, newRole := range ev.Permissions {
-		if !overwriteIn(old.Permissions, newRole) {
+	for _, newRole := range ev.Overwrites {
+		if !overwriteIn(old.Overwrites, newRole) {
 			addedRoles = append(addedRoles, newRole)
 			changed = true
 		}
 	}
-	for _, new := range ev.Permissions {
-		for _, o := range old.Permissions {
+	for _, new := range ev.Overwrites {
+		for _, o := range old.Overwrites {
 			if new.ID == o.ID {
 				if new.Allow != o.Allow || new.Deny != o.Deny {
 					editedRoles = append(editedRoles, new)
@@ -190,7 +190,7 @@ func (bot *Bot) channelUpdate(ev *gateway.ChannelUpdateEvent) {
 		return
 	}
 
-	err = webhook.New(wh.ID, wh.Token).Execute(webhook.ExecuteData{
+	err = webhook.FromAPI(wh.ID, wh.Token, bot.State(ev.GuildID).Client).Execute(webhook.ExecuteData{
 		AvatarURL: bot.Router.Bot.AvatarURL(),
 		Embeds:    []discord.Embed{e},
 	})

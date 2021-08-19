@@ -126,7 +126,7 @@ func (bot *Bot) guildMemberUpdate(ev *gateway.GuildMemberUpdateEvent) {
 		})
 	}
 
-	err = webhook.New(wh.ID, wh.Token).Execute(webhook.ExecuteData{
+	err = webhook.FromAPI(wh.ID, wh.Token, bot.State(ev.GuildID).Client).Execute(webhook.ExecuteData{
 		AvatarURL: bot.Router.Bot.AvatarURL(),
 		Embeds:    []discord.Embed{e},
 	})
@@ -210,7 +210,7 @@ func (bot *Bot) guildMemberNickUpdate(ev *gateway.GuildMemberUpdateEvent, m disc
 		})
 	}
 
-	err = webhook.New(wh.ID, wh.Token).Execute(webhook.ExecuteData{
+	err = webhook.FromAPI(wh.ID, wh.Token, bot.State(ev.GuildID).Client).Execute(webhook.ExecuteData{
 		AvatarURL: bot.Router.Bot.AvatarURL(),
 		Embeds:    []discord.Embed{e},
 	})

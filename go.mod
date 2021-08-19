@@ -5,7 +5,7 @@ go 1.16
 require (
 	emperror.dev/errors v0.8.0
 	github.com/ReneKroon/ttlcache/v2 v2.1.0
-	github.com/diamondburned/arikawa/v3 v3.0.0-20210711175618-29a3094a7523
+	github.com/diamondburned/arikawa/v3 v3.0.0-20210810210230-f7880b91ee2f
 	github.com/dustin/go-humanize v1.0.0
 	github.com/georgysavva/scany v0.2.8
 	github.com/getsentry/sentry-go v0.11.0
@@ -16,7 +16,7 @@ require (
 	github.com/rubenv/sql-migrate v0.0.0-20210614095031-55d5740dbbcc
 	github.com/russross/blackfriday/v2 v2.0.1
 	github.com/spf13/pflag v1.0.5
-	github.com/starshine-sys/bcr v0.19.1
+	github.com/starshine-sys/bcr v0.20.1-0.20210811141110-a116c8041fef
 	github.com/starshine-sys/pkgo v1.1.1
 	github.com/ziutek/mymysql v1.5.4 // indirect
 	go.uber.org/zap v1.16.0

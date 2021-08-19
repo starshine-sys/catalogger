@@ -133,7 +133,7 @@ func (bot *Bot) guildBanRemove(ev *gateway.GuildBanRemoveEvent) {
 		}
 	}
 
-	err = webhook.New(wh.ID, wh.Token).Execute(webhook.ExecuteData{
+	err = webhook.FromAPI(wh.ID, wh.Token, bot.State(ev.GuildID).Client).Execute(webhook.ExecuteData{
 		AvatarURL: bot.Router.Bot.AvatarURL(),
 		Embeds:    []discord.Embed{e},
 	})

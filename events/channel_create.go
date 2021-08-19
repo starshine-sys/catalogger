@@ -56,16 +56,16 @@ func (bot *Bot) channelCreate(ev *gateway.ChannelCreateEvent) {
 		e.Title = "Text channel created"
 	}
 
-	if !ev.CategoryID.IsValid() {
+	if !ev.ParentID.IsValid() {
 		e.Description = fmt.Sprintf("**Name:** %v\n**Category:** None", ev.Name)
 	} else {
-		cat, err := bot.State(ev.GuildID).Channel(ev.CategoryID)
+		cat, err := bot.State(ev.GuildID).Channel(ev.ParentID)
 		if err == nil {
 			e.Description = fmt.Sprintf("**Name:** %v\n**Category:** %v", ev.Name, cat.Name)
 		}
 	}
 
-	for _, p := range ev.Permissions {
+	for _, p := range ev.Overwrites {
 		f := discord.EmbedField{
 			Name:  "Override for " + p.ID.String(),
 			Value: "",
@@ -94,7 +94,7 @@ func (bot *Bot) channelCreate(ev *gateway.ChannelCreateEvent) {
 		e.Fields = append(e.Fields, f)
 	}
 
-	err = webhook.New(wh.ID, wh.Token).Execute(webhook.ExecuteData{
+	err = webhook.FromAPI(wh.ID, wh.Token, bot.State(ev.GuildID).Client).Execute(webhook.ExecuteData{
 		AvatarURL: bot.Router.Bot.AvatarURL(),
 		Embeds:    []discord.Embed{e},
 	})

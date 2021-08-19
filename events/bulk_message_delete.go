@@ -48,7 +48,7 @@ func (bot *Bot) bulkMessageDelete(ev *gateway.MessageDeleteBulkEvent) {
 	// if the channels is blacklisted, return
 	channelID := ev.ChannelID
 	if channel.Type == discord.GuildNewsThread || channel.Type == discord.GuildPrivateThread || channel.Type == discord.GuildPublicThread {
-		channelID = channel.CategoryID
+		channelID = channel.ParentID
 	}
 	var blacklisted bool
 	if bot.DB.Pool.QueryRow(context.Background(), "select exists(select id from guilds where $1 = any(ignored_channels) and id = $2)", channelID, ev.GuildID).Scan(&blacklisted); blacklisted {
@@ -176,7 +176,7 @@ PK system: %v / PK member: %v
 		Timestamp:   discord.NowTimestamp(),
 	}
 
-	_, err = webhook.New(wh.ID, wh.Token).ExecuteAndWait(webhook.ExecuteData{
+	_, err = webhook.FromAPI(wh.ID, wh.Token, bot.State(ev.GuildID).Client).ExecuteAndWait(webhook.ExecuteData{
 		AvatarURL: bot.Router.Bot.AvatarURL(),
 		Embeds:    []discord.Embed{e},
 		Files:     []sendpart.File{file},

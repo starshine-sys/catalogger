@@ -463,11 +463,11 @@ type GuildChannel struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id         uint64                   `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	CategoryId uint64                   `protobuf:"varint,2,opt,name=category_id,json=categoryId,proto3" json:"category_id,omitempty"`
-	Name       string                   `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
-	Position   int32                    `protobuf:"varint,4,opt,name=position,proto3" json:"position,omitempty"`
-	Type       GuildChannel_ChannelType `protobuf:"varint,5,opt,name=type,proto3,enum=GuildChannel_ChannelType" json:"type,omitempty"`
+	Id       uint64                   `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	ParentID uint64                   `protobuf:"varint,2,opt,name=category_id,json=ParentID,proto3" json:"category_id,omitempty"`
+	Name     string                   `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	Position int32                    `protobuf:"varint,4,opt,name=position,proto3" json:"position,omitempty"`
+	Type     GuildChannel_ChannelType `protobuf:"varint,5,opt,name=type,proto3,enum=GuildChannel_ChannelType" json:"type,omitempty"`
 }
 
 func (x *GuildChannel) Reset() {
@@ -509,9 +509,9 @@ func (x *GuildChannel) GetId() uint64 {
 	return 0
 }
 
-func (x *GuildChannel) GetCategoryId() uint64 {
+func (x *GuildChannel) GetParentID() uint64 {
 	if x != nil {
-		return x.CategoryId
+		return x.ParentID
 	}
 	return 0
 }

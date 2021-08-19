@@ -55,10 +55,10 @@ func (s *RPCServer) Guild(ctx context.Context, req *proto.GuildRequest) (resp *p
 
 	for _, ch := range channels {
 		protoCh := &proto.GuildChannel{
-			Id:         uint64(ch.ID),
-			CategoryId: uint64(ch.CategoryID),
-			Name:       ch.Name,
-			Position:   int32(ch.Position),
+			Id:       uint64(ch.ID),
+			ParentID: uint64(ch.ParentID),
+			Name:     ch.Name,
+			Position: int32(ch.Position),
 		}
 
 		switch ch.Type {
