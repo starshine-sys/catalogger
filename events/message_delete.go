@@ -82,13 +82,6 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 		}
 	}
 
-	// proxied messages are handled by a different handler
-	var isProxied bool
-	bot.DB.Pool.QueryRow(context.Background(), "select exists(select msg_id from pk_messages where msg_id = $1)", m.ID).Scan(&isProxied)
-	if isProxied {
-		return
-	}
-
 	// sleep for 5 seconds to give other handlers time to do their thing
 	time.Sleep(5 * time.Second)
 
@@ -149,6 +142,10 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 		Timestamp: discord.NewTimestamp(msg.MsgID.Time()),
 	}
 
+	if msg.Username != "" {
+		e.Title = "Message by \"" + msg.Username + "\" deleted"
+	}
+
 	value := fmt.Sprintf("%v\nID: %v", msg.ChannelID.Mention(), msg.ChannelID)
 	if channel.Type == discord.GuildNewsThread || channel.Type == discord.GuildPrivateThread || channel.Type == discord.GuildPublicThread {
 		value = fmt.Sprintf("%v\nID: %v\n\nThread: %v (%v)", channel.ParentID.Mention(), channel.ParentID, channel.Name, channel.Mention())
@@ -166,6 +163,27 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 			Inline: true,
 		},
 	}...)
+
+	if msg.System != nil && msg.Member != nil {
+		e.Fields[len(e.Fields)-1].Name = "Linked Discord account"
+
+		e.Fields = append(e.Fields, []discord.EmbedField{
+			{
+				Name:  "​",
+				Value: "**PluralKit information**",
+			},
+			{
+				Name:   "System ID",
+				Value:  *msg.System,
+				Inline: true,
+			},
+			{
+				Name:   "Member ID",
+				Value:  *msg.Member,
+				Inline: true,
+			},
+		}...)
+	}
 
 	_, err = webhook.FromAPI(wh.ID, wh.Token, bot.State(m.GuildID).Client).ExecuteAndWait(webhook.ExecuteData{
 		AvatarURL: bot.Router.Bot.AvatarURL(),

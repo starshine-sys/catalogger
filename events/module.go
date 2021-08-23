@@ -169,10 +169,9 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) (clearCacheFunc func(d
 	// add guild create handler
 	b.AddHandler(b.DB.CreateServerIfNotExists)
 
-	// add pluralkit message create/delete handlers
+	// add pluralkit message create handlers
 	b.AddHandler(b.pkMessageCreate)
 	b.AddHandler(b.pkMessageCreateFallback)
-	b.AddHandler(b.pkMessageDelete)
 
 	// add message create/update/delete handlers
 	b.AddHandler(b.messageCreate)
@@ -281,25 +280,13 @@ func (bot *Bot) State(id discord.GuildID) *state.State {
 
 func (bot *Bot) cleanMessages() {
 	for {
-		c, err := bot.DB.Pool.Exec(context.Background(), "delete from pk_messages where msg_id < $1", discord.NewSnowflake(time.Now().UTC().Add(-720*time.Hour)))
+		ct, err := bot.DB.Pool.Exec(context.Background(), "delete from messages where msg_id < $1", discord.NewSnowflake(time.Now().UTC().Add(-720*time.Hour)))
 		if err != nil {
 			time.Sleep(1 * time.Minute)
 			continue
 		}
 
-		if n := c.RowsAffected(); n == 0 {
-			bot.Sugar.Debugf("Deleted 0 PK messages older than 30 days.")
-		} else {
-			bot.Sugar.Infof("Deleted %v PK messages older than 30 days.", n)
-		}
-
-		c, err = bot.DB.Pool.Exec(context.Background(), "delete from messages where msg_id < $1", discord.NewSnowflake(time.Now().UTC().Add(-720*time.Hour)))
-		if err != nil {
-			time.Sleep(1 * time.Minute)
-			continue
-		}
-
-		if n := c.RowsAffected(); n == 0 {
+		if n := ct.RowsAffected(); n == 0 {
 			bot.Sugar.Debugf("Deleted 0 normal messages older than 30 days.")
 		} else {
 			bot.Sugar.Infof("Deleted %v normal messages older than 30 days.", n)

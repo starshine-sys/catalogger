@@ -22,7 +22,11 @@ type ErrorContext struct {
 
 // Report reports an error.
 func (db *DB) Report(ctx ErrorContext, err error) *sentry.EventID {
-	db.Sugar.Error(err)
+	cs := ctx.Event
+	if cs == "" {
+		cs = ctx.Command
+	}
+	db.Sugar.Errorf("Error in %v: %v", err)
 
 	if db.Hub == nil {
 		return nil

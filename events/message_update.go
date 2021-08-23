@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"emperror.dev/errors"
 	"github.com/diamondburned/arikawa/v3/api/webhook"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
+	"github.com/jackc/pgx/v4"
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/db"
 )
@@ -55,21 +57,23 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 	}
 
 	// try getting the message
-	msg, err := bot.DB.GetProxied(m.ID)
+	msg, err := bot.DB.GetMessage(m.ID)
 	if err != nil {
-		msg, err = bot.DB.GetMessage(m.ID)
-		if err != nil {
-			bot.DB.InsertMessage(db.Message{
-				MsgID:     m.ID,
-				UserID:    m.Author.ID,
-				ChannelID: m.ChannelID,
-				ServerID:  m.GuildID,
-				Username:  m.Author.Username + "#" + m.Author.Discriminator,
-
-				Content: m.Content,
-			})
-			return
+		if errors.Cause(err) != pgx.ErrNoRows {
+			bot.Sugar.Errorf("Error fetching message ID %v from database: %v", m.ID, err)
 		}
+
+		// insert message and return
+		bot.DB.InsertMessage(db.Message{
+			MsgID:     m.ID,
+			UserID:    m.Author.ID,
+			ChannelID: m.ChannelID,
+			ServerID:  m.GuildID,
+			Username:  m.Author.Username + "#" + m.Author.Discriminator,
+
+			Content: m.Content,
+		})
+		return
 	}
 
 	wh, err := bot.webhookCache("msg_update", m.GuildID, ch["MESSAGE_UPDATE"])
@@ -228,7 +232,7 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 		},
 	}...)
 
-	if msg.System != "" && msg.Member != "" {
+	if msg.System != nil && msg.Member != nil {
 		e.Title = fmt.Sprintf("Message by \"%v\" updated", m.Author.Username)
 
 		u, err := bot.State(m.GuildID).User(msg.UserID)
@@ -253,12 +257,12 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 			},
 			{
 				Name:   "System ID",
-				Value:  msg.System,
+				Value:  *msg.System,
 				Inline: true,
 			},
 			{
 				Name:   "Member ID",
-				Value:  msg.Member,
+				Value:  *msg.Member,
 				Inline: true,
 			},
 		}...)
@@ -282,28 +286,20 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 	}
 
 	// update the message
-	if msg.System != "" {
-		bot.DB.InsertProxied(db.Message{
-			MsgID:     m.ID,
-			UserID:    m.Author.ID,
-			ChannelID: m.ChannelID,
-			ServerID:  m.GuildID,
-
-			Username: m.Author.Username,
-			Member:   msg.Member,
-			System:   msg.System,
-
-			Content: m.Content,
-		})
-	} else {
-		bot.DB.InsertMessage(db.Message{
-			MsgID:     m.ID,
-			UserID:    m.Author.ID,
-			ChannelID: m.ChannelID,
-			ServerID:  m.GuildID,
-			Username:  m.Author.Username + "#" + m.Author.Discriminator,
-
-			Content: m.Content,
-		})
+	username := m.Author.Username
+	if msg.System == nil {
+		username += "#" + m.Author.Discriminator
 	}
+
+	bot.DB.InsertMessage(db.Message{
+		MsgID:     m.ID,
+		UserID:    m.Author.ID,
+		ChannelID: m.ChannelID,
+		ServerID:  m.GuildID,
+		Username:  username,
+		Member:    msg.Member,
+		System:    msg.System,
+
+		Content: m.Content,
+	})
 }

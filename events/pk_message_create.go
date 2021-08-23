@@ -97,13 +97,13 @@ func (bot *Bot) pkMessageCreate(m *gateway.MessageCreateEvent) {
 		ServerID:  m.GuildID,
 
 		Username: msg.Author.Username,
-		Member:   memberID,
-		System:   sysID,
+		Member:   &memberID,
+		System:   &sysID,
 
 		Content: msg.Content,
 	}
 
-	err = bot.DB.InsertProxied(dbMsg)
+	err = bot.DB.InsertMessage(dbMsg)
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
 			Event:   "pk_message_create",

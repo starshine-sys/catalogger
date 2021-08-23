@@ -108,24 +108,7 @@ func (bot *Bot) bulkMessageDelete(ev *gateway.MessageDeleteBulkEvent) {
 			found++
 			continue
 		}
-		// else check if it's proxied
-		m, err = bot.DB.GetProxied(id)
-		if err == nil && m.UserID != 0 {
-			if u, ok := users[m.UserID]; ok {
-				m.Username = fmt.Sprintf("%v (%v#%v)", m.Username, u.Username, u.Discriminator)
-			} else {
-				u, err := s.User(m.UserID)
-				if err == nil {
-					m.Username = fmt.Sprintf("%v (%v#%v)", m.Username, u.Username, u.Discriminator)
-					users[u.ID] = u
-				}
-			}
-
-			msgs = append(msgs, m)
-			found++
-			continue
-		}
-		// add a dummy message with the ID
+		// else add a dummy message with the ID
 		msgs = append(msgs, &db.Message{
 			MsgID:     id,
 			ChannelID: ev.ChannelID,
@@ -149,7 +132,7 @@ func (bot *Bot) bulkMessageDelete(ev *gateway.MessageDeleteBulkEvent) {
 `,
 			m.MsgID.Time().Format(time.ANSIC), m.MsgID, m.Username, m.UserID, m.Content,
 		)
-		if m.Member != "" {
+		if m.Member != nil && m.System != nil {
 			s = fmt.Sprintf(`[%v | %v] %v (%v)
 PK system: %v / PK member: %v
 --------------------------------------------
@@ -157,7 +140,7 @@ PK system: %v / PK member: %v
 
 --------------------------------------------
 `,
-				m.MsgID.Time().Format(time.ANSIC), m.MsgID, m.Username, m.UserID, m.System, m.Member, m.Content,
+				m.MsgID.Time().Format(time.ANSIC), m.MsgID, m.Username, m.UserID, *m.System, *m.Member, m.Content,
 			)
 		}
 

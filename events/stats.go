@@ -8,7 +8,6 @@ import (
 
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/dustin/go-humanize"
-	"github.com/georgysavva/scany/pgxscan"
 	"github.com/starshine-sys/bcr"
 )
 
@@ -30,12 +29,8 @@ func (bot *Bot) ping(ctx *bcr.Context) (err error) {
 	heartbeat := ctx.State.Gateway.PacerLoop.EchoBeat.Time().Sub(ctx.State.Gateway.PacerLoop.SentBeat.Time()).Round(time.Millisecond)
 
 	// message counts! that's all we store anyway
-	var msgs struct {
-		Messages   int64
-		PKMessages int64
-	}
-
-	err = pgxscan.Get(context.Background(), bot.DB.Pool, &msgs, "select (select count(*) from messages) as messages, (select count(*) from pk_messages) as pk_messages")
+	var msgCount int64
+	err = bot.DB.Pool.QueryRow(context.Background(), "select count(*) from messages").Scan(&msgCount)
 	if err != nil {
 		return bot.DB.ReportCtx(ctx, err)
 	}
@@ -88,9 +83,9 @@ func (bot *Bot) ping(ctx *bcr.Context) (err error) {
 			{
 				Name: "Numbers",
 				Value: fmt.Sprintf(
-					`%v messages (%v normal, %v proxied) from %v servers
+					`%v messages from %v servers
 Cached %v members, %v channels, and %v roles`,
-					humanize.Comma(msgs.Messages+msgs.PKMessages), humanize.Comma(msgs.Messages), humanize.Comma(msgs.PKMessages), len(guilds),
+					humanize.Comma(msgCount), humanize.Comma(int64(len(guilds))),
 					humanize.Comma(int64(len(bot.Members))),
 					humanize.Comma(int64(len(bot.Channels))),
 					humanize.Comma(int64(len(bot.Roles))),

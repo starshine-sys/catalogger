@@ -14,10 +14,7 @@ func (bot *Bot) clearData(ctx *bcr.Context) (err error) {
 	// get count
 	var msgCount int64
 
-	err = bot.DB.Pool.QueryRow(context.Background(), `select (
-	(select count(msg_id) from messages where server_id = $1) +
-	(select count(msg_id) from pk_messages where server_id = $1)
-)`, ctx.Message.GuildID).Scan(&msgCount)
+	err = bot.DB.Pool.QueryRow(context.Background(), `select count(msg_id) from messages where server_id = $1`, ctx.Message.GuildID).Scan(&msgCount)
 	if err != nil {
 		return bot.DB.ReportCtx(ctx, err)
 	}
@@ -41,13 +38,6 @@ func (bot *Bot) clearData(ctx *bcr.Context) (err error) {
 		return bot.DB.ReportCtx(ctx, err)
 	}
 	deleted := c.RowsAffected()
-
-	c, err = bot.DB.Pool.Exec(context.Background(), "delete from pk_messages where server_id = $1", ctx.Message.GuildID)
-	if err != nil {
-		return bot.DB.ReportCtx(ctx, err)
-	}
-
-	deleted += c.RowsAffected()
 
 	_, err = bot.DB.Pool.Exec(context.Background(), "update guilds set channels = $1, ignored_channels = array[]::bigint[], banned_systems = array[]::char(5)[] where id = $2", db.DefaultEventMap, ctx.Message.GuildID)
 	if err != nil {

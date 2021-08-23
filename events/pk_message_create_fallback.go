@@ -52,7 +52,7 @@ func (bot *Bot) pkMessageCreateFallback(m *gateway.MessageCreateEvent) {
 	}
 
 	// check if the message exists in the database; if so, return
-	_, err := bot.DB.GetProxied(m.ID)
+	_, err := bot.DB.GetMessage(m.ID)
 	if err == nil {
 		return
 	}
@@ -81,12 +81,14 @@ func (bot *Bot) pkMessageCreateFallback(m *gateway.MessageCreateEvent) {
 		ServerID:  m.GuildID,
 
 		Username: m.Author.Username,
-		Member:   pkm.Member.ID,
-		System:   pkm.System.ID,
+		Member:   &pkm.Member.ID,
+		System:   &pkm.System.ID,
 
 		Content: m.Content,
 	}
 
-	// insert the message, ignore errors as those shouldn't impact anything
-	bot.DB.InsertProxied(msg)
+	err = bot.DB.InsertMessage(msg)
+	if err != nil {
+		bot.Sugar.Errorf("Error inserting message ID %v: %v", m.ID, err)
+	}
 }
