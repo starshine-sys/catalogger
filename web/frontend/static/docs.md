@@ -1,8 +1,6 @@
 # Bot usage
 
-To invite the bot to your server, use [this link](https://discord.com/api/oauth2/authorize?client_id=830819903371739166&permissions=537259248&scope=bot%20applications.commands).
-
-Catalogger's prefix is `cl!` or `lg!`. Self-hosted instances can use any prefix.
+To invite the bot to your server, use [this link](https://discord.com/api/oauth2/authorize?client_id=830819903371739166&permissions=537259248&scope=bot%20applications.commands). Catalogger's prefix is `cl!` or `lg!`.
 
 A list of all commands can be shown with `cl!help commands`.
 
@@ -13,10 +11,10 @@ Naming invites and the watchlist can only be done with commands, though.
 
 ### Commands
 
-To start logging events, use the command `cl!setchannel` with a *comma-separated* list of [events](#events).
+To start logging events, use the command `cl!setchannel` with a *comma-separated* list of [events](#events).  
 - For example: `cl!setchannel message_update,message_delete`
 
-To *disable* logging for an event, use `cl!setchannel` with the `--clear` flag.
+To *disable* logging for an event, use `cl!setchannel` with the `--clear` flag.  
 - For example, `cl!setchannel --clear message_update` will stop logging the message update event.
 
 To ignore events from a channel, use `cl!ignorechannel` in that channel.  

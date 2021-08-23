@@ -23,7 +23,7 @@ func (bot *Bot) help(ctx *bcr.Context) (err error) {
 The bot's prefixes are %v.
 To get started, use `+"`%vsetchannel`"+` with one or more events.
 
-[Basic usage guide](https://github.com/starshine-sys/catalogger/blob/main/docs/USAGE.md) / [Privacy](https://github.com/starshine-sys/catalogger/blob/main/docs/PRIVACY.md)`, english.OxfordWordSeries(ctx.Router.Prefixes[:len(ctx.Router.Prefixes)-1], "and"), ctx.Prefix),
+[Basic usage guide](https://catalogger.starshines.xyz/docs) / [Privacy](https://catalogger.starshines.xyz/privacy)`, english.OxfordWordSeries(ctx.Router.Prefixes[:len(ctx.Router.Prefixes)-1], "and"), ctx.Prefix),
 		Color: bcr.ColourPurple,
 
 		Fields: []discord.EmbedField{
