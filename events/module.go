@@ -17,6 +17,9 @@ import (
 	"go.uber.org/zap"
 )
 
+// delete messages after this many days have passed
+const deleteAfterDays = 15
+
 // Bot ...
 type Bot struct {
 	*bcr.Router
@@ -280,16 +283,16 @@ func (bot *Bot) State(id discord.GuildID) *state.State {
 
 func (bot *Bot) cleanMessages() {
 	for {
-		ct, err := bot.DB.Pool.Exec(context.Background(), "delete from messages where msg_id < $1", discord.NewSnowflake(time.Now().UTC().Add(-720*time.Hour)))
+		ct, err := bot.DB.Pool.Exec(context.Background(), "delete from messages where msg_id < $1", discord.NewSnowflake(time.Now().UTC().Add(15*-24*time.Hour)))
 		if err != nil {
 			time.Sleep(1 * time.Minute)
 			continue
 		}
 
 		if n := ct.RowsAffected(); n == 0 {
-			bot.Sugar.Debugf("Deleted 0 normal messages older than 30 days.")
+			bot.Sugar.Debugf("Deleted 0 normal messages older than %v days.", deleteAfterDays)
 		} else {
-			bot.Sugar.Infof("Deleted %v normal messages older than 30 days.", n)
+			bot.Sugar.Infof("Deleted %v normal messages older than %v days.", n, deleteAfterDays)
 		}
 
 		time.Sleep(1 * time.Minute)
