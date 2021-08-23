@@ -48,7 +48,14 @@ func (bot *Bot) clearData(ctx *bcr.Context) (err error) {
 	if err != nil {
 		return bot.DB.ReportCtx(ctx, err)
 	}
+	invites := c.RowsAffected()
 
-	_, err = ctx.Sendf("Data deleted, %v messages and %v invites were deleted from the database.", deleted, c.RowsAffected())
+	c, err = bot.DB.Pool.Exec(context.Background(), "delete from watchlist where guild_id = $1", ctx.Message.GuildID)
+	if err != nil {
+		return bot.DB.ReportCtx(ctx, err)
+	}
+	watchlist := c.RowsAffected()
+
+	_, err = ctx.Sendf("Data deleted, %v messages, %v invites, and %v watchlist entries were deleted from the database.", deleted, invites, watchlist)
 	return
 }
