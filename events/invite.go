@@ -40,9 +40,7 @@ func (bot *Bot) inviteCreateEvent(ev *gateway.InviteCreateEvent) {
 	}
 	expires := "Never"
 	if ev.MaxAge != 0 {
-		expires = time.Now().UTC().Add(ev.MaxAge.Duration()).Format(
-			"Jan 2 2006, 15:04:05 MST",
-		)
+		expires = fmt.Sprintf("<t:%v>", time.Now().UTC().Add(ev.MaxAge.Duration()).Unix())
 	}
 
 	e := discord.Embed{

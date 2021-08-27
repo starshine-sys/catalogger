@@ -74,9 +74,9 @@ func (bot *Bot) ping(ctx *bcr.Context) (err error) {
 			{
 				Name: "Uptime",
 				Value: fmt.Sprintf(
-					"%v\n(Since %v)",
+					"%v\n(Since <t:%v:D> <t:%v:T>)",
 					bcr.HumanizeDuration(bcr.DurationPrecisionSeconds, time.Since(bot.Start)),
-					bot.Start.Format("Jan _2 2006, 15:04:05 MST"),
+					bot.Start.Unix(), bot.Start.Unix(),
 				),
 				Inline: true,
 			},

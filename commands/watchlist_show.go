@@ -62,7 +62,7 @@ func (bot *Bot) watchlistField(ctx *bcr.Context, m map[discord.UserID]*discord.U
 		field.Value = fmt.Sprintf("**Moderator:** %v#%v", mod.Username, mod.Discriminator)
 	}
 
-	field.Value += fmt.Sprintf("\n**Added:** %v UTC\n\n**Reason:** ", wl.Added.Format("2006-01-02 | 15:04"))
+	field.Value += fmt.Sprintf("\n**Added:** <t:%v>\n\n**Reason:** ", wl.Added.Unix())
 
 	for _, s := range wl.Reason {
 		if len(field.Value) > 1020 {

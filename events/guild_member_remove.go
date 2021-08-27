@@ -58,7 +58,7 @@ func (bot *Bot) guildMemberRemove(ev *gateway.GuildMemberRemoveEvent) {
 	if ok {
 		e.Fields = append(e.Fields, discord.EmbedField{
 			Name:  "Joined",
-			Value: bcr.HumanizeTime(bcr.DurationPrecisionSeconds, m.Joined.Time()),
+			Value: fmt.Sprintf("<t:%v> (%v)", m.Joined.Time().Unix(), bcr.HumanizeTime(bcr.DurationPrecisionSeconds, m.Joined.Time())),
 		})
 
 		if len(m.RoleIDs) > 0 {

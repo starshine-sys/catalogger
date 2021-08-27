@@ -57,7 +57,7 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) {
 		Fields: []discord.EmbedField{
 			{
 				Name:   "Account created",
-				Value:  bcr.HumanizeTime(bcr.DurationPrecisionMinutes, m.User.ID.Time()),
+				Value:  fmt.Sprintf("<t:%v> (%v)", m.User.ID.Time().Unix(), bcr.HumanizeTime(bcr.DurationPrecisionMinutes, m.User.ID.Time())),
 				Inline: true,
 			},
 		},
@@ -99,10 +99,21 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) {
 			Inline: true,
 		})
 
+		tag := "(None)"
+		if sys.Tag != "" {
+			tag = sys.Tag
+		}
+
+		e.Fields = append(e.Fields, discord.EmbedField{
+			Name:   "Tag",
+			Value:  tag,
+			Inline: true,
+		})
+
 		e.Fields = append(e.Fields, discord.EmbedField{
 			Name:   "Created",
-			Value:  bcr.HumanizeTime(bcr.DurationPrecisionMinutes, sys.Created),
-			Inline: true,
+			Value:  fmt.Sprintf("<t:%v>\n%v", sys.Created.Unix(), bcr.HumanizeTime(bcr.DurationPrecisionMinutes, sys.Created)),
+			Inline: false,
 		})
 	}
 
@@ -158,7 +169,7 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) {
 					},
 					{
 						Name:   "Created at",
-						Value:  inv.CreatedAt.Format(time.RFC1123),
+						Value:  fmt.Sprintf("<t:%v>", inv.CreatedAt.Time().Unix()),
 						Inline: true,
 					},
 					{
@@ -180,7 +191,7 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) {
 	if m.User.CreatedAt().After(time.Now().UTC().Add(-168 * time.Hour)) {
 		embeds = append(embeds, discord.Embed{
 			Title:       "New account",
-			Description: fmt.Sprintf("⚠️ This account was created only **%v** (%v)", bcr.HumanizeTime(bcr.DurationPrecisionSeconds, m.User.CreatedAt()), m.User.CreatedAt().Format(time.RFC1123)),
+			Description: fmt.Sprintf("⚠️ This account was created only **%v** (<t:%v>)", bcr.HumanizeTime(bcr.DurationPrecisionSeconds, m.User.CreatedAt()), m.User.CreatedAt().Unix()),
 			Color:       bcr.ColourOrange,
 		})
 	}
