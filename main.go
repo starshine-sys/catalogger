@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/signal"
 	"strconv"
@@ -11,8 +10,6 @@ import (
 
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
-	"github.com/diamondburned/arikawa/v3/gateway/shard"
-	"github.com/diamondburned/arikawa/v3/state"
 	"github.com/getsentry/sentry-go"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/starshine-sys/bcr"
@@ -70,22 +67,6 @@ func main() {
 
 	// add message create handler
 	r.AddHandler(r.MessageCreate)
-
-	// set status
-	r.ShardManager.ForEach(func(s shard.Shard) {
-		state := s.(*state.State)
-
-		state.AddHandler(func(_ *gateway.ReadyEvent) {
-			err = state.Gateway.UpdateStatus(gateway.UpdateStatusData{
-				Activities: []discord.Activity{{
-					Name: fmt.Sprintf("%vhelp", strings.Split(os.Getenv("PREFIXES"), ",")[0]),
-				}},
-			})
-			if err != nil {
-				sugar.Errorf("Error setting bot status: %v", err)
-			}
-		})
-	})
 
 	// sentry, if enabled
 	var hub *sentry.Hub

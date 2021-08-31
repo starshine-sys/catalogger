@@ -3,12 +3,15 @@ package events
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/ReneKroon/ttlcache/v2"
 	"github.com/diamondburned/arikawa/v3/discord"
+	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/diamondburned/arikawa/v3/gateway/shard"
 	"github.com/diamondburned/arikawa/v3/state"
 	"github.com/diamondburned/arikawa/v3/utils/handler"
@@ -257,6 +260,17 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) (clearCacheFunc func(d
 
 	go b.cleanMessages()
 
+	b.ShardManager.ForEach(func(s shard.Shard) {
+		state := s.(*state.State)
+
+		var o sync.Once
+		state.AddHandler(func(*gateway.ReadyEvent) {
+			o.Do(func() {
+				go b.updateStatusLoop(state)
+			})
+		})
+	})
+
 	clearCacheFunc = b.ResetCache
 	memberFunc = func() int64 {
 		b.MembersMu.Lock()
@@ -338,4 +352,53 @@ func (bot *Bot) guildPerms(guildID discord.GuildID, userID discord.UserID) (g di
 	}
 
 	return g, perms, nil
+}
+
+func (bot *Bot) updateStatusLoop(s *state.State) {
+	time.Sleep(5 * time.Second)
+
+	for {
+		guildCount := 0
+		bot.ShardManager.ForEach(func(s shard.Shard) {
+			state := s.(*state.State)
+
+			guilds, _ := state.GuildStore.Guilds()
+			guildCount += len(guilds)
+		})
+
+		shardNumber := 0
+		bot.ShardManager.ForEach(func(s shard.Shard) {
+			state := s.(*state.State)
+
+			str := fmt.Sprintf("%vhelp", strings.Split(os.Getenv("PREFIXES"), ",")[0])
+			if guildCount != 0 {
+				str += fmt.Sprintf(" | in %v servers", guildCount)
+			}
+
+			i := shardNumber
+			shardNumber++
+
+			go func() {
+				i := i
+				bot.Sugar.Infof("Setting status for shard #%v", i)
+				s := str
+				if bot.ShardManager.NumShards() > 1 {
+					s = fmt.Sprintf("%v | shard #%v", s, i)
+				}
+
+				err := state.UpdateStatus(gateway.UpdateStatusData{
+					Status: discord.OnlineStatus,
+					Activities: []discord.Activity{{
+						Name: s,
+						Type: discord.GameActivity,
+					}},
+				})
+				if err != nil {
+					bot.Sugar.Errorf("Error setting status for shard #%v: %v", i, err)
+				}
+			}()
+		})
+
+		time.Sleep(10 * time.Minute)
+	}
 }
