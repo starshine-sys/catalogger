@@ -3,6 +3,7 @@ package events
 import (
 	"fmt"
 	"sort"
+	"time"
 
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/dustin/go-humanize"
@@ -71,11 +72,11 @@ func (bot *Bot) adminInspectUsers(ctx *bcr.Context) (err error) {
 		})
 	}
 
-	_, err = ctx.PagedEmbed(
+	_, _, err = ctx.ButtonPages(
 		bcr.FieldPaginator(
 			fmt.Sprintf("Guilds (%v)", len(info)),
 			"", bcr.ColourPurple,
 			fields, 5,
-		), false)
+		), 15*time.Minute)
 	return
 }

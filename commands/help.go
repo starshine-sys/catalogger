@@ -5,6 +5,7 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/dustin/go-humanize/english"
@@ -41,7 +42,7 @@ To get started, use `+"`%vsetchannel`"+` with one or more events.
 			},
 			{
 				Name:  "Author",
-				Value: "<@!694563574386786314> / starshine system 🌠✨#0001",
+				Value: "<@!694563574386786314> / starshine 🌠✨#0001",
 			},
 			{
 				Name:  "Source code",
@@ -120,8 +121,8 @@ func (bot *Bot) commands(ctx *bcr.Context) (err error) {
 		})
 	}
 
-	_, err = ctx.PagedEmbed(
-		bcr.FieldPaginator("Commands", fmt.Sprintf("Use `%vhelp <name>` for more info on a command.", ctx.Router.Prefixes[0]), bcr.ColourPurple, fields, 5), false,
+	_, _, err = ctx.ButtonPages(
+		bcr.FieldPaginator("Commands", fmt.Sprintf("Use `%vhelp <name>` for more info on a command.", ctx.Router.Prefixes[0]), bcr.ColourPurple, fields, 5), 15*time.Minute,
 	)
 	return
 }

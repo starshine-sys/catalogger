@@ -3,6 +3,7 @@ package commands
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/dustin/go-humanize"
@@ -36,6 +37,6 @@ func (bot *Bot) adminStats(ctx *bcr.Context) (err error) {
 		})
 	}
 
-	_, err = ctx.PagedEmbed(bcr.FieldPaginator("Server stats", "", bcr.ColourPurple, fields, 5), false)
+	_, _, err = ctx.ButtonPages(bcr.FieldPaginator("Server stats", "", bcr.ColourPurple, fields, 5), 15*time.Minute)
 	return
 }

@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/starshine-sys/bcr"
@@ -27,7 +28,7 @@ func (bot *Bot) watchlist(ctx *bcr.Context) (err error) {
 		fields = append(fields, bot.watchlistField(ctx, m, wl))
 	}
 
-	_, err = ctx.PagedEmbed(bcr.FieldPaginator("Watchlist", "", bcr.ColourPurple, fields, 5), false)
+	_, _, err = ctx.ButtonPages(bcr.FieldPaginator("Watchlist", "", bcr.ColourPurple, fields, 5), 15*time.Minute)
 	return
 }
 

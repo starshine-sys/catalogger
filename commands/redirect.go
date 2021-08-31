@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/starshine-sys/bcr"
@@ -24,8 +25,8 @@ func (bot *Bot) redirect(ctx *bcr.Context) (err error) {
 			s = append(s, fmt.Sprintf("- <#%v> logging to <#%v>\n", k, v))
 		}
 
-		_, err = ctx.PagedEmbed(
-			bcr.StringPaginator("Channel log redirects", bcr.ColourPurple, s, 10), false,
+		_, _, err = ctx.ButtonPages(
+			bcr.StringPaginator("Channel log redirects", bcr.ColourPurple, s, 10), 15*time.Minute,
 		)
 		return err
 	}

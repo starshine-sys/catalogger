@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/starshine-sys/bcr"
@@ -48,8 +49,8 @@ Created by %v#%v`, name, invites[code].Uses, invites[code].Inviter.Username, inv
 		})
 	}
 
-	_, err = ctx.PagedEmbed(
-		bcr.FieldPaginator("Invites", "A list of invites", bcr.ColourPurple, fields, 4), false,
+	_, _, err = ctx.ButtonPages(
+		bcr.FieldPaginator("Invites", "", bcr.ColourPurple, fields, 4), 15*time.Minute,
 	)
 	return
 }
