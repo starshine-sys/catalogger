@@ -3,13 +3,27 @@ package events
 import (
 	"context"
 	"fmt"
+	"os/exec"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/dustin/go-humanize"
 	"github.com/starshine-sys/bcr"
 )
+
+var gitVer string
+
+func init() {
+	git := exec.Command("git", "rev-parse", "--short", "HEAD")
+	// ignoring errors *should* be fine? if there's no output we just fall back to "unknown"
+	b, _ := git.Output()
+	gitVer = strings.TrimSpace(string(b))
+	if gitVer == "" {
+		gitVer = "[unknown]"
+	}
+}
 
 func (bot *Bot) ping(ctx *bcr.Context) (err error) {
 	stats := runtime.MemStats{}
@@ -49,7 +63,9 @@ func (bot *Bot) ping(ctx *bcr.Context) (err error) {
 	bot.RolesMu.Lock()
 
 	e := discord.Embed{
-		Color: bcr.ColourPurple,
+		Color:     bcr.ColourPurple,
+		Footer:    &discord.EmbedFooter{Text: fmt.Sprintf("Version %v", gitVer)},
+		Timestamp: discord.NowTimestamp(),
 		Fields: []discord.EmbedField{
 			{
 				Name:   "Ping",
