@@ -8,8 +8,8 @@ import (
 	"github.com/starshine-sys/bcr"
 )
 
-func (bot *Bot) listInvites(ctx *bcr.Context) (err error) {
-	is, err := ctx.State.GuildInvites(ctx.Message.GuildID)
+func (bot *Bot) listInvites(ctx bcr.Contexter) (err error) {
+	is, err := ctx.Session().GuildInvites(ctx.GetGuild().ID)
 	if err != nil {
 		bot.Sugar.Errorf("Error getting guild invites: %v", err)
 		_, err = ctx.Sendf("Could not get this server's invites. Are you sure I have the **Manage Server** permission?")
@@ -32,7 +32,7 @@ func (bot *Bot) listInvites(ctx *bcr.Context) (err error) {
 		names[i.Code] = "Unnamed"
 	}
 
-	names, err = bot.DB.GetInvites(ctx.Message.GuildID, names)
+	names, err = bot.DB.GetInvites(ctx.GetGuild().ID, names)
 	if err != nil {
 		return bot.DB.ReportCtx(ctx, err)
 	}

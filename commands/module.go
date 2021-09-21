@@ -23,7 +23,6 @@ func Init(bot *bot.Bot) {
 		Summary: "Show all available events.",
 
 		SlashCommand: b.events,
-		Options:      &[]discord.CommandOption{},
 	})
 
 	b.Router.AddCommand(&bcr.Command{
@@ -138,12 +137,6 @@ func Init(bot *bot.Bot) {
 	})
 
 	helpGroup.Add(&bcr.Command{
-		Name:         "commands",
-		Summary:      "Show a list of all commands",
-		SlashCommand: b.commands,
-	})
-
-	helpGroup.Add(&bcr.Command{
 		Name:         "invite",
 		Summary:      "Get an invite link for the bot.",
 		SlashCommand: b.invite,
@@ -153,6 +146,12 @@ func Init(bot *bot.Bot) {
 		Name:         "dashboard",
 		Summary:      "Get a link to the bot dashboard.",
 		SlashCommand: b.dashboard,
+	})
+
+	helpGroup.Add(&bcr.Command{
+		Name:         "events",
+		Summary:      "Show all available events.",
+		SlashCommand: b.events,
 	})
 
 	b.Router.AddCommand(&bcr.Command{
@@ -165,8 +164,8 @@ func Init(bot *bot.Bot) {
 		Name:    "invites",
 		Summary: "List this server's invites.",
 
-		Permissions: discord.PermissionManageGuild,
-		Command:     b.listInvites,
+		Permissions:  discord.PermissionManageGuild,
+		SlashCommand: b.listInvites,
 	})
 
 	inv.AddSubcommand(&bcr.Command{
@@ -180,14 +179,58 @@ func Init(bot *bot.Bot) {
 		Command:     b.renameInvite,
 	})
 
-	b.Router.AddCommand(&bcr.Command{
-		Name:    "admin-stats",
-		Aliases: []string{"adminstats"},
-		Summary: "Per-server message stats.",
+	invGroup := &bcr.Group{
+		Name:        "invites",
+		Description: "List and manage this server's invites.",
+	}
 
-		Hidden:    true,
-		OwnerOnly: true,
-		Command:   b.adminStats,
+	invGroup.Add(&bcr.Command{
+		Name:         "list",
+		Summary:      "List this server's invites.",
+		Permissions:  discord.PermissionManageGuild,
+		SlashCommand: b.listInvites,
+	})
+
+	invGroup.Add(&bcr.Command{
+		Name:         "name",
+		Summary:      "Set or reset an invite's name.",
+		Permissions:  discord.PermissionManageGuild,
+		SlashCommand: b.renameInviteSlash,
+		Options: &[]discord.CommandOption{
+			{
+				Name:        "code",
+				Type:        discord.StringOption,
+				Description: "The invite to name.",
+				Required:    true,
+			},
+			{
+				Name:        "name",
+				Type:        discord.StringOption,
+				Description: "The name to give to the invite. Leave empty to reset the invite's name.",
+				Required:    false,
+			},
+		},
+	})
+
+	invGroup.Add(&bcr.Command{
+		Name:         "create",
+		Summary:      "Create a unique invite for a channel.",
+		Permissions:  discord.PermissionManageGuild,
+		SlashCommand: b.createInvite,
+		Options: &[]discord.CommandOption{
+			{
+				Name:        "channel",
+				Type:        discord.ChannelOption,
+				Description: "The channel to create an invite in.",
+				Required:    true,
+			},
+			{
+				Name:        "name",
+				Type:        discord.StringOption,
+				Description: "What to name the new invite.",
+				Required:    false,
+			},
+		},
 	})
 
 	b.Router.AddCommand(&bcr.Command{
@@ -226,4 +269,5 @@ func Init(bot *bot.Bot) {
 	})
 
 	b.Router.AddGroup(helpGroup)
+	b.Router.AddGroup(invGroup)
 }

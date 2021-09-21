@@ -80,7 +80,8 @@ func (bot *Bot) invite(ctx bcr.Contexter) (err error) {
 		discord.PermissionManageWebhooks |
 		discord.PermissionManageGuild |
 		discord.PermissionViewAuditLog |
-		discord.PermissionManageChannels
+		discord.PermissionManageChannels |
+		discord.PermissionCreateInstantInvite
 
 	link := fmt.Sprintf("https://discord.com/api/oauth2/authorize?client_id=%v&permissions=%v&scope=bot%%20applications.commands", bot.Router.Bot.ID, perms)
 
@@ -140,7 +141,7 @@ func (bot *Bot) dashboard(ctx bcr.Contexter) (err error) {
 		bot.Sugar.Errorf("Error fetching permissions for user: %v", err)
 	}
 
-	if !perms.Has(discord.PermissionManageGuild) {
+	if !perms.Has(discord.PermissionManageGuild) || ctx.GetGuild() == nil {
 		return ctx.SendEphemeral(fmt.Sprintf("The bot dashboard is available here: <%v/servers>", dashboard))
 	}
 

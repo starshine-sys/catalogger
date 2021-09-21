@@ -244,14 +244,6 @@ func Init(bot *bot.Bot) (clearCacheFunc func(discord.GuildID, ...discord.Channel
 		Command: b.ping,
 	})
 
-	b.Router.AddCommand(&bcr.Command{
-		Name:      "admin-users",
-		Summary:   "Show user/bot count for all servers. **Bot owner only**",
-		OwnerOnly: true,
-		Hidden:    true,
-		Command:   b.adminInspectUsers,
-	})
-
 	go b.cleanMessages()
 
 	b.Router.ShardManager.ForEach(func(s shard.Shard) {

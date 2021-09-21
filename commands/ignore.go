@@ -7,6 +7,8 @@ import (
 	"github.com/starshine-sys/bcr"
 )
 
+const channelNotFoundError = "Channel not found, either it is not in this server, or it is not a text channel, or you do not have permission to view it."
+
 func (bot *Bot) ignore(ctx bcr.Contexter) (err error) {
 	guildID := ctx.GetGuild().ID
 	var chID discord.ChannelID
@@ -15,15 +17,19 @@ func (bot *Bot) ignore(ctx bcr.Contexter) (err error) {
 		if err == nil && (ch.Type == discord.GuildNews || ch.Type == discord.GuildText) && ch.GuildID == ctx.GetGuild().ID {
 			chID = ch.ID
 		} else {
-			return ctx.SendEphemeral("Channel not found, either it is not in this server or it is not a text channel.")
+			return ctx.SendEphemeral(channelNotFoundError)
 		}
 	} else if v, ok := ctx.(*bcr.Context); ok {
 		ch, err := v.ParseChannel(v.RawArgs)
 		if err == nil && (ch.Type == discord.GuildNews || ch.Type == discord.GuildText) && ch.GuildID == ctx.GetGuild().ID {
 			chID = ch.ID
 		} else {
-			return ctx.SendEphemeral("Channel not found, either it is not in this server or it is not a text channel.")
+			return ctx.SendEphemeral(channelNotFoundError)
 		}
+	}
+
+	if perms, _ := ctx.Session().Permissions(chID, ctx.User().ID); !perms.Has(discord.PermissionViewChannel) {
+		return ctx.SendEphemeral(channelNotFoundError)
 	}
 
 	var blacklisted bool
@@ -38,7 +44,7 @@ func (bot *Bot) ignore(ctx bcr.Contexter) (err error) {
 			return bot.DB.ReportCtx(ctx, err)
 		}
 
-		_, err = ctx.Send("Stopped ignoring this channel.")
+		_, err = ctx.Sendf("Stopped ignoring %v.", chID.Mention())
 		return
 	}
 
