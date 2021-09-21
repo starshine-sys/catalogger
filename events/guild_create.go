@@ -29,25 +29,13 @@ func (bot *Bot) guildCreate(g *gateway.GuildCreateEvent) {
 		return
 	}
 
-	owner := g.OwnerID.Mention()
-	if o, err := bot.State(g.ID).User(g.OwnerID); err == nil {
-		owner = fmt.Sprintf("%v#%v (%v)", o.Username, o.Discriminator, o.Mention())
-	}
-
 	e := discord.Embed{
 		Title: "Joined new server",
 		Color: bcr.ColourPurple,
 		Thumbnail: &discord.EmbedThumbnail{
 			URL: g.IconURL(),
 		},
-
 		Description: fmt.Sprintf("Joined new server **%v**", g.Name),
-
-		Fields: []discord.EmbedField{{
-			Name:  "Owner",
-			Value: owner,
-		}},
-
 		Footer: &discord.EmbedFooter{
 			Text: fmt.Sprintf("ID: %v", g.ID),
 		},

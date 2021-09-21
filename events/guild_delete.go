@@ -20,11 +20,6 @@ func (bot *Bot) guildDelete(g *gateway.GuildDeleteEvent) {
 		return
 	}
 
-	owner := guild.OwnerID.Mention()
-	if o, err := bot.State(g.ID).User(guild.OwnerID); err == nil {
-		owner = fmt.Sprintf("%v#%v (%v)", o.Username, o.Discriminator, o.Mention())
-	}
-
 	e := discord.Embed{
 		Title: "Left server",
 		Color: bcr.ColourPurple,
@@ -33,12 +28,6 @@ func (bot *Bot) guildDelete(g *gateway.GuildDeleteEvent) {
 		},
 
 		Description: fmt.Sprintf("Left server **%v**", guild.Name),
-
-		Fields: []discord.EmbedField{{
-			Name:  "Owner",
-			Value: owner,
-		}},
-
 		Footer: &discord.EmbedFooter{
 			Text: fmt.Sprintf("ID: %v", guild.ID),
 		},
