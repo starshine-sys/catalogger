@@ -1,6 +1,6 @@
 # Bot usage
 
-To invite the bot to your server, use [this link](https://discord.com/api/oauth2/authorize?client_id=830819903371739166&permissions=537259248&scope=bot%20applications.commands).
+To invite the bot to your server, use [this link](https://discord.com/api/oauth2/authorize?client_id=830819903371739166&permissions=537259249&scope=bot%20applications.commands).
 
 Catalogger's prefix is `cl!` or `lg!`. Self-hosted instances can use any prefix.
 

@@ -87,7 +87,7 @@ func (s *server) serverList(w http.ResponseWriter, r *http.Request, _ httprouter
 }
 
 func inviteLink(guildID discord.GuildID) string {
-	return fmt.Sprintf("https://discord.com/api/oauth2/authorize?client_id=%v&permissions=537259248&scope=bot%%20applications.commands&guild_id=%v&disable_guild_select=true", clientID, guildID)
+	return fmt.Sprintf("https://discord.com/api/oauth2/authorize?client_id=%v&permissions=537259249&scope=bot%%20applications.commands&guild_id=%v&disable_guild_select=true", clientID, guildID)
 }
 
 func (s *server) guildList(ctx context.Context, id discord.UserID) (list []discord.Guild, err error) {
