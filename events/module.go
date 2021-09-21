@@ -344,9 +344,7 @@ func (bot *Bot) guildPerms(guildID discord.GuildID, userID discord.UserID) (g di
 				if r.Permissions.Has(discord.PermissionAdministrator) {
 					return g, discord.PermissionAll, nil
 				}
-
 				perms |= r.Permissions
-				break
 			}
 		}
 	}

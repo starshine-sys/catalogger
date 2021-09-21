@@ -1,0 +1,45 @@
+version: "3"
+
+services:
+  catalogger:
+    build: .
+    environment:
+      - "DATABASE_URL=postgresql://postgres:postgres@postgres/postgres"
+      - "REDIS=redis:6379"
+    volumes:
+      - "./.env:/app/.env:ro"
+    restart: unless-stopped
+    depends_on:
+      - redis
+      - postgres
+    networks:
+      - default
+
+  postgres:
+    image: postgres:13-alpine
+    volumes:
+      - "postgres_data:/var/lib/postgresql/data"
+      - "/var/run/postgresql:/var/run/postgresql"
+    command: ["postgres",
+              "-c", "max-connections=1000",
+              "-c", "timezone=Etc/UTC",
+              "-c", "max_wal_size=1GB",
+              "-c", "min_wal_size=80MB",
+              "-c", "shared_buffers=128MB"]
+    environment:
+      - "POSTGRES_PASSWORD=postgres"
+    restart: unless-stopped
+    networks:
+      - default
+
+  redis:
+    image: redis:alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    networks:
+      - default
+
+volumes:
+  postgres_data:
+  redis_data:

@@ -13,15 +13,20 @@ import (
 	"github.com/starshine-sys/bcr"
 )
 
-var gitVer string
+// GitVer is the git version (commit hash)
+var GitVer = "[unknown]"
 
 func init() {
+	if GitVer != "[unknown]" {
+		return
+	}
+
 	git := exec.Command("git", "rev-parse", "--short", "HEAD")
 	// ignoring errors *should* be fine? if there's no output we just fall back to "unknown"
 	b, _ := git.Output()
-	gitVer = strings.TrimSpace(string(b))
-	if gitVer == "" {
-		gitVer = "[unknown]"
+	GitVer = strings.TrimSpace(string(b))
+	if GitVer == "" {
+		GitVer = "[unknown]"
 	}
 }
 
@@ -64,7 +69,7 @@ func (bot *Bot) ping(ctx *bcr.Context) (err error) {
 
 	e := discord.Embed{
 		Color:     bcr.ColourPurple,
-		Footer:    &discord.EmbedFooter{Text: fmt.Sprintf("Version %v", gitVer)},
+		Footer:    &discord.EmbedFooter{Text: fmt.Sprintf("Version %v", GitVer)},
 		Timestamp: discord.NowTimestamp(),
 		Fields: []discord.EmbedField{
 			{
