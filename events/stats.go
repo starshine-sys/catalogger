@@ -8,7 +8,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/diamondburned/arikawa/v3/api"
 	"github.com/diamondburned/arikawa/v3/discord"
+	"github.com/diamondburned/arikawa/v3/utils/json/option"
 	"github.com/dustin/go-humanize"
 	"github.com/starshine-sys/bcr"
 )
@@ -30,13 +32,13 @@ func init() {
 	}
 }
 
-func (bot *Bot) ping(ctx *bcr.Context) (err error) {
+func (bot *Bot) ping(ctx bcr.Contexter) (err error) {
 	stats := runtime.MemStats{}
 	runtime.ReadMemStats(&stats)
 
 	t := time.Now()
 
-	m, err := ctx.Send("...")
+	err = ctx.SendX("...")
 	if err != nil {
 		return err
 	}
@@ -45,7 +47,7 @@ func (bot *Bot) ping(ctx *bcr.Context) (err error) {
 
 	// this will return 0ms in the first minute after the bot is restarted
 	// can't do much about that though
-	heartbeat := ctx.State.Gateway.PacerLoop.EchoBeat.Time().Sub(ctx.State.Gateway.PacerLoop.SentBeat.Time()).Round(time.Millisecond)
+	heartbeat := ctx.Session().Gateway.PacerLoop.EchoBeat.Time().Sub(ctx.Session().Gateway.PacerLoop.SentBeat.Time()).Round(time.Millisecond)
 
 	// message counts! that's all we store anyway
 	var msgCount int64
@@ -53,14 +55,14 @@ func (bot *Bot) ping(ctx *bcr.Context) (err error) {
 	if err != nil {
 		return bot.DB.ReportCtx(ctx, err)
 	}
-	guilds, err := ctx.State.Guilds()
-	if err != nil {
-		return bot.DB.ReportCtx(ctx, err)
-	}
+
+	bot.GuildsMu.Lock()
+	guilds := len(bot.Guilds)
+	bot.GuildsMu.Unlock()
 
 	// database latency
 	t = time.Now()
-	bot.DB.Channels(ctx.Message.GuildID)
+	bot.DB.Channels(ctx.GetChannel().GuildID)
 	dbLatency := time.Since(t).Round(time.Microsecond)
 
 	bot.MembersMu.Lock()
@@ -106,7 +108,7 @@ func (bot *Bot) ping(ctx *bcr.Context) (err error) {
 				Value: fmt.Sprintf(
 					`%v messages from %v servers
 Cached %v members, %v channels, and %v roles`,
-					humanize.Comma(msgCount), humanize.Comma(int64(len(guilds))),
+					humanize.Comma(msgCount), humanize.Comma(int64(guilds)),
 					humanize.Comma(int64(len(bot.Members))),
 					humanize.Comma(int64(len(bot.Channels))),
 					humanize.Comma(int64(len(bot.Roles))),
@@ -119,6 +121,9 @@ Cached %v members, %v channels, and %v roles`,
 	bot.ChannelsMu.Unlock()
 	bot.RolesMu.Unlock()
 
-	_, err = ctx.Edit(m, "", true, e)
+	_, err = ctx.EditOriginal(api.EditInteractionResponseData{
+		Content: option.NewNullableString(""),
+		Embeds:  &[]discord.Embed{e},
+	})
 	return err
 }

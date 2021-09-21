@@ -220,8 +220,9 @@ func Init(bot *bot.Bot) (clearCacheFunc func(discord.GuildID, ...discord.Channel
 		Summary: "Clear this server's webhook cache.",
 
 		Permissions: discord.PermissionManageGuild,
-		Command: func(ctx *bcr.Context) (err error) {
-			channels, err := ctx.State.Channels(ctx.Message.GuildID)
+		Options:     &[]discord.CommandOption{},
+		SlashCommand: func(ctx bcr.Contexter) (err error) {
+			channels, err := ctx.Session().Channels(ctx.GetGuild().ID)
 			if err != nil {
 				return b.DB.ReportCtx(ctx, err)
 			}
@@ -230,7 +231,7 @@ func Init(bot *bot.Bot) (clearCacheFunc func(discord.GuildID, ...discord.Channel
 				ch = append(ch, c.ID)
 			}
 
-			b.ResetCache(ctx.Message.GuildID, ch...)
+			b.ResetCache(ctx.GetGuild().ID, ch...)
 			_, err = ctx.Send("Reset the webhook cache for this server.")
 			return
 		},
@@ -241,8 +242,20 @@ func Init(bot *bot.Bot) (clearCacheFunc func(discord.GuildID, ...discord.Channel
 		Aliases: []string{"ping"},
 		Summary: "Show the bot's latency and other stats.",
 
-		Command: b.ping,
+		SlashCommand: b.ping,
 	})
+
+	// mmmm spaghetti
+	// [this isn't *that* spaghetti but i wish we'd added a better way to do this]
+	for _, g := range bot.Router.SlashGroups {
+		if g.Name == "help" {
+			g.Add(&bcr.Command{
+				Name:         "stats",
+				Summary:      "Show the bot's latency and other stats.",
+				SlashCommand: b.ping,
+			})
+		}
+	}
 
 	go b.cleanMessages()
 
