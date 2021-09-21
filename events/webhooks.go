@@ -155,7 +155,7 @@ func (bot *Bot) getWebhook(guildID discord.GuildID, channelID discord.ChannelID,
 	ws, err := bot.State(guildID).ChannelWebhooks(channelID)
 	if err == nil {
 		for _, w := range ws {
-			if w.Name == name && (w.User.ID == bot.Bot.ID || !w.User.ID.IsValid()) {
+			if w.Name == name && (w.User.ID == bot.Router.Bot.ID || !w.User.ID.IsValid()) {
 				return &w, nil
 			}
 		}

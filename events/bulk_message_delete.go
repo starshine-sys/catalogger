@@ -17,7 +17,7 @@ import (
 )
 
 func (bot *Bot) bulkMessageDelete(ev *gateway.MessageDeleteBulkEvent) {
-	s, _ := bot.StateFromGuildID(ev.GuildID)
+	s, _ := bot.Router.StateFromGuildID(ev.GuildID)
 
 	if !ev.GuildID.IsValid() {
 		return

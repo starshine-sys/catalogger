@@ -12,10 +12,12 @@ import (
 	"github.com/starshine-sys/bcr"
 )
 
-func (bot *Bot) help(ctx *bcr.Context) (err error) {
+func (bot *Bot) help(ctx bcr.Contexter) (err error) {
 	// help for commands
-	if len(ctx.Args) > 0 {
-		return ctx.Help(ctx.Args)
+	if v, ok := ctx.(*bcr.Context); ok {
+		if len(v.Args) > 0 {
+			return v.Help(v.Args)
+		}
 	}
 
 	e := discord.Embed{
@@ -24,7 +26,7 @@ func (bot *Bot) help(ctx *bcr.Context) (err error) {
 The bot's prefixes are %v.
 To get started, use `+"`%vsetchannel`"+` with one or more events.
 
-[Basic usage guide](https://catalogger.starshines.xyz/docs) / [Privacy](https://catalogger.starshines.xyz/privacy)`, english.OxfordWordSeries(ctx.Router.Prefixes[:len(ctx.Router.Prefixes)-1], "and"), ctx.Prefix),
+[Basic usage guide](https://catalogger.starshines.xyz/docs) / [Privacy](https://catalogger.starshines.xyz/privacy)`, english.OxfordWordSeries(bot.Router.Prefixes[:len(bot.Router.Prefixes)-1], "and"), bot.Router.Prefixes[0]),
 		Color: bcr.ColourPurple,
 
 		Fields: []discord.EmbedField{
@@ -63,11 +65,10 @@ To get started, use `+"`%vsetchannel`"+` with one or more events.
 		e.Description += fmt.Sprintf("\n\nYou can also use the [dashboard](%v/servers) to configure the bot!", dashboard)
 	}
 
-	_, err = ctx.Send("", e)
-	return
+	return ctx.SendX("", e)
 }
 
-func (bot *Bot) invite(ctx *bcr.Context) (err error) {
+func (bot *Bot) invite(ctx bcr.Contexter) (err error) {
 	perms := discord.PermissionViewChannel |
 		discord.PermissionReadMessageHistory |
 		discord.PermissionAddReactions |
@@ -81,13 +82,12 @@ func (bot *Bot) invite(ctx *bcr.Context) (err error) {
 		discord.PermissionViewAuditLog |
 		discord.PermissionManageChannels
 
-	link := fmt.Sprintf("https://discord.com/api/oauth2/authorize?client_id=%v&permissions=%v&scope=bot%%20applications.commands", ctx.Bot.ID, perms)
+	link := fmt.Sprintf("https://discord.com/api/oauth2/authorize?client_id=%v&permissions=%v&scope=bot%%20applications.commands", bot.Router.Bot.ID, perms)
 
-	_, err = ctx.Sendf("Use the following link to invite me to your server: <%v>", link)
-	return
+	return ctx.SendEphemeral(fmt.Sprintf("Use the following link to invite me to your server: <%v>", link))
 }
 
-func (bot *Bot) perms(ctx *bcr.Context) (err error) {
+func (bot *Bot) perms(ctx bcr.Contexter) (err error) {
 	e := discord.Embed{
 		Title: "Permissions",
 		Description: `This bot requires the following major permissions to function correctly:
@@ -97,11 +97,10 @@ func (bot *Bot) perms(ctx *bcr.Context) (err error) {
 		Color: bcr.ColourPurple,
 	}
 
-	_, err = ctx.Send("", e)
-	return
+	return ctx.SendEphemeral("", e)
 }
 
-func (bot *Bot) commands(ctx *bcr.Context) (err error) {
+func (bot *Bot) commands(ctx bcr.Contexter) (err error) {
 	cmds := bot.Router.Commands()
 	sort.Sort(bcr.Commands(cmds))
 
@@ -122,7 +121,28 @@ func (bot *Bot) commands(ctx *bcr.Context) (err error) {
 	}
 
 	_, _, err = ctx.ButtonPages(
-		bcr.FieldPaginator("Commands", fmt.Sprintf("Use `%vhelp <name>` for more info on a command.", ctx.Router.Prefixes[0]), bcr.ColourPurple, fields, 5), 15*time.Minute,
+		bcr.FieldPaginator("Commands", fmt.Sprintf("Use `%vhelp <name>` for more info on a command.", bot.Router.Prefixes[0]), bcr.ColourPurple, fields, 5), 15*time.Minute,
 	)
 	return
+}
+
+func (bot *Bot) dashboard(ctx bcr.Contexter) (err error) {
+	dashboard := os.Getenv("DASHBOARD_BASE")
+	if dashboard == "" {
+		if _, ok := ctx.(*bcr.Context); ok {
+			return
+		}
+		return ctx.SendEphemeral("There is no dashboard for this instance of the bot. Sorry :(")
+	}
+
+	perms, err := ctx.Session().Permissions(ctx.GetChannel().ID, ctx.User().ID)
+	if err != nil {
+		bot.Sugar.Errorf("Error fetching permissions for user: %v", err)
+	}
+
+	if !perms.Has(discord.PermissionManageGuild) {
+		return ctx.SendEphemeral(fmt.Sprintf("The bot dashboard is available here: <%v/servers>", dashboard))
+	}
+
+	return ctx.SendEphemeral(fmt.Sprintf("The dashboard for this server is available here: <%v/servers/%v>", dashboard, ctx.GetGuild().ID))
 }

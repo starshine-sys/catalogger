@@ -1,39 +1,32 @@
 package commands
 
 import (
-	"os"
-
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/spf13/pflag"
 	"github.com/starshine-sys/bcr"
-	"github.com/starshine-sys/catalogger/db"
-	"go.uber.org/zap"
+	"github.com/starshine-sys/catalogger/bot"
 )
 
 // Bot ...
 type Bot struct {
-	*bcr.Router
-
-	DB    *db.DB
-	Sugar *zap.SugaredLogger
+	*bot.Bot
 }
 
 // Init ...
-func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
+func Init(bot *bot.Bot) {
 	b := &Bot{
-		Router: r,
-		DB:     db,
-		Sugar:  s,
+		Bot: bot,
 	}
 
-	b.AddCommand(&bcr.Command{
+	b.Router.AddCommand(&bcr.Command{
 		Name:    "events",
 		Summary: "Show all available events.",
 
-		Command: b.events,
+		SlashCommand: b.events,
+		Options:      &[]discord.CommandOption{},
 	})
 
-	b.AddCommand(&bcr.Command{
+	b.Router.AddCommand(&bcr.Command{
 		Name:        "setchannel",
 		Summary:     "Set the given event(s) to log in the current channel.",
 		Description: "Set the given event(s) to log in the current channel.\nSeparate events with commas.\nUse `--clear` to disable the event.\nUse `events` for a list of valid events.",
@@ -48,7 +41,7 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 		Command:     b.setChannel,
 	})
 
-	b.AddCommand(&bcr.Command{
+	b.Router.AddCommand(&bcr.Command{
 		Name:        "redirect",
 		Summary:     "Show channels being redirected, or change where a channel is being redirected to.",
 		Description: "Show channels being redirected, or change where a channel is being redirected to.\nUse `--clear` or `clear` to reset to the default log channel.",
@@ -59,46 +52,56 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 		Command:     b.redirect,
 	})
 
-	b.AddCommand(&bcr.Command{
+	b.Router.AddCommand(&bcr.Command{
 		Name:    "channels",
 		Summary: "Show all currently logging events.",
 
-		Permissions: discord.PermissionManageGuild,
-		Command:     b.channels,
+		Permissions:  discord.PermissionManageGuild,
+		SlashCommand: b.channels,
+		Options:      &[]discord.CommandOption{},
 	})
 
-	b.AddCommand(&bcr.Command{
+	b.Router.AddCommand(&bcr.Command{
 		Name:    "permcheck",
 		Summary: "Check the bot's permissions.",
 
-		Permissions: discord.PermissionManageGuild,
-		Command:     b.permcheck,
+		Permissions:  discord.PermissionManageGuild,
+		SlashCommand: b.permcheck,
+		Options:      &[]discord.CommandOption{},
 	})
 
-	b.AddCommand(&bcr.Command{
+	b.Router.AddCommand(&bcr.Command{
 		Name:    "ignore-channel",
 		Aliases: []string{"ignorechannel", "ignore"},
-		Summary: "Ignore the current channel.",
+		Summary: "Ignore the given channel.",
+		Usage:   "<channel>",
+		Args:    bcr.MinArgs(1),
 
-		Permissions: discord.PermissionManageGuild,
-		Command:     b.ignore,
+		Permissions:  discord.PermissionManageGuild,
+		SlashCommand: b.ignore,
+		Options: &[]discord.CommandOption{{
+			Type:        discord.ChannelOption,
+			Name:        "channel",
+			Description: "The channel to ignore.",
+			Required:    true,
+		}},
 	})
 
-	b.AddCommand(&bcr.Command{
+	b.Router.AddCommand(&bcr.Command{
 		Name:    "clear-data",
 		Aliases: []string{"cleardata"},
 		Summary: "Clear ___all___ of this server's data.",
 
-		Permissions: discord.PermissionManageGuild,
-		Command:     b.clearData,
+		Permissions:  discord.PermissionManageGuild,
+		SlashCommand: b.clearData,
 	})
 
-	h := b.AddCommand(&bcr.Command{
+	h := b.Router.AddCommand(&bcr.Command{
 		Name:    "help",
 		Summary: "Show information about the bot, or a specific command.",
 		Usage:   "[command]",
 
-		Command: b.help,
+		SlashCommand: b.help,
 	})
 
 	h.AddSubcommand(&bcr.Command{
@@ -106,7 +109,7 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 		Aliases: []string{"perms"},
 		Summary: "Show a list of required permissions.",
 
-		Command: b.perms,
+		SlashCommand: b.perms,
 	})
 
 	h.AddSubcommand(&bcr.Command{
@@ -114,17 +117,51 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 		Aliases: []string{"cmds"},
 		Summary: "Show a list of all commands",
 
-		Command: b.commands,
+		SlashCommand: b.commands,
 	})
 
-	b.AddCommand(&bcr.Command{
-		Name:    "invite",
-		Summary: "Get an invite link for the bot.",
+	helpGroup := &bcr.Group{
+		Name:        "help",
+		Description: "Show information about the bot.",
+	}
 
-		Command: b.invite,
+	helpGroup.Add(&bcr.Command{
+		Name:         "info",
+		Summary:      "Show information about the bot.",
+		SlashCommand: b.help,
 	})
 
-	inv := b.AddCommand(&bcr.Command{
+	helpGroup.Add(&bcr.Command{
+		Name:         "permissions",
+		Summary:      "Show a list of required permissions.",
+		SlashCommand: b.perms,
+	})
+
+	helpGroup.Add(&bcr.Command{
+		Name:         "commands",
+		Summary:      "Show a list of all commands",
+		SlashCommand: b.commands,
+	})
+
+	helpGroup.Add(&bcr.Command{
+		Name:         "invite",
+		Summary:      "Get an invite link for the bot.",
+		SlashCommand: b.invite,
+	})
+
+	helpGroup.Add(&bcr.Command{
+		Name:         "dashboard",
+		Summary:      "Get a link to the bot dashboard.",
+		SlashCommand: b.dashboard,
+	})
+
+	b.Router.AddCommand(&bcr.Command{
+		Name:         "invite",
+		Summary:      "Get an invite link for the bot.",
+		SlashCommand: b.invite,
+	})
+
+	inv := b.Router.AddCommand(&bcr.Command{
 		Name:    "invites",
 		Summary: "List this server's invites.",
 
@@ -143,7 +180,7 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 		Command:     b.renameInvite,
 	})
 
-	b.AddCommand(&bcr.Command{
+	b.Router.AddCommand(&bcr.Command{
 		Name:    "admin-stats",
 		Aliases: []string{"adminstats"},
 		Summary: "Per-server message stats.",
@@ -153,27 +190,13 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 		Command:   b.adminStats,
 	})
 
-	b.AddCommand(&bcr.Command{
-		Name:    "dashboard",
-		Summary: "Get a link to the bot dashboard.",
-
-		Command: func(ctx *bcr.Context) (err error) {
-			dashboard := os.Getenv("DASHBOARD_BASE")
-			if dashboard == "" {
-				return
-			}
-
-			if !ctx.GuildPerms().Has(discord.PermissionManageGuild) {
-				_, err = ctx.Sendf("The bot dashboard is available here: <%v/servers>", dashboard)
-				return
-			}
-
-			_, err = ctx.Sendf("The dashboard for this server is available here: <%v/servers/%v>", dashboard, ctx.Message.GuildID)
-			return
-		},
+	b.Router.AddCommand(&bcr.Command{
+		Name:         "dashboard",
+		Summary:      "Get a link to the bot dashboard.",
+		SlashCommand: b.dashboard,
 	})
 
-	wl := b.AddCommand(&bcr.Command{
+	wl := b.Router.AddCommand(&bcr.Command{
 		Name:    "watchlist",
 		Aliases: []string{"wl"},
 		Summary: "Show or manage this server's user watchlist.",
@@ -201,4 +224,6 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) {
 		Permissions: discord.PermissionKickMembers,
 		Command:     b.watchlistRemove,
 	})
+
+	b.Router.AddGroup(helpGroup)
 }

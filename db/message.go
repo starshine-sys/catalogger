@@ -7,7 +7,11 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/starshine-sys/catalogger/crypt"
+
+	"github.com/Masterminds/squirrel"
 )
+
+var sq = squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 
 // Message is a single message
 type Message struct {
@@ -53,7 +57,11 @@ set content = $5`, m.MsgID, m.UserID, m.ChannelID, m.ServerID, m.Content, m.User
 func (db *DB) GetMessage(id discord.MessageID) (m *Message, err error) {
 	m = &Message{}
 
-	err = pgxscan.Get(context.Background(), db.Pool, m, "select * from messages where msg_id = $1", id)
+	sql, args, err := sq.Select("*").From("messages").Where(squirrel.Eq{"msg_id": id}).ToSql()
+	if err != nil {
+		return nil, err
+	}
+	err = pgxscan.Get(context.Background(), db.Pool, m, sql, args...)
 
 	b, err := hex.DecodeString(m.Content)
 	if err != nil {

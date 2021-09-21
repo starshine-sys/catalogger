@@ -16,8 +16,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/state"
 	"github.com/diamondburned/arikawa/v3/utils/handler"
 	"github.com/starshine-sys/bcr"
-	"github.com/starshine-sys/catalogger/db"
-	"go.uber.org/zap"
+	"github.com/starshine-sys/catalogger/bot"
 )
 
 // delete messages after this many days have passed
@@ -25,10 +24,7 @@ const deleteAfterDays = 15
 
 // Bot ...
 type Bot struct {
-	*bcr.Router
-
-	DB    *db.DB
-	Sugar *zap.SugaredLogger
+	*bot.Bot
 
 	ProxiedTriggers   map[discord.MessageID]struct{}
 	ProxiedTriggersMu sync.Mutex
@@ -88,14 +84,12 @@ type Bot struct {
 }
 
 // Init ...
-func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) (clearCacheFunc func(discord.GuildID, ...discord.ChannelID), memberFunc func() int64, guildPermFunc func(discord.GuildID, discord.UserID) (discord.Guild, discord.Permissions, error), joinedFunc func(discord.GuildID) bool) {
+func Init(bot *bot.Bot) (clearCacheFunc func(discord.GuildID, ...discord.ChannelID), memberFunc func() int64, guildPermFunc func(discord.GuildID, discord.UserID) (discord.Guild, discord.Permissions, error), joinedFunc func(discord.GuildID) bool) {
 	joinLeaveLog, _ := discord.ParseSnowflake(os.Getenv("JOIN_LEAVE_LOG"))
 
 	b := &Bot{
-		Router: r,
-		DB:     db,
-		Sugar:  s,
-		Start:  time.Now().UTC(),
+		Bot:   bot,
+		Start: time.Now().UTC(),
 
 		ProxiedTriggers: map[discord.MessageID]struct{}{},
 		BotMessages:     map[discord.MessageID]struct{}{},
@@ -159,8 +153,8 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) (clearCacheFunc func(d
 	b.RedirectCache.SetTTL(10 * time.Minute)
 
 	// add member cache handlers
-	b.AddHandler(b.requestGuildMembers)
-	b.AddHandler(b.guildMemberChunk)
+	b.Router.AddHandler(b.requestGuildMembers)
+	b.Router.AddHandler(b.guildMemberChunk)
 
 	// add join/leave log handlers
 	b.Router.ShardManager.ForEach(func(s shard.Shard) {
@@ -173,54 +167,54 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) (clearCacheFunc func(d
 	})
 
 	// add guild create handler
-	b.AddHandler(b.DB.CreateServerIfNotExists)
+	b.Router.AddHandler(b.DB.CreateServerIfNotExists)
 
 	// add pluralkit message create handlers
-	b.AddHandler(b.pkMessageCreate)
-	b.AddHandler(b.pkMessageCreateFallback)
+	b.Router.AddHandler(b.pkMessageCreate)
+	b.Router.AddHandler(b.pkMessageCreateFallback)
 
 	// add message create/update/delete handlers
-	b.AddHandler(b.messageCreate)
-	b.AddHandler(b.messageUpdate)
-	b.AddHandler(b.messageDelete)
-	b.AddHandler(b.bulkMessageDelete)
+	b.Router.AddHandler(b.messageCreate)
+	b.Router.AddHandler(b.messageUpdate)
+	b.Router.AddHandler(b.messageDelete)
+	b.Router.AddHandler(b.bulkMessageDelete)
 
 	// add guild member handlers
-	b.AddHandler(b.guildMemberAdd)
-	b.AddHandler(b.guildMemberUpdate)
-	b.AddHandler(b.guildMemberRemove)
+	b.Router.AddHandler(b.guildMemberAdd)
+	b.Router.AddHandler(b.guildMemberUpdate)
+	b.Router.AddHandler(b.guildMemberRemove)
 
 	// add invite handlers
-	b.AddHandler(b.invitesReady)
-	b.AddHandler(b.inviteCreate)
-	b.AddHandler(b.inviteDelete)
+	b.Router.AddHandler(b.invitesReady)
+	b.Router.AddHandler(b.inviteCreate)
+	b.Router.AddHandler(b.inviteDelete)
 
 	// add invite create/delete handlers
-	b.AddHandler(b.inviteCreateEvent)
-	b.AddHandler(b.inviteDeleteEvent)
+	b.Router.AddHandler(b.inviteCreateEvent)
+	b.Router.AddHandler(b.inviteDeleteEvent)
 
 	// add ban handlers
-	b.AddHandler(b.guildBanAdd)
-	b.AddHandler(b.guildBanRemove)
+	b.Router.AddHandler(b.guildBanAdd)
+	b.Router.AddHandler(b.guildBanRemove)
 
 	// add channel handlers
-	b.AddHandler(b.channelCreate)
-	b.AddHandler(b.channelUpdate)
-	b.AddHandler(b.channelDelete)
+	b.Router.AddHandler(b.channelCreate)
+	b.Router.AddHandler(b.channelUpdate)
+	b.Router.AddHandler(b.channelDelete)
 
 	// add role handlers
-	b.AddHandler(b.guildRoleCreate)
-	b.AddHandler(b.guildRoleUpdate)
-	b.AddHandler(b.guildRoleDelete)
+	b.Router.AddHandler(b.guildRoleCreate)
+	b.Router.AddHandler(b.guildRoleUpdate)
+	b.Router.AddHandler(b.guildRoleDelete)
 
 	// add guild handlers
-	b.AddHandler(b.guildUpdate)
+	b.Router.AddHandler(b.guildUpdate)
 
 	// add webhook update handler
-	b.AddHandler(b.webhooksUpdate)
+	b.Router.AddHandler(b.webhooksUpdate)
 
 	// add clear cache command
-	b.AddCommand(&bcr.Command{
+	b.Router.AddCommand(&bcr.Command{
 		Name:    "clear-cache",
 		Aliases: []string{"clearcache"},
 		Summary: "Clear this server's webhook cache.",
@@ -242,7 +236,7 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) (clearCacheFunc func(d
 		},
 	})
 
-	b.AddCommand(&bcr.Command{
+	b.Router.AddCommand(&bcr.Command{
 		Name:    "stats",
 		Aliases: []string{"ping"},
 		Summary: "Show the bot's latency and other stats.",
@@ -250,7 +244,7 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) (clearCacheFunc func(d
 		Command: b.ping,
 	})
 
-	b.AddCommand(&bcr.Command{
+	b.Router.AddCommand(&bcr.Command{
 		Name:      "admin-users",
 		Summary:   "Show user/bot count for all servers. **Bot owner only**",
 		OwnerOnly: true,
@@ -260,7 +254,7 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) (clearCacheFunc func(d
 
 	go b.cleanMessages()
 
-	b.ShardManager.ForEach(func(s shard.Shard) {
+	b.Router.ShardManager.ForEach(func(s shard.Shard) {
 		state := s.(*state.State)
 
 		var o sync.Once
@@ -291,7 +285,7 @@ func Init(r *bcr.Router, db *db.DB, s *zap.SugaredLogger) (clearCacheFunc func(d
 
 // State gets a state.State for the guild
 func (bot *Bot) State(id discord.GuildID) *state.State {
-	s, _ := bot.StateFromGuildID(id)
+	s, _ := bot.Router.StateFromGuildID(id)
 	return s
 }
 
@@ -321,7 +315,7 @@ func (bot *Bot) guildPerms(guildID discord.GuildID, userID discord.UserID) (g di
 		return g, 0, errors.New("guild not found")
 	}
 
-	s, _ := bot.StateFromGuildID(guildID)
+	s, _ := bot.Router.StateFromGuildID(guildID)
 	g.Roles, err = s.Roles(guildID)
 	if err != nil {
 		return g, 0, err
@@ -357,7 +351,7 @@ func (bot *Bot) updateStatusLoop(s *state.State) {
 
 	for {
 		guildCount := 0
-		bot.ShardManager.ForEach(func(s shard.Shard) {
+		bot.Router.ShardManager.ForEach(func(s shard.Shard) {
 			state := s.(*state.State)
 
 			guilds, _ := state.GuildStore.Guilds()
@@ -365,7 +359,7 @@ func (bot *Bot) updateStatusLoop(s *state.State) {
 		})
 
 		shardNumber := 0
-		bot.ShardManager.ForEach(func(s shard.Shard) {
+		bot.Router.ShardManager.ForEach(func(s shard.Shard) {
 			state := s.(*state.State)
 
 			str := fmt.Sprintf("%vhelp", strings.Split(os.Getenv("PREFIXES"), ",")[0])
@@ -380,7 +374,7 @@ func (bot *Bot) updateStatusLoop(s *state.State) {
 				i := i
 				bot.Sugar.Infof("Setting status for shard #%v", i)
 				s := str
-				if bot.ShardManager.NumShards() > 1 {
+				if bot.Router.ShardManager.NumShards() > 1 {
 					s = fmt.Sprintf("%v | shard #%v", s, i)
 				}
 

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"strconv"
@@ -13,6 +14,7 @@ import (
 	"github.com/getsentry/sentry-go"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/starshine-sys/bcr"
+	"github.com/starshine-sys/catalogger/bot"
 	"github.com/starshine-sys/catalogger/commands"
 	"github.com/starshine-sys/catalogger/db"
 	"github.com/starshine-sys/catalogger/events"
@@ -65,9 +67,6 @@ func main() {
 	}
 	r.EmbedColor = bcr.ColourPurple
 
-	// add message create handler
-	r.AddHandler(r.MessageCreate)
-
 	// sentry, if enabled
 	var hub *sentry.Hub
 	if os.Getenv("SENTRY_URL") != "" {
@@ -87,10 +86,16 @@ func main() {
 	}
 	sugar.Infof("Opened database connection.")
 
-	// actually load events + commands
-	commands.Init(r, db, sugar)
+	// add message create + interaction create handler
+	b, err := bot.New(os.Getenv("REDIS"), r, db, sugar)
+	if err != nil {
+		sugar.Fatal("Error connecting to Redis: %v", err)
+	}
 
-	cacheFunc, countFunc, guildPermFunc, joinedFunc := events.Init(r, db, sugar)
+	// actually load events + commands
+	commands.Init(b)
+
+	cacheFunc, countFunc, guildPermFunc, joinedFunc := events.Init(b)
 	server.NewServer(r, db, cacheFunc, countFunc, guildPermFunc, joinedFunc)
 
 	// connect to discord
@@ -114,6 +119,28 @@ func main() {
 	r.Bot = botUser
 	// normally creating a Context would do this, but as we set the user above, that doesn't work
 	r.Prefixes = append(r.Prefixes, "<@"+r.Bot.ID.String()+">", "<@!"+r.Bot.ID.String()+">")
+
+	// sync slash commands *if needed*
+	sync := !strings.EqualFold(os.Getenv("SYNC_COMMANDS"), "false")
+	guildID, _ := discord.ParseSnowflake(os.Getenv("COMMANDS_GUILD_ID"))
+	if sync {
+		if guildID == 0 {
+			err = r.SyncCommands()
+		} else {
+			err = r.SyncCommands(discord.GuildID(guildID))
+		}
+		if err != nil {
+			sugar.Errorf("Error syncing slash commands: %v", err)
+		} else {
+			s := "Synced slash commands"
+			if guildID.IsValid() {
+				s += " in " + fmt.Sprint(guildID)
+			}
+			sugar.Infof(s)
+		}
+	} else {
+		sugar.Infof("Note: not syncing slash commands. Set SYNC_COMMANDS to true to sync commands")
+	}
 
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)

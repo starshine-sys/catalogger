@@ -22,8 +22,8 @@ var requiredPerms = []bcr.Perm{
 	{Permission: discord.PermissionViewChannel, Name: "View Channel"},
 }
 
-func (bot *Bot) permcheck(ctx *bcr.Context) (err error) {
-	ch, err := bot.DB.Channels(ctx.Message.GuildID)
+func (bot *Bot) permcheck(ctx bcr.Contexter) (err error) {
+	ch, err := bot.DB.Channels(ctx.GetGuild().ID)
 	if err != nil {
 		return bot.DB.ReportCtx(ctx, err)
 	}
@@ -48,7 +48,7 @@ func (bot *Bot) permcheck(ctx *bcr.Context) (err error) {
 	}
 
 	// global perms first
-	perms, err := bot.globalPerms(ctx, ctx.Message.GuildID, ctx.Bot.ID)
+	perms, err := bot.globalPerms(ctx, ctx.GetGuild().ID, bot.Router.Bot.ID)
 	if err == nil {
 		for _, p := range requiredPerms {
 			if perms.Has(p.Permission) {
@@ -68,7 +68,7 @@ func (bot *Bot) permcheck(ctx *bcr.Context) (err error) {
 	}
 
 	for ch := range toCheck {
-		p, err := ctx.State.Permissions(ch, ctx.Bot.ID)
+		p, err := ctx.Session().Permissions(ch, bot.Router.Bot.ID)
 		if err != nil {
 			_, err = ctx.Sendf("There was an error checking permissions for %v (ID: %v).", ch.Mention(), ch)
 			return err
@@ -87,7 +87,7 @@ func (bot *Bot) permcheck(ctx *bcr.Context) (err error) {
 			Name: "Channel permissions",
 			Value: fmt.Sprintf(`No issues found! :)
 If the bot still isn't logging, try `+"`%vclearcache`"+`.
-If that doesn't work, contact the developer.`, ctx.Prefix),
+If that doesn't work, contact the developer.`, bot.Router.Prefixes[0]),
 		})
 	} else {
 		e.Color = bcr.ColourRed
@@ -116,19 +116,19 @@ If that doesn't work, contact the developer.`, ctx.Prefix),
 	return
 }
 
-func (bot *Bot) globalPerms(ctx *bcr.Context, guildID discord.GuildID, userID discord.UserID) (perms discord.Permissions, err error) {
+func (bot *Bot) globalPerms(ctx bcr.Contexter, guildID discord.GuildID, userID discord.UserID) (perms discord.Permissions, err error) {
 	// global perms first
-	m, err := ctx.State.Member(guildID, userID)
+	m, err := ctx.Session().Member(guildID, userID)
 	if err != nil {
 		return
 	}
 
-	g, err := ctx.State.Guild(guildID)
+	g, err := ctx.Session().Guild(guildID)
 	if err != nil {
 		return
 	}
 
-	g.Roles, err = ctx.State.Roles(g.ID)
+	g.Roles, err = ctx.Session().Roles(g.ID)
 	if err != nil {
 		return
 	}

@@ -24,7 +24,7 @@ var ignoreBotNames = [...]string{
 
 func (bot *Bot) pkMessageCreateFallback(m *gateway.MessageCreateEvent) {
 	if ignoreBotNames[0] == "" {
-		ignoreBotNames[0] = bot.Bot.Username
+		ignoreBotNames[0] = bot.Router.Bot.Username
 	}
 
 	// only check webhook messages

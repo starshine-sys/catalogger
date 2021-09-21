@@ -8,7 +8,7 @@ import (
 	"github.com/starshine-sys/catalogger/db"
 )
 
-func (bot *Bot) events(ctx *bcr.Context) (err error) {
+func (bot *Bot) events(ctx bcr.Contexter) (err error) {
 	var s []string
 
 	for _, e := range db.Events {

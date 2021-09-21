@@ -65,15 +65,32 @@ func (db *DB) Report(ctx ErrorContext, err error) *sentry.EventID {
 }
 
 // ReportCtx reports an error and sends the event ID to the context channel, if possible
-func (db *DB) ReportCtx(ctx *bcr.Context, e error) (err error) {
-	var s string
-	var embeds []discord.Embed
+func (db *DB) ReportCtx(ctx bcr.Contexter, e error) (err error) {
+	var guildID discord.GuildID
+	if ctx.GetGuild() != nil {
+		guildID = ctx.GetGuild().ID
+	}
+
+	cmdName := ""
+	if v, ok := ctx.(*bcr.Context); ok {
+		cmdName = strings.Join(v.FullCommandPath, " ")
+	} else if v, ok := ctx.(*bcr.SlashContext); ok {
+		cmdName = v.CommandName
+	}
 
 	id := db.Report(ErrorContext{
-		Command: ctx.Command,
-		UserID:  ctx.Author.ID,
-		GuildID: ctx.Message.GuildID,
+		Command: cmdName,
+		UserID:  ctx.User().ID,
+		GuildID: guildID,
 	}, e)
+
+	return db.ReportEmbed(ctx, id)
+}
+
+// ReportEmbed ...
+func (db *DB) ReportEmbed(ctx bcr.Contexter, id *sentry.EventID) (err error) {
+	var s string
+	var embeds []discord.Embed
 
 	if id == nil {
 		s = "Internal error occurred."
@@ -95,6 +112,5 @@ func (db *DB) ReportCtx(ctx *bcr.Context, e error) (err error) {
 		}
 	}
 
-	_, err = ctx.Send(s, embeds...)
-	return
+	return ctx.SendEphemeral(s, embeds...)
 }
