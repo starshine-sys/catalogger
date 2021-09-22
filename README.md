@@ -67,7 +67,7 @@ Catalogger is configured through a `.env` file. The following keys are available
 - `SUPPORT_SERVER`: a link to the support server, used in the help command, as well as internal error messages. (not needed for self-hosting)
 - `DASHBOARD_BASE`: the base URL to the dashboard. (not needed for self-hosting)
 - `SENTRY_URL`: URL to connect to Sentry, for improved error logging (not needed for self-hosting)
-- `DEBUG_LOGGING`: if enabled, will log all messages to the console. For obvious reasons, **do not enable except for testing!**
+- `DEBUG_LOGGING`: if enabled, will enable debug level logging. Not needed for self-hosting, might be useful in development and for reporting errors.
 
 ### Dashboard
 
