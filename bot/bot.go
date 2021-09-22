@@ -3,6 +3,7 @@ package bot
 import (
 	"context"
 
+	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/getsentry/sentry-go"
 	"github.com/mediocregopher/radix/v4"
@@ -95,7 +96,7 @@ func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) {
 }
 
 func (bot *Bot) interactionCreate(ic *gateway.InteractionCreateEvent) {
-	if ic.Type != gateway.CommandInteraction {
+	if ic.Type != discord.CommandInteraction {
 		return
 	}
 

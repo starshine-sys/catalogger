@@ -65,6 +65,9 @@ func (bot *Bot) emojiUpdate(ev *gateway.GuildEmojisUpdateEvent) {
 			},
 			Timestamp: discord.NowTimestamp(),
 			Color:     bcr.ColourGreen,
+			Thumbnail: &discord.EmbedThumbnail{
+				URL: em.EmojiURL(),
+			},
 		}
 		if em.User.ID.IsValid() {
 			e.Fields = append(e.Fields, discord.EmbedField{
@@ -124,8 +127,6 @@ func (bot *Bot) emojiUpdate(ev *gateway.GuildEmojisUpdateEvent) {
 		embeds = embeds[:9]
 	}
 
-	fmt.Println(embeds)
-
 	err = webhook.FromAPI(wh.ID, wh.Token, bot.State(ev.GuildID).Client).Execute(webhook.ExecuteData{
 		AvatarURL: bot.Router.Bot.AvatarURL(),
 		Embeds:    embeds,
@@ -151,6 +152,9 @@ func emojiRenameEmbed(old, new []discord.Emoji) *discord.Embed {
 					},
 					Timestamp: discord.NowTimestamp(),
 					Color:     bcr.ColourBlue,
+					Thumbnail: &discord.EmbedThumbnail{
+						URL: new.EmojiURL(),
+					},
 				}
 			}
 		}

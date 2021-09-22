@@ -137,6 +137,7 @@ func Init(bot *bot.Bot) (clearCacheFunc func(discord.GuildID, ...discord.Channel
 
 	// add guild handlers
 	b.Router.AddHandler(b.guildUpdate)
+	b.Router.AddHandler(b.emojiUpdate)
 
 	// add webhook update handler
 	b.Router.AddHandler(b.webhooksUpdate)
