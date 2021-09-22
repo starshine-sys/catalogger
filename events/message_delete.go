@@ -24,7 +24,7 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 	channel, err := bot.State(m.GuildID).Channel(m.ChannelID)
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "message_delete",
+			Event:   keys.MessageDelete,
 			GuildID: m.GuildID,
 		}, err)
 		return
@@ -33,13 +33,13 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 	ch, err := bot.DB.Channels(m.GuildID)
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "message_delete",
+			Event:   keys.MessageDelete,
 			GuildID: m.GuildID,
 		}, err)
 		return
 	}
 
-	if !ch["MESSAGE_DELETE"].IsValid() {
+	if !ch[keys.MessageDelete].IsValid() {
 		return
 	}
 
@@ -53,10 +53,10 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 		return
 	}
 
-	wh, err := bot.webhookCache("msg_delete", m.GuildID, ch["MESSAGE_DELETE"])
+	wh, err := bot.webhookCache(keys.MessageDelete, m.GuildID, ch[keys.MessageDelete])
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "message_delete",
+			Event:   keys.MessageDelete,
 			GuildID: m.GuildID,
 		}, err)
 		return
@@ -65,7 +65,7 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 	redirects, err := bot.DB.Redirects(m.GuildID)
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "message_delete",
+			Event:   keys.MessageDelete,
 			GuildID: m.GuildID,
 		}, err)
 		return
@@ -75,7 +75,7 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 		wh, err = bot.getRedirect(m.GuildID, redirects[channelID.String()])
 		if err != nil {
 			bot.DB.Report(db.ErrorContext{
-				Event:   "message_delete",
+				Event:   keys.MessageDelete,
 				GuildID: m.GuildID,
 			}, err)
 			return
@@ -193,7 +193,7 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 		bot.DB.DeleteMessage(msg.MsgID)
 	} else {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "message_delete",
+			Event:   keys.MessageDelete,
 			GuildID: m.GuildID,
 		}, err)
 		return

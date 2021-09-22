@@ -25,20 +25,20 @@ func (bot *Bot) guildRoleDelete(ev *gateway.GuildRoleDeleteEvent) {
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "role_delete",
+			Event:   keys.GuildRoleDelete,
 			GuildID: ev.GuildID,
 		}, err)
 		return
 	}
 
-	if !ch["GUILD_ROLE_DELETE"].IsValid() {
+	if !ch[keys.GuildRoleDelete].IsValid() {
 		return
 	}
 
-	wh, err := bot.webhookCache("guild_role_delete", ev.GuildID, ch["GUILD_ROLE_DELETE"])
+	wh, err := bot.webhookCache(keys.GuildRoleDelete, ev.GuildID, ch[keys.GuildRoleDelete])
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "role_delete",
+			Event:   keys.GuildRoleDelete,
 			GuildID: ev.GuildID,
 		}, err)
 		return
@@ -73,7 +73,7 @@ Created <t:%v> (%v)`, old.Name, old.Color, old.Mentionable, old.Hoist, old.Posit
 	})
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "role_delete",
+			Event:   keys.GuildRoleDelete,
 			GuildID: ev.GuildID,
 		}, err)
 		return

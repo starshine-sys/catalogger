@@ -15,20 +15,20 @@ func (bot *Bot) inviteCreateEvent(ev *gateway.InviteCreateEvent) {
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "invite_create",
+			Event:   keys.InviteCreate,
 			GuildID: ev.GuildID,
 		}, err)
 		return
 	}
 
-	if !ch["INVITE_CREATE"].IsValid() {
+	if !ch[keys.InviteCreate].IsValid() {
 		return
 	}
 
-	wh, err := bot.webhookCache("invite-create", ev.GuildID, ch["INVITE_CREATE"])
+	wh, err := bot.webhookCache(keys.InviteCreate, ev.GuildID, ch[keys.InviteCreate])
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "invite_create",
+			Event:   keys.InviteCreate,
 			GuildID: ev.GuildID,
 		}, err)
 		return
@@ -77,7 +77,7 @@ func (bot *Bot) inviteCreateEvent(ev *gateway.InviteCreateEvent) {
 	})
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "invite_create",
+			Event:   keys.InviteCreate,
 			GuildID: ev.GuildID,
 		}, err)
 		return
@@ -106,20 +106,20 @@ func (bot *Bot) inviteDeleteEvent(ev *gateway.InviteDeleteEvent) {
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "invite_delete",
+			Event:   keys.InviteDelete,
 			GuildID: ev.GuildID,
 		}, err)
 		return
 	}
 
-	if !ch["INVITE_DELETE"].IsValid() {
+	if !ch[keys.InviteDelete].IsValid() {
 		return
 	}
 
-	wh, err := bot.webhookCache("invite-delete", ev.GuildID, ch["INVITE_DELETE"])
+	wh, err := bot.webhookCache(keys.InviteDelete, ev.GuildID, ch[keys.InviteDelete])
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "invite_delete",
+			Event:   keys.InviteDelete,
 			GuildID: ev.GuildID,
 		}, err)
 		return
@@ -164,7 +164,7 @@ func (bot *Bot) inviteDeleteEvent(ev *gateway.InviteDeleteEvent) {
 	})
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "invite_delete",
+			Event:   keys.InviteDelete,
 			GuildID: ev.GuildID,
 		}, err)
 		return

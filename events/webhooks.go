@@ -1,16 +1,23 @@
 package events
 
 import (
-	"errors"
+	"context"
 	"strings"
+
+	"emperror.dev/errors"
 
 	"github.com/diamondburned/arikawa/v3/api"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
+	"github.com/mediocregopher/radix/v4"
+	"github.com/starshine-sys/catalogger/db"
 )
 
-// ErrNotExists ...
-var ErrNotExists = errors.New("webhooks not found in cache")
+// Errors for the webhook cache
+const (
+	ErrNotExists = errors.Sentinel("webhook not found in cache")
+	ErrInvalid   = errors.Sentinel("invalid cache value")
+)
 
 // Webhook ...
 type Webhook struct {
@@ -18,136 +25,116 @@ type Webhook struct {
 	Token string
 }
 
-// SetWebhooks ...
-func (bot *Bot) SetWebhooks(t string, id discord.GuildID, w *Webhook) {
-	switch strings.ToLower(t) {
-	case "msg_delete":
-		bot.MessageDeleteCache.Set(id.String(), w)
-	case "msg_update":
-		bot.MessageUpdateCache.Set(id.String(), w)
-	case "join":
-		bot.GuildMemberAddCache.Set(id.String(), w)
-	case "invite-create":
-		bot.InviteCreateCache.Set(id.String(), w)
-	case "invite-delete":
-		bot.InviteDeleteCache.Set(id.String(), w)
-	case "ban-add":
-		bot.GuildBanAddCache.Set(id.String(), w)
-	case "ban-remove":
-		bot.GuildBanRemoveCache.Set(id.String(), w)
-	case "leave":
-		bot.GuildMemberRemoveCache.Set(id.String(), w)
-	case "member-update":
-		bot.GuildMemberUpdateCache.Set(id.String(), w)
-	case "member-nick-update":
-		bot.GuildMemberNickUpdateCache.Set(id.String(), w)
-	case "channel_create":
-		bot.ChannelCreateCache.Set(id.String(), w)
-	case "channel_update":
-		bot.ChannelUpdateCache.Set(id.String(), w)
-	case "channel_delete":
-		bot.ChannelDeleteCache.Set(id.String(), w)
-	case "guild_update":
-		bot.GuildUpdateCache.Set(id.String(), w)
-	case "guild_emojis_update":
-		bot.GuildEmojisUpdateCache.Set(id.String(), w)
-	case "guild_role_create":
-		bot.GuildRoleCreateCache.Set(id.String(), w)
-	case "guild_role_update":
-		bot.GuildRoleUpdateCache.Set(id.String(), w)
-	case "guild_role_delete":
-		bot.GuildRoleDeleteCache.Set(id.String(), w)
-	case "message_delete_bulk":
-		bot.MessageDeleteBulkCache.Set(id.String(), w)
-	default:
-		return
-	}
+var keys = struct {
+	GuildUpdate           string
+	GuildEmojisUpdate     string
+	GuildRoleCreate       string
+	GuildRoleUpdate       string
+	GuildRoleDelete       string
+	ChannelCreate         string
+	ChannelUpdate         string
+	ChannelDelete         string
+	GuildMemberAdd        string
+	GuildMemberUpdate     string
+	GuildMemberNickUpdate string
+	GuildMemberRemove     string
+	GuildBanAdd           string
+	GuildBanRemove        string
+	InviteCreate          string
+	InviteDelete          string
+	MessageUpdate         string
+	MessageDelete         string
+	MessageDeleteBulk     string
+}{
+	GuildUpdate:           "GUILD_UPDATE",
+	GuildEmojisUpdate:     "GUILD_EMOJIS_UPDATE",
+	GuildRoleCreate:       "GUILD_ROLE_CREATE",
+	GuildRoleUpdate:       "GUILD_ROLE_UPDATE",
+	GuildRoleDelete:       "GUILD_ROLE_DELETE",
+	ChannelCreate:         "CHANNEL_CREATE",
+	ChannelUpdate:         "CHANNEL_UPDATE",
+	ChannelDelete:         "CHANNEL_DELETE",
+	GuildMemberAdd:        "GUILD_MEMBER_ADD",
+	GuildMemberUpdate:     "GUILD_MEMBER_UPDATE",
+	GuildMemberNickUpdate: "GUILD_MEMBER_NICK_UPDATE",
+	GuildMemberRemove:     "GUILD_MEMBER_REMOVE",
+	GuildBanAdd:           "GUILD_BAN_ADD",
+	GuildBanRemove:        "GUILD_BAN_REMOVE",
+	InviteCreate:          "INVITE_CREATE",
+	InviteDelete:          "INVITE_DELETE",
+	MessageUpdate:         "MESSAGE_UPDATE",
+	MessageDelete:         "MESSAGE_DELETE",
+	MessageDeleteBulk:     "MESSAGE_DELETE_BULK",
 }
 
-// GetWebhooks ...
-func (bot *Bot) GetWebhooks(t string, id discord.GuildID) (*Webhook, error) {
-	var (
-		v   interface{}
-		err error
-	)
+func whKey(key string, id discord.GuildID) string {
+	return "wh:" + key + ":" + id.String()
+}
 
-	switch strings.ToLower(t) {
-	case "msg_delete":
-		v, err = bot.MessageDeleteCache.Get(id.String())
-	case "msg_update":
-		v, err = bot.MessageUpdateCache.Get(id.String())
-	case "join":
-		v, err = bot.GuildMemberAddCache.Get(id.String())
-	case "invite-create":
-		v, err = bot.InviteCreateCache.Get(id.String())
-	case "invite-delete":
-		v, err = bot.InviteDeleteCache.Get(id.String())
-	case "ban-add":
-		v, err = bot.GuildBanAddCache.Get(id.String())
-	case "ban-remove":
-		v, err = bot.GuildBanRemoveCache.Get(id.String())
-	case "leave":
-		v, err = bot.GuildMemberRemoveCache.Get(id.String())
-	case "member-update":
-		v, err = bot.GuildMemberUpdateCache.Get(id.String())
-	case "member-nick-update":
-		v, err = bot.GuildMemberNickUpdateCache.Get(id.String())
-	case "channel_create":
-		v, err = bot.ChannelCreateCache.Get(id.String())
-	case "channel_update":
-		v, err = bot.ChannelUpdateCache.Get(id.String())
-	case "channel_delete":
-		v, err = bot.ChannelDeleteCache.Get(id.String())
-	case "guild_update":
-		v, err = bot.GuildUpdateCache.Get(id.String())
-	case "guild_emojis_update":
-		v, err = bot.GuildEmojisUpdateCache.Get(id.String())
-	case "guild_role_create":
-		v, err = bot.GuildRoleCreateCache.Get(id.String())
-	case "guild_role_update":
-		v, err = bot.GuildRoleUpdateCache.Get(id.String())
-	case "guild_role_delete":
-		v, err = bot.GuildRoleDeleteCache.Get(id.String())
-	case "message_delete_bulk":
-		v, err = bot.MessageDeleteBulkCache.Get(id.String())
-	default:
-		return nil, errors.New("invalid webhook type specified")
-	}
+func redirKey(channelID discord.ChannelID) string {
+	return "wh:redir:" + channelID.String()
+}
+
+// 10 minutes
+const webhookCacheExpiry = "600"
+
+// SetWebhook ...
+func (bot *Bot) SetWebhook(key string, guildID discord.GuildID, w *Webhook) error {
+	return bot.Redis.Do(context.Background(), radix.Cmd(nil, "SET", whKey(key, guildID), w.ID.String()+":"+w.Token, "EX", webhookCacheExpiry))
+}
+
+func (bot *Bot) setRedirWebhook(chID discord.ChannelID, w *Webhook) error {
+	return bot.Redis.Do(context.Background(), radix.Cmd(nil, "SET", redirKey(chID), w.ID.String()+":"+w.Token, "EX", webhookCacheExpiry))
+}
+
+// GetWebhook gets a cached webhook from redis
+func (bot *Bot) GetWebhook(key string, id discord.GuildID) (*Webhook, error) {
+	return bot.fetchCachedKey(whKey(key, id))
+}
+
+func (bot *Bot) fetchCachedKey(key string) (*Webhook, error) {
+	var s string
+	err := bot.Redis.Do(context.Background(), radix.Cmd(&s, "GET", key))
 	if err != nil {
+		return nil, err
+	}
+	if s == "" {
 		return nil, ErrNotExists
 	}
-	if _, ok := v.(*Webhook); !ok {
-		return nil, errors.New("could not convert interface to Webhooks")
+
+	w := strings.SplitN(s, ":", 2)
+	if len(w) != 2 {
+		bot.Redis.Do(context.Background(), radix.Cmd(nil, "DEL", key))
+		return nil, ErrInvalid
 	}
 
-	return v.(*Webhook), nil
+	whID, err := discord.ParseSnowflake(w[0])
+	if err != nil {
+		bot.Redis.Do(context.Background(), radix.Cmd(nil, "DEL", key))
+		return nil, ErrInvalid
+	}
+
+	return &Webhook{
+		ID:    discord.WebhookID(whID),
+		Token: w[1],
+	}, nil
 }
 
 // ResetCache ...
 func (bot *Bot) ResetCache(id discord.GuildID, channels ...discord.ChannelID) {
-	bot.MessageDeleteCache.Remove(id.String())
-	bot.MessageUpdateCache.Remove(id.String())
-	bot.GuildMemberAddCache.Remove(id.String())
-	bot.InviteCreateCache.Remove(id.String())
-	bot.InviteDeleteCache.Remove(id.String())
-	bot.GuildBanAddCache.Remove(id.String())
-	bot.GuildBanRemoveCache.Remove(id.String())
-	bot.GuildMemberRemoveCache.Remove(id.String())
-	bot.GuildMemberUpdateCache.Remove(id.String())
-	bot.GuildMemberNickUpdateCache.Remove(id.String())
-	bot.ChannelCreateCache.Remove(id.String())
-	bot.ChannelUpdateCache.Remove(id.String())
-	bot.ChannelDeleteCache.Remove(id.String())
-	bot.GuildUpdateCache.Remove(id.String())
-	bot.GuildEmojisUpdateCache.Remove(id.String())
-	bot.GuildRoleCreateCache.Remove(id.String())
-	bot.GuildRoleUpdateCache.Remove(id.String())
-	bot.GuildRoleDeleteCache.Remove(id.String())
-	bot.MessageDeleteBulkCache.Remove(id.String())
+	var keys []string
+
+	for _, ev := range db.Events {
+		keys = append(keys, whKey(ev, id))
+	}
 
 	for _, ch := range channels {
-		bot.MessageDeleteCache.Remove(ch.String())
-		bot.MessageUpdateCache.Remove(ch.String())
+		keys = append(keys, redirKey(ch))
+	}
+
+	err := bot.Redis.Do(context.Background(), radix.Cmd(nil, "DEL", keys...))
+	if err != nil {
+		bot.Sugar.Errorf("Error resetting webhook cache: %v", err)
 	}
 }
 
@@ -173,21 +160,28 @@ func (bot *Bot) webhookCache(t string, guildID discord.GuildID, ch discord.Chann
 	// try getting the cached webhook
 	var wh *discord.Webhook
 
-	w, err := bot.GetWebhooks(t, guildID)
+	w, err := bot.GetWebhook(t, guildID)
 	if err != nil {
+		bot.Sugar.Debugf("Couldn't find webhook for %v in cache, falling back to fetching webhook", ch)
+
+		if err != ErrNotExists && err != ErrInvalid {
+			bot.Sugar.Errorf("Error fetching webhook: %v", err)
+		}
+
 		wh, err = bot.getWebhook(guildID, ch, bot.Router.Bot.Username)
 		if err != nil {
 			return nil, err
 		}
 
-		bot.SetWebhooks(t, guildID, &Webhook{
+		bot.SetWebhook(t, guildID, &Webhook{
 			ID:    wh.ID,
 			Token: wh.Token,
 		})
 	} else {
 		wh = &discord.Webhook{
-			ID:    w.ID,
-			Token: w.Token,
+			ID:        w.ID,
+			Token:     w.Token,
+			ChannelID: ch,
 		}
 	}
 
@@ -196,24 +190,34 @@ func (bot *Bot) webhookCache(t string, guildID discord.GuildID, ch discord.Chann
 
 func (bot *Bot) getRedirect(guildID discord.GuildID, ch discord.ChannelID) (*discord.Webhook, error) {
 	// try getting the cached webhook
-	var wh *discord.Webhook
-
-	v, err := bot.RedirectCache.Get(ch.String())
+	w, err := bot.fetchCachedKey(redirKey(ch))
 	if err == nil {
-		return v.(*discord.Webhook), nil
+		return &discord.Webhook{
+			ID:        w.ID,
+			Token:     w.Token,
+			ChannelID: ch,
+		}, nil
 	}
 
-	wh, err = bot.getWebhook(guildID, ch, bot.Router.Bot.Username)
+	bot.Sugar.Debugf("Couldn't find webhook for %v in cache, falling back to fetching webhook", ch)
+
+	// else, create or fetch webhook
+	wh, err := bot.getWebhook(guildID, ch, bot.Router.Bot.Username)
 	if err != nil {
 		return nil, err
 	}
 
-	bot.RedirectCache.Set(ch.String(), wh)
+	err = bot.setRedirWebhook(ch, &Webhook{
+		ID:    wh.ID,
+		Token: wh.Token,
+	})
+	if err != nil {
+		bot.Sugar.Errorf("Error setting redirect webhook for %v: %v", ch, err)
+	}
 
 	return wh, nil
 }
 
 func (bot *Bot) webhooksUpdate(ev *gateway.WebhooksUpdateEvent) {
 	bot.ResetCache(ev.GuildID, ev.ChannelID)
-	bot.RedirectCache.Remove(ev.ChannelID.String())
 }

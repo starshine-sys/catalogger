@@ -17,20 +17,20 @@ func (bot *Bot) guildBanRemove(ev *gateway.GuildBanRemoveEvent) {
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "guild_ban_remove",
+			Event:   keys.GuildBanRemove,
 			GuildID: ev.GuildID,
 		}, err)
 		return
 	}
 
-	if !ch["GUILD_BAN_REMOVE"].IsValid() {
+	if !ch[keys.GuildBanRemove].IsValid() {
 		return
 	}
 
-	wh, err := bot.webhookCache("ban-remove", ev.GuildID, ch["GUILD_BAN_REMOVE"])
+	wh, err := bot.webhookCache(keys.GuildBanRemove, ev.GuildID, ch[keys.GuildBanRemove])
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "guild_ban_remove",
+			Event:   keys.GuildBanRemove,
 			GuildID: ev.GuildID,
 		}, err)
 		return
@@ -139,7 +139,7 @@ func (bot *Bot) guildBanRemove(ev *gateway.GuildBanRemoveEvent) {
 	})
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "guild_ban_remove",
+			Event:   keys.GuildBanRemove,
 			GuildID: ev.GuildID,
 		}, err)
 		return

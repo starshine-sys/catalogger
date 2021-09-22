@@ -19,19 +19,19 @@ func (bot *Bot) guildRoleCreate(ev *gateway.GuildRoleCreateEvent) {
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "role_create",
+			Event:   keys.GuildRoleCreate,
 			GuildID: ev.GuildID,
 		}, err)
 		return
 	}
-	if !ch["GUILD_ROLE_CREATE"].IsValid() {
+	if !ch[keys.GuildRoleCreate].IsValid() {
 		return
 	}
 
-	wh, err := bot.webhookCache("guild_role_create", ev.GuildID, ch["GUILD_ROLE_CREATE"])
+	wh, err := bot.webhookCache(keys.GuildRoleCreate, ev.GuildID, ch[keys.GuildRoleCreate])
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "role_create",
+			Event:   keys.GuildRoleCreate,
 			GuildID: ev.GuildID,
 		}, err)
 		return
@@ -65,7 +65,7 @@ func (bot *Bot) guildRoleCreate(ev *gateway.GuildRoleCreateEvent) {
 	})
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "role_create",
+			Event:   keys.GuildRoleCreate,
 			GuildID: ev.GuildID,
 		}, err)
 		return

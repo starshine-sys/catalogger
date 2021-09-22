@@ -25,20 +25,20 @@ func (bot *Bot) guildUpdate(ev *gateway.GuildUpdateEvent) {
 	ch, err := bot.DB.Channels(ev.ID)
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "guild_update",
+			Event:   keys.GuildUpdate,
 			GuildID: ev.ID,
 		}, err)
 		return
 	}
 
-	if !ch["GUILD_UPDATE"].IsValid() {
+	if !ch[keys.GuildUpdate].IsValid() {
 		return
 	}
 
-	wh, err := bot.webhookCache("guild_update", ev.ID, ch["GUILD_UPDATE"])
+	wh, err := bot.webhookCache(keys.GuildUpdate, ev.ID, ch[keys.GuildUpdate])
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "guild_update",
+			Event:   keys.GuildUpdate,
 			GuildID: ev.ID,
 		}, err)
 		return
@@ -99,7 +99,7 @@ func (bot *Bot) guildUpdate(ev *gateway.GuildUpdateEvent) {
 	})
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "guild_update",
+			Event:   keys.GuildUpdate,
 			GuildID: ev.ID,
 		}, err)
 		return

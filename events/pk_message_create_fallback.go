@@ -42,6 +42,19 @@ func (bot *Bot) pkMessageCreateFallback(m *gateway.MessageCreateEvent) {
 		}
 	}
 
+	ch, err := bot.DB.Channels(m.GuildID)
+	if err != nil {
+		bot.DB.Report(db.ErrorContext{
+			Event:   "pk_message_create_fallback",
+			GuildID: m.GuildID,
+		}, err)
+		return
+	}
+
+	if !ch[keys.MessageDelete].IsValid() && !ch[keys.MessageUpdate].IsValid() && !ch[keys.MessageDeleteBulk].IsValid() {
+		return
+	}
+
 	// wait 2 seconds
 	time.Sleep(2 * time.Second)
 
@@ -52,7 +65,7 @@ func (bot *Bot) pkMessageCreateFallback(m *gateway.MessageCreateEvent) {
 	}
 
 	// check if the message exists in the database; if so, return
-	_, err := bot.DB.GetMessage(m.ID)
+	_, err = bot.DB.GetMessage(m.ID)
 	if err == nil {
 		return
 	}

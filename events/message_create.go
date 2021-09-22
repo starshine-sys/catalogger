@@ -21,7 +21,7 @@ func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) {
 		return
 	}
 
-	if !ch["MESSAGE_DELETE"].IsValid() && !ch["MESSAGE_UPDATE"].IsValid() {
+	if !ch[keys.MessageDelete].IsValid() && !ch[keys.MessageUpdate].IsValid() && !ch[keys.MessageDeleteBulk].IsValid() {
 		return
 	}
 

@@ -29,7 +29,7 @@ func (bot *Bot) pkMessageCreate(m *gateway.MessageCreateEvent) {
 		return
 	}
 
-	if !ch["MESSAGE_DELETE"].IsValid() {
+	if !ch[keys.MessageDelete].IsValid() && !ch[keys.MessageUpdate].IsValid() && !ch[keys.MessageDeleteBulk].IsValid() {
 		return
 	}
 

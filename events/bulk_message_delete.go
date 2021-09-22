@@ -26,7 +26,7 @@ func (bot *Bot) bulkMessageDelete(ev *gateway.MessageDeleteBulkEvent) {
 	channel, err := bot.State(ev.GuildID).Channel(ev.ChannelID)
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "bulk_message_delete",
+			Event:   keys.MessageDeleteBulk,
 			GuildID: ev.GuildID,
 		}, err)
 		return
@@ -35,13 +35,13 @@ func (bot *Bot) bulkMessageDelete(ev *gateway.MessageDeleteBulkEvent) {
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "bulk_message_delete",
+			Event:   keys.MessageDeleteBulk,
 			GuildID: ev.GuildID,
 		}, err)
 		return
 	}
 
-	if !ch["MESSAGE_DELETE_BULK"].IsValid() {
+	if !ch[keys.MessageDeleteBulk].IsValid() {
 		return
 	}
 
@@ -55,10 +55,10 @@ func (bot *Bot) bulkMessageDelete(ev *gateway.MessageDeleteBulkEvent) {
 		return
 	}
 
-	wh, err := bot.webhookCache("message_delete_bulk", ev.GuildID, ch["MESSAGE_DELETE_BULK"])
+	wh, err := bot.webhookCache(keys.MessageDeleteBulk, ev.GuildID, ch[keys.MessageDeleteBulk])
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "bulk_message_delete",
+			Event:   keys.MessageDeleteBulk,
 			GuildID: ev.GuildID,
 		}, err)
 		return
@@ -67,7 +67,7 @@ func (bot *Bot) bulkMessageDelete(ev *gateway.MessageDeleteBulkEvent) {
 	redirects, err := bot.DB.Redirects(ev.GuildID)
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "bulk_message_delete",
+			Event:   keys.MessageDeleteBulk,
 			GuildID: ev.GuildID,
 		}, err)
 		return
@@ -77,7 +77,7 @@ func (bot *Bot) bulkMessageDelete(ev *gateway.MessageDeleteBulkEvent) {
 		wh, err = bot.getRedirect(ev.GuildID, redirects[channelID.String()])
 		if err != nil {
 			bot.DB.Report(db.ErrorContext{
-				Event:   "bulk_message_delete",
+				Event:   keys.MessageDeleteBulk,
 				GuildID: ev.GuildID,
 			}, err)
 			return
@@ -166,7 +166,7 @@ PK system: %v / PK member: %v
 	})
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "bulk_message_delete",
+			Event:   keys.MessageDeleteBulk,
 			GuildID: ev.GuildID,
 		}, err)
 		return

@@ -27,7 +27,7 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 	channel, err := bot.State(m.GuildID).Channel(m.ChannelID)
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "message_update",
+			Event:   keys.MessageUpdate,
 			GuildID: m.GuildID,
 		}, err)
 		return
@@ -36,13 +36,13 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 	ch, err := bot.DB.Channels(m.GuildID)
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "message_update",
+			Event:   keys.MessageUpdate,
 			GuildID: m.GuildID,
 		}, err)
 		return
 	}
 
-	if !ch["MESSAGE_UPDATE"].IsValid() {
+	if !ch[keys.MessageUpdate].IsValid() {
 		return
 	}
 
@@ -76,10 +76,10 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 		return
 	}
 
-	wh, err := bot.webhookCache("msg_update", m.GuildID, ch["MESSAGE_UPDATE"])
+	wh, err := bot.webhookCache(keys.MessageUpdate, m.GuildID, ch[keys.MessageUpdate])
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "message_update",
+			Event:   keys.MessageUpdate,
 			GuildID: m.GuildID,
 		}, err)
 		return
@@ -88,7 +88,7 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 	redirects, err := bot.DB.Redirects(m.GuildID)
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "message_update",
+			Event:   keys.MessageUpdate,
 			GuildID: m.GuildID,
 		}, err)
 		return
@@ -98,7 +98,7 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 		wh, err = bot.getRedirect(m.GuildID, redirects[channelID.String()])
 		if err != nil {
 			bot.DB.Report(db.ErrorContext{
-				Event:   "message_update",
+				Event:   keys.MessageUpdate,
 				GuildID: m.GuildID,
 			}, err)
 			return
@@ -279,7 +279,7 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 	})
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "message_update",
+			Event:   keys.MessageUpdate,
 			GuildID: m.GuildID,
 		}, err)
 		return

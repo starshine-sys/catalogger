@@ -26,20 +26,20 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) {
 	ch, err := bot.DB.Channels(m.GuildID)
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "guild_member_add",
+			Event:   keys.GuildMemberAdd,
 			GuildID: m.GuildID,
 		}, err)
 		return
 	}
 
-	if !ch["GUILD_MEMBER_ADD"].IsValid() {
+	if !ch[keys.GuildMemberAdd].IsValid() {
 		return
 	}
 
-	wh, err := bot.webhookCache("join", m.GuildID, ch["GUILD_MEMBER_ADD"])
+	wh, err := bot.webhookCache("join", m.GuildID, ch[keys.GuildMemberAdd])
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "guild_member_add",
+			Event:   keys.GuildMemberAdd,
 			GuildID: m.GuildID,
 		}, err)
 		return
@@ -227,7 +227,7 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) {
 	})
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "guild_member_add",
+			Event:   keys.GuildMemberAdd,
 			GuildID: m.GuildID,
 		}, err)
 		return
@@ -237,7 +237,7 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) {
 	if err != nil || wl == nil {
 		if errors.Cause(err) != pgx.ErrNoRows {
 			bot.DB.Report(db.ErrorContext{
-				Event:   "guild_member_add",
+				Event:   keys.GuildMemberAdd,
 				GuildID: m.GuildID,
 			}, err)
 			return
@@ -295,7 +295,7 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) {
 	})
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "guild_member_add",
+			Event:   keys.GuildMemberAdd,
 			GuildID: m.GuildID,
 		}, err)
 		return

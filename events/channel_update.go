@@ -25,16 +25,16 @@ func (bot *Bot) channelUpdate(ev *gateway.ChannelUpdateEvent) {
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "channel_update",
+			Event:   keys.ChannelUpdate,
 			GuildID: ev.GuildID,
 		}, err)
 		return
 	}
-	if !ch["CHANNEL_UPDATE"].IsValid() {
+	if !ch[keys.ChannelUpdate].IsValid() {
 		return
 	}
 
-	wh, err := bot.webhookCache("channel_update", ev.GuildID, ch["CHANNEL_UPDATE"])
+	wh, err := bot.webhookCache(keys.ChannelUpdate, ev.GuildID, ch[keys.ChannelUpdate])
 	if err != nil {
 		bot.Sugar.Errorf("Error getting webhook: %v", err)
 		return
@@ -196,7 +196,7 @@ func (bot *Bot) channelUpdate(ev *gateway.ChannelUpdateEvent) {
 	})
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "channel_update",
+			Event:   keys.ChannelUpdate,
 			GuildID: ev.GuildID,
 		}, err)
 		return

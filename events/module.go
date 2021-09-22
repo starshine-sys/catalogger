@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ReneKroon/ttlcache/v2"
+	"github.com/diamondburned/arikawa/v3/api/webhook"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/diamondburned/arikawa/v3/gateway/shard"
@@ -47,40 +47,15 @@ type Bot struct {
 	Guilds   map[discord.GuildID]discord.Guild
 	GuildsMu sync.Mutex
 
-	MessageDeleteCache     *ttlcache.Cache
-	MessageUpdateCache     *ttlcache.Cache
-	MessageDeleteBulkCache *ttlcache.Cache
-
-	InviteCreateCache *ttlcache.Cache
-	InviteDeleteCache *ttlcache.Cache
-
-	GuildBanAddCache    *ttlcache.Cache
-	GuildBanRemoveCache *ttlcache.Cache
-
-	GuildMemberAddCache    *ttlcache.Cache
-	GuildMemberRemoveCache *ttlcache.Cache
-
-	GuildMemberUpdateCache     *ttlcache.Cache
-	GuildMemberNickUpdateCache *ttlcache.Cache
-
-	ChannelCreateCache *ttlcache.Cache
-	ChannelUpdateCache *ttlcache.Cache
-	ChannelDeleteCache *ttlcache.Cache
-
-	GuildUpdateCache       *ttlcache.Cache
-	GuildEmojisUpdateCache *ttlcache.Cache
-	GuildRoleCreateCache   *ttlcache.Cache
-	GuildRoleDeleteCache   *ttlcache.Cache
-	GuildRoleUpdateCache   *ttlcache.Cache
-
-	RedirectCache *ttlcache.Cache
-
 	BotJoinLeaveLog discord.ChannelID
 
 	Start time.Time
 
-	Queues  map[discord.ChannelID]*Queue
+	Queues  map[discord.WebhookID]*Queue
 	QueueMu sync.Mutex
+
+	WebhookClients map[discord.WebhookID]*webhook.Client
+	WebhooksMu     sync.Mutex
 }
 
 // Init ...
@@ -94,63 +69,16 @@ func Init(bot *bot.Bot) (clearCacheFunc func(discord.GuildID, ...discord.Channel
 		ProxiedTriggers: map[discord.MessageID]struct{}{},
 		BotMessages:     map[discord.MessageID]struct{}{},
 
-		Invites:  map[discord.GuildID][]discord.Invite{},
-		Members:  map[memberCacheKey]discord.Member{},
-		Channels: map[discord.ChannelID]discord.Channel{},
-		Roles:    map[discord.RoleID]discord.Role{},
-		Guilds:   map[discord.GuildID]discord.Guild{},
-		Queues:   map[discord.ChannelID]*Queue{},
-
-		MessageDeleteCache: ttlcache.NewCache(),
-		MessageUpdateCache: ttlcache.NewCache(),
-
-		GuildMemberAddCache: ttlcache.NewCache(),
-		InviteCreateCache:   ttlcache.NewCache(),
-		InviteDeleteCache:   ttlcache.NewCache(),
-		GuildBanAddCache:    ttlcache.NewCache(),
-		GuildBanRemoveCache: ttlcache.NewCache(),
-
-		GuildMemberNickUpdateCache: ttlcache.NewCache(),
-
-		GuildMemberRemoveCache: ttlcache.NewCache(),
-		GuildMemberUpdateCache: ttlcache.NewCache(),
-
-		MessageDeleteBulkCache: ttlcache.NewCache(),
-
-		ChannelCreateCache: ttlcache.NewCache(),
-		ChannelUpdateCache: ttlcache.NewCache(),
-		ChannelDeleteCache: ttlcache.NewCache(),
-
-		GuildUpdateCache:       ttlcache.NewCache(),
-		GuildEmojisUpdateCache: ttlcache.NewCache(),
-		GuildRoleCreateCache:   ttlcache.NewCache(),
-		GuildRoleDeleteCache:   ttlcache.NewCache(),
-		GuildRoleUpdateCache:   ttlcache.NewCache(),
-
-		RedirectCache: ttlcache.NewCache(),
+		Invites:        map[discord.GuildID][]discord.Invite{},
+		Members:        map[memberCacheKey]discord.Member{},
+		Channels:       map[discord.ChannelID]discord.Channel{},
+		Roles:          map[discord.RoleID]discord.Role{},
+		Guilds:         map[discord.GuildID]discord.Guild{},
+		Queues:         map[discord.WebhookID]*Queue{},
+		WebhookClients: map[discord.WebhookID]*webhook.Client{},
 
 		BotJoinLeaveLog: discord.ChannelID(joinLeaveLog),
 	}
-	b.MessageDeleteCache.SetTTL(10 * time.Minute)
-	b.MessageUpdateCache.SetTTL(10 * time.Minute)
-	b.GuildMemberAddCache.SetTTL(10 * time.Minute)
-	b.InviteCreateCache.SetTTL(10 * time.Minute)
-	b.InviteDeleteCache.SetTTL(10 * time.Minute)
-	b.GuildBanAddCache.SetTTL(10 * time.Minute)
-	b.GuildBanRemoveCache.SetTTL(10 * time.Minute)
-	b.GuildMemberRemoveCache.SetTTL(10 * time.Minute)
-	b.GuildMemberUpdateCache.SetTTL(10 * time.Minute)
-	b.GuildMemberNickUpdateCache.SetTTL(10 * time.Minute)
-	b.MessageDeleteBulkCache.SetTTL(10 * time.Minute)
-	b.ChannelCreateCache.SetTTL(10 * time.Minute)
-	b.ChannelUpdateCache.SetTTL(10 * time.Minute)
-	b.ChannelDeleteCache.SetTTL(10 * time.Minute)
-	b.GuildUpdateCache.SetTTL(10 * time.Minute)
-	b.GuildEmojisUpdateCache.SetTTL(10 * time.Minute)
-	b.GuildRoleCreateCache.SetTTL(10 * time.Minute)
-	b.GuildRoleDeleteCache.SetTTL(10 * time.Minute)
-	b.GuildRoleUpdateCache.SetTTL(10 * time.Minute)
-	b.RedirectCache.SetTTL(10 * time.Minute)
 
 	// add member cache handlers
 	b.Router.AddHandler(b.requestGuildMembers)

@@ -18,19 +18,19 @@ func (bot *Bot) channelDelete(ev *gateway.ChannelDeleteEvent) {
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "channel_delete",
+			Event:   keys.ChannelDelete,
 			GuildID: ev.GuildID,
 		}, err)
 		return
 	}
-	if !ch["CHANNEL_DELETE"].IsValid() {
+	if !ch[keys.ChannelDelete].IsValid() {
 		return
 	}
 
-	wh, err := bot.webhookCache("channel_delete", ev.GuildID, ch["CHANNEL_DELETE"])
+	wh, err := bot.webhookCache(keys.ChannelDelete, ev.GuildID, ch[keys.ChannelDelete])
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "channel_delete",
+			Event:   keys.ChannelDelete,
 			GuildID: ev.GuildID,
 		}, err)
 		return
@@ -67,7 +67,7 @@ func (bot *Bot) channelDelete(ev *gateway.ChannelDeleteEvent) {
 	})
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "channel_delete",
+			Event:   keys.ChannelDelete,
 			GuildID: ev.GuildID,
 		}, err)
 		return

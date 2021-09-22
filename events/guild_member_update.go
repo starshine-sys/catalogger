@@ -60,20 +60,20 @@ func (bot *Bot) guildMemberUpdate(ev *gateway.GuildMemberUpdateEvent) {
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "guild_member_update",
+			Event:   keys.GuildMemberUpdate,
 			GuildID: ev.GuildID,
 		}, err)
 		return
 	}
 
-	if !ch["GUILD_MEMBER_UPDATE"].IsValid() {
+	if !ch[keys.GuildMemberUpdate].IsValid() {
 		return
 	}
 
-	wh, err := bot.webhookCache("member-update", ev.GuildID, ch["GUILD_MEMBER_UPDATE"])
+	wh, err := bot.webhookCache(keys.GuildMemberUpdate, ev.GuildID, ch[keys.GuildMemberUpdate])
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "guild_member_update",
+			Event:   keys.GuildMemberUpdate,
 			GuildID: ev.GuildID,
 		}, err)
 		return
@@ -132,7 +132,7 @@ func (bot *Bot) guildMemberUpdate(ev *gateway.GuildMemberUpdateEvent) {
 	})
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "guild_member_update",
+			Event:   keys.GuildMemberUpdate,
 			GuildID: ev.GuildID,
 		}, err)
 		return
@@ -143,20 +143,20 @@ func (bot *Bot) guildMemberNickUpdate(ev *gateway.GuildMemberUpdateEvent, m disc
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "guild_member_nick_update",
+			Event:   keys.GuildMemberNickUpdate,
 			GuildID: ev.GuildID,
 		}, err)
 		return
 	}
 
-	if !ch["GUILD_MEMBER_NICK_UPDATE"].IsValid() {
+	if !ch[keys.GuildMemberNickUpdate].IsValid() {
 		return
 	}
 
-	wh, err := bot.webhookCache("member-nick-update", ev.GuildID, ch["GUILD_MEMBER_NICK_UPDATE"])
+	wh, err := bot.webhookCache(keys.GuildMemberNickUpdate, ev.GuildID, ch[keys.GuildMemberNickUpdate])
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "guild_member_nick_update",
+			Event:   keys.GuildMemberNickUpdate,
 			GuildID: ev.GuildID,
 		}, err)
 		return
@@ -216,7 +216,7 @@ func (bot *Bot) guildMemberNickUpdate(ev *gateway.GuildMemberUpdateEvent, m disc
 	})
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "guild_member_nick_update",
+			Event:   keys.GuildMemberNickUpdate,
 			GuildID: ev.GuildID,
 		}, err)
 		return

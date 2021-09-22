@@ -19,19 +19,19 @@ func (bot *Bot) channelCreate(ev *gateway.ChannelCreateEvent) {
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "channel_create",
+			Event:   keys.ChannelCreate,
 			GuildID: ev.GuildID,
 		}, err)
 		return
 	}
-	if !ch["CHANNEL_CREATE"].IsValid() {
+	if !ch[keys.ChannelCreate].IsValid() {
 		return
 	}
 
-	wh, err := bot.webhookCache("channel_create", ev.GuildID, ch["CHANNEL_CREATE"])
+	wh, err := bot.webhookCache(keys.ChannelCreate, ev.GuildID, ch[keys.ChannelCreate])
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "channel_create",
+			Event:   keys.ChannelCreate,
 			GuildID: ev.GuildID,
 		}, err)
 		return
@@ -100,7 +100,7 @@ func (bot *Bot) channelCreate(ev *gateway.ChannelCreateEvent) {
 	})
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
-			Event:   "channel_create",
+			Event:   keys.ChannelCreate,
 			GuildID: ev.GuildID,
 		}, err)
 		return
