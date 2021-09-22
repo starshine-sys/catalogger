@@ -4,6 +4,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/diamondburned/arikawa/v3/api"
 	"github.com/diamondburned/arikawa/v3/api/webhook"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/starshine-sys/catalogger/db"
@@ -72,7 +73,7 @@ func (bot *Bot) Queue(wh *discord.Webhook, event string, embed discord.Embed) {
 
 	q.mu.Lock()
 	defer q.mu.Unlock()
-	if q.TotalLength()+embed.Length() >= 6000 || len(q.queue) > 5 {
+	if q.TotalLength()+embed.Length() >= 6000 || len(q.queue) >= 5 {
 		embeds := q.queue
 		q.queue = nil
 
@@ -117,9 +118,15 @@ func (bot *Bot) Queue(wh *discord.Webhook, event string, embed discord.Embed) {
 }
 
 func (bot *Bot) queueInner(client *webhook.Client, embeds []discord.Embed) (err error) {
+	bot.Sugar.Debugf("Executing webhook %v, with %v embed(s)", client.ID, len(embeds))
+
 	_, err = client.ExecuteAndWait(webhook.ExecuteData{
 		AvatarURL: bot.Router.Bot.AvatarURL(),
 		Embeds:    embeds,
+		// won't ping anyway because it's all embeds, but can't hurt
+		AllowedMentions: &api.AllowedMentions{
+			Parse: []api.AllowedMentionType{},
+		},
 	})
 	return
 }

@@ -185,18 +185,14 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 		}...)
 	}
 
-	_, err = webhook.FromAPI(wh.ID, wh.Token, bot.State(m.GuildID).Client).ExecuteAndWait(webhook.ExecuteData{
-		AvatarURL: bot.Router.Bot.AvatarURL(),
-		Embeds:    []discord.Embed{e},
-	})
-	if err == nil {
-		bot.DB.DeleteMessage(msg.MsgID)
-	} else {
+	bot.Queue(wh, keys.MessageDelete, e)
+
+	err = bot.DB.DeleteMessage(msg.MsgID)
+	if err != nil {
 		bot.DB.Report(db.ErrorContext{
 			Event:   keys.MessageDelete,
 			GuildID: m.GuildID,
 		}, err)
-		return
 	}
 }
 

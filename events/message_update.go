@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"emperror.dev/errors"
-	"github.com/diamondburned/arikawa/v3/api/webhook"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/jackc/pgx/v4"
@@ -273,17 +272,7 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 		Value: fmt.Sprintf("https://discord.com/channels/%v/%v/%v", m.GuildID, m.ChannelID, m.ID),
 	})
 
-	err = webhook.FromAPI(wh.ID, wh.Token, bot.State(m.GuildID).Client).Execute(webhook.ExecuteData{
-		AvatarURL: bot.Router.Bot.AvatarURL(),
-		Embeds:    []discord.Embed{e},
-	})
-	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.MessageUpdate,
-			GuildID: m.GuildID,
-		}, err)
-		return
-	}
+	bot.Queue(wh, keys.MessageUpdate, e)
 
 	// update the message
 	username := m.Author.Username

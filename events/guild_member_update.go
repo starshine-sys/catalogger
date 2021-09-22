@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/diamondburned/arikawa/v3/api/webhook"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
@@ -126,17 +125,7 @@ func (bot *Bot) guildMemberUpdate(ev *gateway.GuildMemberUpdateEvent) {
 		})
 	}
 
-	err = webhook.FromAPI(wh.ID, wh.Token, bot.State(ev.GuildID).Client).Execute(webhook.ExecuteData{
-		AvatarURL: bot.Router.Bot.AvatarURL(),
-		Embeds:    []discord.Embed{e},
-	})
-	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.GuildMemberUpdate,
-			GuildID: ev.GuildID,
-		}, err)
-		return
-	}
+	bot.Queue(wh, keys.GuildMemberUpdate, e)
 }
 
 func (bot *Bot) guildMemberNickUpdate(ev *gateway.GuildMemberUpdateEvent, m discord.Member) {
@@ -210,17 +199,7 @@ func (bot *Bot) guildMemberNickUpdate(ev *gateway.GuildMemberUpdateEvent, m disc
 		})
 	}
 
-	err = webhook.FromAPI(wh.ID, wh.Token, bot.State(ev.GuildID).Client).Execute(webhook.ExecuteData{
-		AvatarURL: bot.Router.Bot.AvatarURL(),
-		Embeds:    []discord.Embed{e},
-	})
-	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.GuildMemberNickUpdate,
-			GuildID: ev.GuildID,
-		}, err)
-		return
-	}
+	bot.Queue(wh, keys.GuildMemberNickUpdate, e)
 }
 
 func roleIn(s []discord.RoleID, id discord.RoleID) (exists bool) {
