@@ -53,6 +53,6 @@ func (bot *Bot) setChannel(ctx *bcr.Context) (err error) {
 	if err != nil {
 		bot.Sugar.Errorf("Error sending message: %v", err)
 	}
-	err = bot.Router.GetCommand("clearcache").Command(ctx)
+	err = bot.Router.GetCommand("clearcache").SlashCommand(ctx)
 	return
 }

@@ -37,7 +37,7 @@ If for whatever reason you can't or don't want to use Docker, it's still possibl
 
 - Go 1.16
 - PostgreSQL 12
-- Redis (not sure which version, the latest version is always a safe bet though)
+- Redis 6.2
 
 #### Installation
 
