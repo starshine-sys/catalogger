@@ -52,7 +52,7 @@ func (bot *Bot) channelUpdate(ev *gateway.ChannelUpdateEvent) {
 	}
 
 	switch ev.Type {
-	case discord.GuildVoice:
+	case discord.GuildVoice, discord.GuildStageVoice:
 		e.Title = "Voice channel updated"
 	case discord.GuildCategory:
 		e.Title = "Category channel updated"
@@ -171,7 +171,7 @@ func (bot *Bot) channelUpdate(ev *gateway.ChannelUpdateEvent) {
 		} else if p.Type == discord.OverwriteMember {
 			u, err := bot.State(ev.GuildID).User(discord.UserID(p.ID))
 			if err == nil {
-				f.Name = "Role override for " + u.Username + "#" + u.Discriminator
+				f.Name = "User override for " + u.Username + "#" + u.Discriminator
 			}
 		}
 
