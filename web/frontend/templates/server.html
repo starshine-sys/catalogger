@@ -312,15 +312,10 @@
 
                         <div class="channel-entry">
                             <div class="form-floating">
-                                <select id="GUILD_EMOJIS_UPDATE" name="GUILD_EMOJIS_UPDATE" class="form-select"
-                                    aria-label="Changes to emotes" aria-describedby="emojiHelp" disabled>
+                                <select id="GUILD_EMOJIS_UPDATE" name="GUILD_EMOJIS_UPDATE" class="form-select" aria-label="Changes to emotes">
                                     {{selectOptions .Guild.Channels $.CurrentChannels.GUILD_EMOJIS_UPDATE}}
                                 </select>
                                 <label for="GUILD_EMOJIS_UPDATE">Changes to emotes</label>
-                                <div id="emojiHelp" class="form-text">
-                                    <strong>Note:</strong> this event isn't logged (yet!), so you can't set a channel
-                                    for it.
-                                </div>
                             </div>
                         </div>
 
