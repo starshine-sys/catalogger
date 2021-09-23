@@ -5,6 +5,9 @@ import (
 
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
+	"github.com/diamondburned/arikawa/v3/gateway/shard"
+	"github.com/diamondburned/arikawa/v3/state"
+	"github.com/diamondburned/arikawa/v3/state/store"
 	"github.com/getsentry/sentry-go"
 	"github.com/mediocregopher/radix/v4"
 	"github.com/starshine-sys/bcr"
@@ -38,6 +41,19 @@ func New(redisURL string, r *bcr.Router, db *db.DB, log *zap.SugaredLogger) (b *
 
 	b.Router.AddHandler(b.messageCreate)
 	b.Router.AddHandler(b.interactionCreate)
+
+	// these are never referenced in code and otherwise take up memory (not a whole lot, but hey)
+	// for now, bcr.Context still uses GuildStore, ChannelStore, and RoleStore
+	// TODO: replace r.NewContext with a custom method that uses the bot's own cache, will require a major refactor (as it's currently in events.Bot)
+	r.ShardManager.ForEach(func(s shard.Shard) {
+		state := s.(*state.State)
+
+		state.Cabinet.MessageStore = store.Noop
+		state.Cabinet.EmojiStore = store.Noop
+		state.Cabinet.MemberStore = store.Noop
+		state.Cabinet.VoiceStateStore = store.Noop
+		state.Cabinet.PresenceStore = store.Noop
+	})
 
 	return b, nil
 }
