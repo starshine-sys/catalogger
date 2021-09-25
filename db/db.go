@@ -32,7 +32,9 @@ type DB struct {
 
 // New ...
 func New(url string, sugar *zap.SugaredLogger, hub *sentry.Hub) (*DB, error) {
-	err := runMigrations(url, sugar)
+	log := sugar.Named("db")
+
+	err := runMigrations(url, log)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +46,7 @@ func New(url string, sugar *zap.SugaredLogger, hub *sentry.Hub) (*DB, error) {
 
 	db := &DB{
 		Pool:  pool,
-		Sugar: sugar,
+		Sugar: log,
 		Hub:   hub,
 	}
 

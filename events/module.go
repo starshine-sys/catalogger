@@ -17,6 +17,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/utils/handler"
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/bot"
+	"go.uber.org/zap"
 )
 
 // delete messages after this many days have passed
@@ -25,6 +26,7 @@ const deleteAfterDays = 15
 // Bot ...
 type Bot struct {
 	*bot.Bot
+	Sugar *zap.SugaredLogger
 
 	ProxiedTriggers   map[discord.MessageID]struct{}
 	ProxiedTriggersMu sync.Mutex
@@ -59,11 +61,12 @@ type Bot struct {
 }
 
 // Init ...
-func Init(bot *bot.Bot) (clearCacheFunc func(discord.GuildID, ...discord.ChannelID), memberFunc func() int64, guildPermFunc func(discord.GuildID, discord.UserID) (discord.Guild, discord.Permissions, error), joinedFunc func(discord.GuildID) bool) {
+func Init(bot *bot.Bot, log *zap.SugaredLogger) (clearCacheFunc func(discord.GuildID, ...discord.ChannelID), memberFunc func() int64, guildPermFunc func(discord.GuildID, discord.UserID) (discord.Guild, discord.Permissions, error), joinedFunc func(discord.GuildID) bool) {
 	joinLeaveLog, _ := discord.ParseSnowflake(os.Getenv("JOIN_LEAVE_LOG"))
 
 	b := &Bot{
 		Bot:   bot,
+		Sugar: log.Named("event"),
 		Start: time.Now().UTC(),
 
 		ProxiedTriggers: map[discord.MessageID]struct{}{},

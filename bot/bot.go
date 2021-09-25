@@ -30,14 +30,14 @@ func New(redisURL string, r *bcr.Router, db *db.DB, log *zap.SugaredLogger) (b *
 	b = &Bot{
 		Bot:   bot.NewWithRouter(r),
 		DB:    db,
-		Sugar: log,
+		Sugar: log.Named("bot"),
 	}
 
 	b.Redis, err = (&radix.PoolConfig{}).New(context.Background(), "tcp", redisURL)
 	if err != nil {
 		return nil, err
 	}
-	log.Info("Connected to Redis")
+	b.Sugar.Info("Connected to Redis")
 
 	b.Router.AddHandler(b.messageCreate)
 	b.Router.AddHandler(b.interactionCreate)

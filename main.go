@@ -11,6 +11,7 @@ import (
 
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
+	"github.com/diamondburned/arikawa/v3/utils/wsutil"
 	"github.com/getsentry/sentry-go"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/starshine-sys/bcr"
@@ -46,6 +47,14 @@ func main() {
 	}
 	sugar := zap.Sugar()
 
+	wsutil.WSDebug = sugar.Named("ws").Debug
+	wsutil.WSError = func(err error) {
+		sugar.Named("ws").Error(err)
+	}
+
+	// set up logger for this section
+	log := sugar.Named("init")
+
 	intents := gateway.IntentGuilds | gateway.IntentGuildMembers |
 		gateway.IntentGuildBans | gateway.IntentGuildEmojis |
 		gateway.IntentGuildIntegrations | gateway.IntentGuildWebhooks |
@@ -63,7 +72,7 @@ func main() {
 		intents,
 	)
 	if err != nil {
-		sugar.Fatalf("Error creating bot: %v", err)
+		log.Fatalf("Error creating bot: %v", err)
 	}
 	r.EmbedColor = bcr.ColourPurple
 
@@ -74,7 +83,7 @@ func main() {
 			Dsn: os.Getenv("SENTRY_URL"),
 		})
 		if err != nil {
-			sugar.Fatalf("Error initialising Sentry: %v", err)
+			log.Fatalf("Error initialising Sentry: %v", err)
 		}
 		hub = sentry.CurrentHub()
 	}
@@ -82,40 +91,40 @@ func main() {
 	// create a database connection
 	db, err := db.New(os.Getenv("DATABASE_URL"), sugar, hub)
 	if err != nil {
-		sugar.Fatalf("Error opening database connection: %v", err)
+		log.Fatalf("Error opening database connection: %v", err)
 	}
-	sugar.Infof("Opened database connection.")
+	log.Infof("Opened database connection.")
 
 	// add message create + interaction create handler
 	b, err := bot.New(os.Getenv("REDIS"), r, db, sugar)
 	if err != nil {
-		sugar.Fatal("Error connecting to Redis: %v", err)
+		log.Fatal("Error connecting to Redis: %v", err)
 	}
 
 	// actually load events + commands
-	commands.Init(b)
+	commands.Init(b, sugar)
 
-	cacheFunc, countFunc, guildPermFunc, joinedFunc := events.Init(b)
+	cacheFunc, countFunc, guildPermFunc, joinedFunc := events.Init(b, sugar)
 	server.NewServer(r, db, cacheFunc, countFunc, guildPermFunc, joinedFunc)
 
 	// connect to discord
 	if err := r.ShardManager.Open(context.Background()); err != nil {
-		sugar.Fatal("Failed to connect:", err)
+		log.Fatal("Failed to connect:", err)
 	}
 
 	// Defer this to make sure that things are always cleanly shutdown even in the event of a crash
 	defer func() {
 		db.Pool.Close()
-		sugar.Info("Closed database connection.")
+		log.Info("Closed database connection.")
 		r.ShardManager.Close()
-		sugar.Info("Disconnected from Discord.")
+		log.Info("Disconnected from Discord.")
 	}()
 
-	sugar.Info("Connected to Discord. Press Ctrl-C or send an interrupt signal to stop.")
+	log.Info("Connected to Discord. Press Ctrl-C or send an interrupt signal to stop.")
 
 	s, _ := r.StateFromGuildID(0)
 	botUser, _ := s.Me()
-	sugar.Infof("User: %v#%v (%v)", botUser.Username, botUser.Discriminator, botUser.ID)
+	log.Infof("User: %v#%v (%v)", botUser.Username, botUser.Discriminator, botUser.ID)
 	r.Bot = botUser
 	// normally creating a Context would do this, but as we set the user above, that doesn't work
 	r.Prefixes = append(r.Prefixes, "<@"+r.Bot.ID.String()+">", "<@!"+r.Bot.ID.String()+">")
@@ -130,21 +139,21 @@ func main() {
 			err = r.SyncCommands(discord.GuildID(guildID))
 		}
 		if err != nil {
-			sugar.Errorf("Error syncing slash commands: %v", err)
+			log.Errorf("Error syncing slash commands: %v", err)
 		} else {
 			s := "Synced slash commands"
 			if guildID.IsValid() {
 				s += " in " + fmt.Sprint(guildID)
 			}
-			sugar.Infof(s)
+			log.Infof(s)
 		}
 	} else {
-		sugar.Infof("Note: not syncing slash commands. Set SYNC_COMMANDS to true to sync commands")
+		log.Infof("Note: not syncing slash commands. Set SYNC_COMMANDS to true to sync commands")
 	}
 
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
 	<-sc
 
-	sugar.Infof("Interrupt signal received. Shutting down...")
+	log.Infof("Interrupt signal received. Shutting down...")
 }
