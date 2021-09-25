@@ -3,7 +3,6 @@ package events
 import (
 	"fmt"
 
-	"github.com/diamondburned/arikawa/v3/api/webhook"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
@@ -93,15 +92,5 @@ func (bot *Bot) guildUpdate(ev *gateway.GuildUpdateEvent) {
 		return
 	}
 
-	err = webhook.FromAPI(wh.ID, wh.Token, bot.State(ev.ID).Client).Execute(webhook.ExecuteData{
-		AvatarURL: bot.Router.Bot.AvatarURL(),
-		Embeds:    []discord.Embed{e},
-	})
-	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.GuildUpdate,
-			GuildID: ev.ID,
-		}, err)
-		return
-	}
+	bot.Send(wh, keys.GuildUpdate, e)
 }

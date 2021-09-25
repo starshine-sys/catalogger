@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"emperror.dev/errors"
-	"github.com/diamondburned/arikawa/v3/api/webhook"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/jackc/pgx/v4"
@@ -218,23 +217,9 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) {
 		}
 	}
 
-	// we create a client separately because we might need to send 2 messages
-	client := webhook.FromAPI(wh.ID, wh.Token, bot.State(m.GuildID).Client)
-
-	err = client.Execute(webhook.ExecuteData{
-		AvatarURL: bot.Router.Bot.AvatarURL(),
-		Embeds:    embeds,
-	})
-	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.GuildMemberAdd,
-			GuildID: m.GuildID,
-		}, err)
-		return
-	}
-
 	wl, err := bot.DB.UserWatchlist(m.GuildID, m.User.ID)
 	if err != nil || wl == nil {
+		bot.Send(wh, keys.GuildMemberAdd, embeds...)
 		if errors.Cause(err) != pgx.ErrNoRows {
 			bot.DB.Report(db.ErrorContext{
 				Event:   keys.GuildMemberAdd,
@@ -289,15 +274,5 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) {
 		})
 	}
 
-	err = client.Execute(webhook.ExecuteData{
-		AvatarURL: bot.Router.Bot.AvatarURL(),
-		Embeds:    []discord.Embed{e},
-	})
-	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.GuildMemberAdd,
-			GuildID: m.GuildID,
-		}, err)
-		return
-	}
+	bot.Send(wh, keys.GuildMemberAdd, append(embeds, e)...)
 }

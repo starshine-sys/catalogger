@@ -159,7 +159,9 @@ PK system: %v / PK member: %v
 		Timestamp:   discord.NowTimestamp(),
 	}
 
-	_, err = webhook.FromAPI(wh.ID, wh.Token, bot.State(ev.GuildID).Client).ExecuteAndWait(webhook.ExecuteData{
+	client := bot.WebhookClient(wh)
+
+	_, err = client.ExecuteAndWait(webhook.ExecuteData{
 		AvatarURL: bot.Router.Bot.AvatarURL(),
 		Embeds:    []discord.Embed{e},
 		Files:     []sendpart.File{file},

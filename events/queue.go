@@ -10,6 +10,48 @@ import (
 	"github.com/starshine-sys/catalogger/db"
 )
 
+// shouldQueue is a map of all events that should be put into a webhook queue
+// doesn't need a mutex because it's never modified
+var shouldQueue = map[string]bool{
+	keys.GuildMemberUpdate:     true,
+	keys.GuildMemberNickUpdate: true,
+	keys.MessageDelete:         true,
+	keys.MessageUpdate:         true,
+	keys.GuildMemberAdd:        true,
+	keys.GuildMemberRemove:     true,
+	keys.GuildBanAdd:           true,
+	keys.GuildBanRemove:        true,
+	keys.InviteCreate:          true,
+	keys.InviteDelete:          true,
+}
+
+// Send either sends a slice of embeds immediately, or queues a single embed
+func (bot *Bot) Send(wh *discord.Webhook, event string, embeds ...discord.Embed) {
+	if len(embeds) == 0 {
+		return
+	}
+
+	if shouldQueue[event] && len(embeds) == 1 {
+		bot.Queue(wh, event, embeds[0])
+		return
+	}
+
+	bot.Sugar.Debugf("Event for webhook %v should not be queued, sending embed", wh.ID)
+
+	client := bot.WebhookClient(wh)
+
+	err := client.Execute(webhook.ExecuteData{
+		AvatarURL: bot.Router.Bot.AvatarURL(),
+		Embeds:    embeds,
+	})
+	if err != nil {
+		bot.DB.Report(db.ErrorContext{
+			Event:   event,
+			GuildID: wh.GuildID,
+		}, err)
+	}
+}
+
 // Queue is a webhook embed queue.
 type Queue struct {
 	mu      sync.Mutex

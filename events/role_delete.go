@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/diamondburned/arikawa/v3/api/webhook"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
@@ -67,15 +66,5 @@ Created <t:%v> (%v)`, old.Name, old.Color, old.Mentionable, old.Hoist, old.Posit
 		})
 	}
 
-	err = webhook.FromAPI(wh.ID, wh.Token, bot.State(ev.GuildID).Client).Execute(webhook.ExecuteData{
-		AvatarURL: bot.Router.Bot.AvatarURL(),
-		Embeds:    []discord.Embed{e},
-	})
-	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.GuildRoleDelete,
-			GuildID: ev.GuildID,
-		}, err)
-		return
-	}
+	bot.Send(wh, keys.GuildRoleDelete, e)
 }

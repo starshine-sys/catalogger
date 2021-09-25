@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/diamondburned/arikawa/v3/api/webhook"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
@@ -127,17 +126,7 @@ func (bot *Bot) emojiUpdate(ev *gateway.GuildEmojisUpdateEvent) {
 		embeds = embeds[:9]
 	}
 
-	err = webhook.FromAPI(wh.ID, wh.Token, bot.State(ev.GuildID).Client).Execute(webhook.ExecuteData{
-		AvatarURL: bot.Router.Bot.AvatarURL(),
-		Embeds:    embeds,
-	})
-	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.GuildEmojisUpdate,
-			GuildID: ev.GuildID,
-		}, err)
-	}
-	return
+	bot.Send(wh, keys.GuildEmojisUpdate, embeds...)
 }
 
 func emojiRenameEmbed(old, new []discord.Emoji) *discord.Embed {

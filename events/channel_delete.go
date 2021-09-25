@@ -3,7 +3,6 @@ package events
 import (
 	"fmt"
 
-	"github.com/diamondburned/arikawa/v3/api/webhook"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
@@ -61,15 +60,5 @@ func (bot *Bot) channelDelete(ev *gateway.ChannelDeleteEvent) {
 		})
 	}
 
-	err = webhook.FromAPI(wh.ID, wh.Token, bot.State(ev.GuildID).Client).Execute(webhook.ExecuteData{
-		AvatarURL: bot.Router.Bot.AvatarURL(),
-		Embeds:    []discord.Embed{e},
-	})
-	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.ChannelDelete,
-			GuildID: ev.GuildID,
-		}, err)
-		return
-	}
+	bot.Send(wh, keys.ChannelDelete, e)
 }

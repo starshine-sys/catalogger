@@ -185,6 +185,7 @@ func (bot *Bot) webhookCache(t string, guildID discord.GuildID, ch discord.Chann
 		}
 	}
 
+	wh.GuildID = guildID
 	return wh, nil
 }
 
@@ -215,6 +216,7 @@ func (bot *Bot) getRedirect(guildID discord.GuildID, ch discord.ChannelID) (*dis
 		bot.Sugar.Errorf("Error setting redirect webhook for %v: %v", ch, err)
 	}
 
+	wh.GuildID = guildID
 	return wh, nil
 }
 

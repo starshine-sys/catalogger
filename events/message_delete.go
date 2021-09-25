@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/diamondburned/arikawa/v3/api/webhook"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
@@ -107,10 +106,7 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 			Timestamp: discord.NewTimestamp(m.ID.Time()),
 		}
 
-		webhook.FromAPI(wh.ID, wh.Token, bot.State(m.GuildID).Client).Execute(webhook.ExecuteData{
-			AvatarURL: bot.Router.Bot.AvatarURL(),
-			Embeds:    []discord.Embed{e},
-		})
+		bot.Send(wh, keys.MessageDelete, e)
 		return
 	}
 
