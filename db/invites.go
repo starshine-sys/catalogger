@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 
+	"github.com/Masterminds/squirrel"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/starshine-sys/catalogger/crypt"
@@ -16,7 +17,12 @@ func (db *DB) GetInvites(guildID discord.GuildID, invites map[string]string) (na
 		Name string
 	}
 
-	err = pgxscan.Select(context.Background(), db.Pool, &list, "select code, name from invites where guild_id = $1", guildID)
+	sql, args, err := sq.Select("code", "name").From("invites").Where(squirrel.Eq{"guild_id": 1}).ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	err = pgxscan.Select(context.Background(), db.Pool, &list, sql, args...)
 	if err != nil {
 		return
 	}
@@ -47,16 +53,24 @@ func (db *DB) NameInvite(guildID discord.GuildID, code, name string) (err error)
 	}
 	name = hex.EncodeToString(out)
 
-	_, err = db.Pool.Exec(context.Background(), `insert into invites (guild_id, code, name)
-values ($1, $2, $3) on conflict (code)
-do update set name = $3`, guildID, code, name)
+	sql, args, err := sq.Insert("invites").Columns("guild_id", "code", "name").Values(guildID, code, name).Suffix("ON CONFLICT (code) DO UPDATE SET name = ?", name).ToSql()
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Pool.Exec(context.Background(), sql, args...)
 	return err
 }
 
 // GetInviteName gets an invite by name.
 // If the invite is not found, returns "Unnamed".
 func (db *DB) GetInviteName(code string) (name string, err error) {
-	err = db.Pool.QueryRow(context.Background(), "select name from invites where code = $1", code).Scan(&name)
+	sql, args, err := sq.Select("name").From("invites").Where(squirrel.Eq{"code": code}).ToSql()
+	if err != nil {
+		return "Unnamed", err
+	}
+
+	err = db.Pool.QueryRow(context.Background(), sql, args...).Scan(&name)
 	if err != nil {
 		return "Unnamed", nil
 	}
