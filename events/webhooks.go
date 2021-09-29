@@ -132,6 +132,8 @@ func (bot *Bot) ResetCache(id discord.GuildID, channels ...discord.ChannelID) {
 		keys = append(keys, redirKey(ch))
 	}
 
+	bot.Sugar.Debugf("Deleting cache entries for %v", id)
+
 	err := bot.Redis.Do(context.Background(), radix.Cmd(nil, "DEL", keys...))
 	if err != nil {
 		bot.Sugar.Errorf("Error resetting webhook cache: %v", err)

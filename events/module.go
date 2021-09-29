@@ -164,8 +164,7 @@ func Init(bot *bot.Bot, log *zap.SugaredLogger) (clearCacheFunc func(discord.Gui
 			}
 
 			b.ResetCache(ctx.GetGuild().ID, ch...)
-			_, err = ctx.Send("Reset the webhook cache for this server.")
-			return
+			return ctx.SendX("Reset the webhook cache for this server.")
 		},
 	})
 

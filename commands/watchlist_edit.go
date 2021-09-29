@@ -43,3 +43,36 @@ func (bot *Bot) watchlistRemove(ctx *bcr.Context) (err error) {
 	_, err = ctx.Reply("Removed **%v#%v** from the watchlist.", u.Username, u.Discriminator)
 	return
 }
+
+func (bot *Bot) watchlistAddSlash(ctx bcr.Contexter) (err error) {
+	u, err := ctx.GetUserFlag("user")
+	if err != nil {
+		return ctx.SendEphemeral("User not found.")
+	}
+
+	reason := ctx.GetStringFlag("reason")
+	if reason == "" {
+		reason = "N/A"
+	}
+
+	_, err = bot.DB.WatchlistAdd(ctx.GetGuild().ID, u.ID, ctx.User().ID, reason)
+	if err != nil {
+		return bot.DB.ReportCtx(ctx, err)
+	}
+
+	return ctx.SendfX("Added **%v#%v** to the watchlist.", u.Username, u.Discriminator)
+}
+
+func (bot *Bot) watchlistRemoveSlash(ctx bcr.Contexter) (err error) {
+	u, err := ctx.GetUserFlag("user")
+	if err != nil {
+		return ctx.SendEphemeral("User not found.")
+	}
+
+	err = bot.DB.WatchlistRemove(ctx.GetGuild().ID, u.ID)
+	if err != nil {
+		return bot.DB.ReportCtx(ctx, err)
+	}
+
+	return ctx.SendfX("Removed **%v#%v** from the watchlist.", u.Username, u.Discriminator)
+}

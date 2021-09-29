@@ -5,6 +5,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/bot"
+	"github.com/starshine-sys/catalogger/db"
 	"go.uber.org/zap"
 )
 
@@ -28,9 +29,18 @@ func Init(bot *bot.Bot, log *zap.SugaredLogger) {
 		SlashCommand: b.events,
 	})
 
+	var choices []discord.CommandOptionChoice
+	for _, ev := range db.Events {
+		choices = append(choices, discord.CommandOptionChoice{
+			Name:  db.EventDescs[ev],
+			Value: ev,
+		})
+	}
+
 	b.Router.AddCommand(&bcr.Command{
-		Name:        "setchannel",
-		Summary:     "Set the given event(s) to log in the current channel.",
+		Name:        "set-channel",
+		Aliases:     []string{"setchannel"},
+		Summary:     "Set the given event to log in a channel.",
 		Description: "Set the given event(s) to log in the current channel.\nSeparate events with commas.\nUse `--clear` to disable the event.\nUse `events` for a list of valid events.",
 		Usage:       "<events...>",
 		Args:        bcr.MinArgs(1),
@@ -41,6 +51,40 @@ func Init(bot *bot.Bot, log *zap.SugaredLogger) {
 
 		Permissions: discord.PermissionManageGuild,
 		Command:     b.setChannel,
+
+		SlashCommand: b.setChannelSlash,
+		Options: &[]discord.CommandOption{
+			{
+				Name:         "channel",
+				Type:         discord.ChannelOption,
+				Description:  "The channel to log to.",
+				Required:     true,
+				ChannelTypes: []discord.ChannelType{discord.GuildNews, discord.GuildText},
+			},
+			{
+				Name:        "event",
+				Type:        discord.StringOption,
+				Description: "The event to log.",
+				Required:    true,
+				Choices:     choices,
+			},
+		},
+	})
+
+	b.Router.AddCommand(&bcr.Command{
+		Name:         "reset-event",
+		Aliases:      []string{"reset-channel", "resetevent", "resetchannel"},
+		Summary:      "Stop logging the given event.",
+		Usage:        "<event>",
+		Args:         bcr.MinArgs(1),
+		SlashCommand: b.resetChannel,
+		Options: &[]discord.CommandOption{{
+			Type:        discord.StringOption,
+			Name:        "event",
+			Description: "The event to stop logging.",
+			Required:    true,
+			Choices:     choices,
+		}},
 	})
 
 	b.Router.AddCommand(&bcr.Command{
@@ -52,6 +96,54 @@ func Init(bot *bot.Bot, log *zap.SugaredLogger) {
 
 		Permissions: discord.PermissionManageGuild,
 		Command:     b.redirect,
+	})
+
+	b.Router.AddGroup(&bcr.Group{
+		Name:        "redirect",
+		Description: "View or manage redirected logs.",
+		Subcommands: []*bcr.Command{
+			{
+				Name:         "list",
+				Summary:      "Show a list of all currently redirecting channels.",
+				Permissions:  discord.PermissionManageGuild,
+				SlashCommand: b.redirectList,
+			},
+			{
+				Name:         "to",
+				Summary:      "Redirect logs from a channel to another channel.",
+				Permissions:  discord.PermissionManageGuild,
+				SlashCommand: b.redirectTo,
+				Options: &[]discord.CommandOption{
+					{
+						Name:         "from",
+						Type:         discord.ChannelOption,
+						ChannelTypes: []discord.ChannelType{discord.GuildNews, discord.GuildText},
+						Description:  "Text channel to redirect logs from.",
+						Required:     true,
+					},
+					{
+						Name:         "to",
+						Type:         discord.ChannelOption,
+						ChannelTypes: []discord.ChannelType{discord.GuildNews, discord.GuildText},
+						Description:  "Text channel to redirect logs to.",
+						Required:     true,
+					},
+				},
+			},
+			{
+				Name:         "remove",
+				Summary:      "Reset a channel's logs, making them log to the default log channel again.",
+				Permissions:  discord.PermissionManageGuild,
+				SlashCommand: b.redirectRemove,
+				Options: &[]discord.CommandOption{{
+					Name:         "from",
+					Type:         discord.ChannelOption,
+					ChannelTypes: []discord.ChannelType{discord.GuildNews, discord.GuildText},
+					Description:  "Text channel to reset logs for.",
+					Required:     true,
+				}},
+			},
+		},
 	})
 
 	b.Router.AddCommand(&bcr.Command{
@@ -82,10 +174,11 @@ func Init(bot *bot.Bot, log *zap.SugaredLogger) {
 		Permissions:  discord.PermissionManageGuild,
 		SlashCommand: b.ignore,
 		Options: &[]discord.CommandOption{{
-			Type:        discord.ChannelOption,
-			Name:        "channel",
-			Description: "The channel to ignore.",
-			Required:    true,
+			Type:         discord.ChannelOption,
+			ChannelTypes: []discord.ChannelType{discord.GuildNews, discord.GuildText},
+			Name:         "channel",
+			Description:  "The channel to ignore.",
+			Required:     true,
 		}},
 	})
 
@@ -222,10 +315,11 @@ func Init(bot *bot.Bot, log *zap.SugaredLogger) {
 		SlashCommand: b.createInvite,
 		Options: &[]discord.CommandOption{
 			{
-				Name:        "channel",
-				Type:        discord.ChannelOption,
-				Description: "The channel to create an invite in.",
-				Required:    true,
+				Name:         "channel",
+				Type:         discord.ChannelOption,
+				ChannelTypes: []discord.ChannelType{discord.GuildNews, discord.GuildText},
+				Description:  "The channel to create an invite in.",
+				Required:     true,
 			},
 			{
 				Name:        "name",
@@ -269,6 +363,51 @@ func Init(bot *bot.Bot, log *zap.SugaredLogger) {
 
 		Permissions: discord.PermissionKickMembers,
 		Command:     b.watchlistRemove,
+	})
+
+	b.Router.AddGroup(&bcr.Group{
+		Name:        "watchlist",
+		Description: "Show or manage this server's user watchlist.",
+		Subcommands: []*bcr.Command{
+			{
+				Name:         "show",
+				Summary:      "Show the user watchlist.",
+				Permissions:  discord.PermissionKickMembers,
+				SlashCommand: b.watchlistSlash,
+			},
+			{
+				Name:         "add",
+				Summary:      "Add a user to the watchlist.",
+				Permissions:  discord.PermissionKickMembers,
+				SlashCommand: b.watchlistAddSlash,
+				Options: &[]discord.CommandOption{
+					{
+						Name:        "user",
+						Type:        discord.UserOption,
+						Description: "The user to add.",
+						Required:    true,
+					},
+					{
+						Name:        "reason",
+						Type:        discord.StringOption,
+						Description: "Why you're adding this user.",
+						Required:    false,
+					},
+				},
+			},
+			{
+				Name:         "remove",
+				Summary:      "Remove a user from the watchlist.",
+				Permissions:  discord.PermissionKickMembers,
+				SlashCommand: b.watchlistRemoveSlash,
+				Options: &[]discord.CommandOption{{
+					Name:        "user",
+					Type:        discord.UserOption,
+					Description: "The user to remove.",
+					Required:    true,
+				}},
+			},
+		},
 	})
 
 	b.Router.AddGroup(helpGroup)
