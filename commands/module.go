@@ -189,6 +189,7 @@ func Init(bot *bot.Bot, log *zap.SugaredLogger) {
 
 		Permissions:  discord.PermissionManageGuild,
 		SlashCommand: b.clearData,
+		Options:      &[]discord.CommandOption{},
 	})
 
 	h := b.Router.AddCommand(&bcr.Command{

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/diamondburned/arikawa/v3/api"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/dustin/go-humanize"
 	"github.com/starshine-sys/bcr"
@@ -27,11 +28,11 @@ func (bot *Bot) clearData(ctx bcr.Contexter) (err error) {
 		YesStyle:  discord.DangerButton,
 	})
 	if timeout {
-		_, err = ctx.Send("Operation timed out.")
+		_, err = send(ctx, "Operation timed out.")
 		return
 	}
 	if !yes {
-		_, err = ctx.Send("Operation cancelled.")
+		_, err = send(ctx, "Operation cancelled.")
 		return
 	}
 
@@ -58,6 +59,15 @@ func (bot *Bot) clearData(ctx bcr.Contexter) (err error) {
 	}
 	watchlist := c.RowsAffected()
 
-	_, err = ctx.Sendf("Data deleted, %v messages, %v invites, and %v watchlist entries were deleted from the database.", deleted, invites, watchlist)
+	_, err = send(ctx, "Data deleted, %v messages, %v invites, and %v watchlist entries were deleted from the database.", deleted, invites, watchlist)
 	return
+}
+
+func send(ctx bcr.Contexter, tmpl string, v ...interface{}) (*discord.Message, error) {
+	return ctx.Session().SendMessageComplex(ctx.GetChannel().ID, api.SendMessageData{
+		Content: fmt.Sprintf(tmpl, v...),
+		AllowedMentions: &api.AllowedMentions{
+			Parse: []api.AllowedMentionType{},
+		},
+	})
 }
