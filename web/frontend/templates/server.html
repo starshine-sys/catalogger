@@ -325,33 +325,6 @@
             </div>
             <div class="col-md">
                 <div class="panel-form">
-                    <h3>Ignored channels</h3>
-
-                    <p>Coming to the dashboard Soon! For now, use the <code>cl!ignore</code> command in the channel(s)
-                        you want to ignore.</p>
-                </div>
-
-                <!-- <div class="panel-form">
-                    <h3>Ignored channels</h3>
-                    <p>
-                        Channels selected here will not have any messages logged.
-                        This only applies to the <strong>Edited messages</strong>, <strong>Deleted messages</strong>,
-                        and <strong>Bulk deleted messages</strong> logs.
-                    </p>
-                    <form action="/servers/{{.Guild.ID}}/save-ignored" method="post"
-                        onsubmit="ignoreChannels(event, this)">
-                        <div class="channel-entry">
-                            <select id="ignored-channels" multiple class="form-select" aria-label="Ignored channels"
-                                size="10" name="ignored-channels">
-                                {{multiselectOptions .Guild.Channels $.IgnoredChannels}}
-                            </select>
-                        </div>
-
-                        <button type="submit" class="btn btn-success">Save</button>
-                    </form>
-                </div> -->
-
-                <div class="panel-form">
                     <h3>Redirected channels</h3>
                     <form action="/servers/{{.Guild.ID}}/add-redirect" method="post"
                         onsubmit="addRedirect(event, this)">
