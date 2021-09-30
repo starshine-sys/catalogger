@@ -81,6 +81,7 @@ func (s *RPCServer) Guild(ctx context.Context, req *proto.GuildRequest) (resp *p
 
 	_, perms, err := s.guildPerms(g.ID, discord.UserID(req.GetUserId()))
 	if err != nil {
+		s.DB.Sugar.Errorf("Error getting permissions for user %v: %v", req.GetUserId(), err)
 		return resp, err
 	}
 	resp.Permissions = uint64(perms)

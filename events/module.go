@@ -268,15 +268,16 @@ func (bot *Bot) guildPerms(guildID discord.GuildID, userID discord.UserID) (g di
 		return g, discord.PermissionAll, nil
 	}
 
-	for _, r := range g.Roles {
+	for _, role := range g.Roles {
 		for _, id := range m.RoleIDs {
-			if r.ID == id {
-				if r.Permissions.Has(discord.PermissionAdministrator) {
-					return g, discord.PermissionAll, nil
-				}
-				perms |= r.Permissions
+			if id == role.ID {
+				perms = perms.Add(role.Permissions)
 			}
 		}
+	}
+
+	if perms.Has(discord.PermissionAdministrator) {
+		perms.Add(discord.PermissionAll)
 	}
 
 	return g, perms, nil
