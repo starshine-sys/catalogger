@@ -81,6 +81,10 @@ Disallow: /login
 Disallow: /authorize`))
 	})
 
+	r.NotFound = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		s.error(w, http.StatusNotFound, false, "You've taken a wrong turn! No page exists at this address. Try again from the home page, maybe?")
+	})
+
 	r.ServeFiles("/static/*filepath", http.FS(static))
 
 	return r
