@@ -54,15 +54,15 @@ func (s *server) serverList(w http.ResponseWriter, r *http.Request, _ httprouter
 
 	guilds, err := s.guilds(ctx, client)
 	if err != nil {
-		s.Sugar.Errorf("Error getting guilds: %v", err)
-		fmt.Fprintf(w, "Error getting guilds: %v", err)
+		id := s.error(w, http.StatusInternalServerError, true, "Couldn't get your servers.")
+		s.Sugar.Errorf("[%s] Error getting guilds: %v", id, err)
 		return
 	}
 
 	filtered, joined, unjoined, err := s.filterGuilds(ctx, guilds)
 	if err != nil {
-		s.Sugar.Errorf("Error filtering guilds: %v", err)
-		fmt.Fprintf(w, "Error filtering guilds: %v", err)
+		id := s.error(w, http.StatusInternalServerError, true, "Couldn't get your servers.")
+		s.Sugar.Errorf("[%s] Error filtering guilds: %v", id, err)
 		return
 	}
 

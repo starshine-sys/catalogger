@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"html/template"
 	"net/http"
 	"sort"
@@ -49,6 +48,8 @@ type channel struct {
 	Type     discord.ChannelType
 }
 
+const guildNotFound = "You've taken a wrong turn! Either this isn't a server, or you're not in it, or you don't have permission to change its settings."
+
 func (s *server) serverPage(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	ctx := r.Context()
 
@@ -61,13 +62,13 @@ func (s *server) serverPage(w http.ResponseWriter, r *http.Request, params httpr
 
 	guildID, err := discord.ParseSnowflake(params.ByName("id"))
 	if err != nil {
-		fmt.Fprint(w, "Not a server.")
+		s.error(w, http.StatusNotFound, false, guildNotFound)
 		return
 	}
 
 	resp, err := s.RPC.Guild(r.Context(), &proto.GuildRequest{Id: uint64(guildID), UserId: uint64(client.User.ID)})
 	if err != nil || !discord.Permissions(resp.GetPermissions()).Has(discord.PermissionManageGuild) {
-		fmt.Fprint(w, "You're not in that server.")
+		s.error(w, http.StatusNotFound, false, guildNotFound)
 		return
 	}
 
@@ -82,8 +83,8 @@ func (s *server) serverPage(w http.ResponseWriter, r *http.Request, params httpr
 
 	data.CurrentChannels, err = s.DB.Channels(discord.GuildID(resp.GetId()))
 	if err != nil {
-		s.Sugar.Errorf("Error getting current event channels: %v", err)
-		fmt.Fprintf(w, "Error getting current event channels: %v", err)
+		id := s.error(w, http.StatusInternalServerError, true, "Couldn't get this server's channels.")
+		s.Sugar.Errorf("[%s] Error getting event channels: %v", id, err)
 		return
 	}
 
@@ -93,8 +94,8 @@ func (s *server) serverPage(w http.ResponseWriter, r *http.Request, params httpr
 
 	err = s.DB.Pool.QueryRow(ctx, "select ignored_channels from guilds where id = $1", resp.GetId()).Scan(&data.IgnoredChannels)
 	if err != nil {
-		s.Sugar.Errorf("Error getting current ignored channels: %v", err)
-		fmt.Fprintf(w, "Error getting current ignored channels: %v", err)
+		id := s.error(w, http.StatusInternalServerError, true, "Couldn't get this server's channels.")
+		s.Sugar.Errorf("[%s] Error getting ignored channels: %v", id, err)
 		return
 	}
 
@@ -131,8 +132,8 @@ func (s *server) serverPage(w http.ResponseWriter, r *http.Request, params httpr
 
 	redirMap, err := s.DB.Redirects(discord.GuildID(resp.GetId()))
 	if err != nil {
-		s.Sugar.Errorf("Error getting redirected channels: %v", err)
-		fmt.Fprintf(w, "Error getting redirected channels: %v", err)
+		id := s.error(w, http.StatusInternalServerError, true, "Couldn't get this server's channels.")
+		s.Sugar.Errorf("[%s] Error getting redirected channels: %v", id, err)
 		return
 	}
 
@@ -160,15 +161,15 @@ func (s *server) serverPage(w http.ResponseWriter, r *http.Request, params httpr
 
 	guilds, err := s.guilds(ctx, client)
 	if err != nil {
-		s.Sugar.Errorf("Error getting guilds: %v", err)
-		fmt.Fprintf(w, "Error getting guilds: %v", err)
+		id := s.error(w, http.StatusInternalServerError, true, "Couldn't get your servers.")
+		s.Sugar.Errorf("[%s] Error getting guilds: %v", id, err)
 		return
 	}
 
 	_, joined, unjoined, err := s.filterGuilds(ctx, guilds)
 	if err != nil {
-		s.Sugar.Errorf("Error filtering guilds: %v", err)
-		fmt.Fprintf(w, "Error filtering guilds: %v", err)
+		id := s.error(w, http.StatusInternalServerError, true, "Couldn't get your servers.")
+		s.Sugar.Errorf("[%s] Error filtering guilds: %v", id, err)
 		return
 	}
 
