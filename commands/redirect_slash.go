@@ -9,7 +9,13 @@ import (
 )
 
 func (bot *Bot) redirectList(ctx bcr.Contexter) (err error) {
-	m, err := bot.DB.Redirects(ctx.GetGuild().ID)
+	conn, err := bot.DB.Obtain()
+	if err != nil {
+		return bot.DB.ReportCtx(ctx, err)
+	}
+	defer conn.Release()
+
+	m, err := bot.DB.Redirects(conn, ctx.GetGuild().ID)
 	if err != nil {
 		return bot.DB.ReportCtx(ctx, err)
 	}
@@ -30,7 +36,13 @@ func (bot *Bot) redirectList(ctx bcr.Contexter) (err error) {
 }
 
 func (bot *Bot) redirectTo(ctx bcr.Contexter) (err error) {
-	m, err := bot.DB.Redirects(ctx.GetGuild().ID)
+	conn, err := bot.DB.Obtain()
+	if err != nil {
+		return bot.DB.ReportCtx(ctx, err)
+	}
+	defer conn.Release()
+
+	m, err := bot.DB.Redirects(conn, ctx.GetGuild().ID)
 	if err != nil {
 		return bot.DB.ReportCtx(ctx, err)
 	}
@@ -57,7 +69,7 @@ func (bot *Bot) redirectTo(ctx bcr.Contexter) (err error) {
 
 	m[src.ID.String()] = dest.ID
 
-	err = bot.DB.SetRedirects(ctx.GetGuild().ID, m)
+	err = bot.DB.SetRedirects(conn, ctx.GetGuild().ID, m)
 	if err != nil {
 		return bot.DB.ReportCtx(ctx, err)
 	}
@@ -66,7 +78,13 @@ func (bot *Bot) redirectTo(ctx bcr.Contexter) (err error) {
 }
 
 func (bot *Bot) redirectRemove(ctx bcr.Contexter) (err error) {
-	m, err := bot.DB.Redirects(ctx.GetGuild().ID)
+	conn, err := bot.DB.Obtain()
+	if err != nil {
+		return bot.DB.ReportCtx(ctx, err)
+	}
+	defer conn.Release()
+
+	m, err := bot.DB.Redirects(conn, ctx.GetGuild().ID)
 	if err != nil {
 		return bot.DB.ReportCtx(ctx, err)
 	}
@@ -83,7 +101,7 @@ func (bot *Bot) redirectRemove(ctx bcr.Contexter) (err error) {
 
 	delete(m, src.ID.String())
 
-	err = bot.DB.SetRedirects(ctx.GetGuild().ID, m)
+	err = bot.DB.SetRedirects(conn, ctx.GetGuild().ID, m)
 	if err != nil {
 		return bot.DB.ReportCtx(ctx, err)
 	}

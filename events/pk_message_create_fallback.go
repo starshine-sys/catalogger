@@ -42,7 +42,16 @@ func (bot *Bot) pkMessageCreateFallback(m *gateway.MessageCreateEvent) {
 		}
 	}
 
-	ch, err := bot.DB.Channels(m.GuildID)
+	conn, err := bot.DB.Obtain()
+	if err != nil {
+		bot.DB.Report(db.ErrorContext{
+			Event:   "pk_message_create_fallback",
+			GuildID: m.GuildID,
+		}, err)
+	}
+	defer conn.Release()
+
+	ch, err := bot.DB.ChannelsConn(conn, m.GuildID)
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
 			Event:   "pk_message_create_fallback",
@@ -60,12 +69,12 @@ func (bot *Bot) pkMessageCreateFallback(m *gateway.MessageCreateEvent) {
 
 	// if the channel is blacklisted, return
 	var blacklisted bool
-	if bot.DB.Pool.QueryRow(context.Background(), "select exists(select id from guilds where $1 = any(ignored_channels) and id = $2)", m.ChannelID, m.GuildID).Scan(&blacklisted); blacklisted {
+	if conn.QueryRow(context.Background(), "select exists(select id from guilds where $1 = any(ignored_channels) and id = $2)", m.ChannelID, m.GuildID).Scan(&blacklisted); blacklisted {
 		return
 	}
 
 	// check if the message exists in the database; if so, return
-	_, err = bot.DB.GetMessage(m.ID)
+	_, err = bot.DB.GetMessage(conn, m.ID)
 	if err == nil {
 		return
 	}
@@ -100,7 +109,7 @@ func (bot *Bot) pkMessageCreateFallback(m *gateway.MessageCreateEvent) {
 		Content: m.Content,
 	}
 
-	err = bot.DB.InsertMessage(msg)
+	err = bot.DB.InsertMessage(conn, msg)
 	if err != nil {
 		bot.Sugar.Errorf("Error inserting message ID %v: %v", m.ID, err)
 	}

@@ -20,19 +20,6 @@ func (bot *Bot) pkMessageCreate(m *gateway.MessageCreateEvent) {
 		return
 	}
 
-	ch, err := bot.DB.Channels(m.GuildID)
-	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   "pk_message_create",
-			GuildID: m.GuildID,
-		}, err)
-		return
-	}
-
-	if !ch[keys.MessageDelete].IsValid() && !ch[keys.MessageUpdate].IsValid() && !ch[keys.MessageDeleteBulk].IsValid() {
-		return
-	}
-
 	// only handle PK message events
 	var isPK bool
 	for _, u := range botsToCheck {
@@ -42,6 +29,28 @@ func (bot *Bot) pkMessageCreate(m *gateway.MessageCreateEvent) {
 		}
 	}
 	if !isPK {
+		return
+	}
+
+	conn, err := bot.DB.Obtain()
+	if err != nil {
+		bot.DB.Report(db.ErrorContext{
+			Event:   "pk_message_create",
+			GuildID: m.GuildID,
+		}, err)
+	}
+	defer conn.Release()
+
+	ch, err := bot.DB.ChannelsConn(conn, m.GuildID)
+	if err != nil {
+		bot.DB.Report(db.ErrorContext{
+			Event:   "pk_message_create",
+			GuildID: m.GuildID,
+		}, err)
+		return
+	}
+
+	if !ch[keys.MessageDelete].IsValid() && !ch[keys.MessageUpdate].IsValid() && !ch[keys.MessageDeleteBulk].IsValid() {
 		return
 	}
 
@@ -103,7 +112,7 @@ func (bot *Bot) pkMessageCreate(m *gateway.MessageCreateEvent) {
 		Content: msg.Content,
 	}
 
-	err = bot.DB.InsertMessage(dbMsg)
+	err = bot.DB.InsertMessage(conn, dbMsg)
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
 			Event:   "pk_message_create",

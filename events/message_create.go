@@ -25,9 +25,18 @@ func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) {
 		return
 	}
 
+	conn, err := bot.DB.Obtain()
+	if err != nil {
+		bot.DB.Report(db.ErrorContext{
+			Event:   "message_create",
+			GuildID: m.GuildID,
+		}, err)
+	}
+	defer conn.Release()
+
 	// if the channel is blacklisted, return
 	var blacklisted bool
-	if bot.DB.Pool.QueryRow(context.Background(), "select exists(select id from guilds where $1 = any(ignored_channels) and id = $2)", m.ChannelID, m.GuildID).Scan(&blacklisted); blacklisted {
+	if conn.QueryRow(context.Background(), "select exists(select id from guilds where $1 = any(ignored_channels) and id = $2)", m.ChannelID, m.GuildID).Scan(&blacklisted); blacklisted {
 		return
 	}
 
@@ -46,7 +55,7 @@ func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) {
 		Content: content,
 	}
 
-	err = bot.DB.InsertMessage(msg)
+	err = bot.DB.InsertMessage(conn, msg)
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
 			Event:   "message_create",

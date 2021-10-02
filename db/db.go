@@ -28,6 +28,8 @@ type DB struct {
 
 	// Used for encryption
 	AESKey [32]byte
+
+	openConns int32
 }
 
 // New ...

@@ -29,7 +29,16 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 		return
 	}
 
-	ch, err := bot.DB.Channels(m.GuildID)
+	conn, err := bot.DB.Obtain()
+	if err != nil {
+		bot.DB.Report(db.ErrorContext{
+			Event:   keys.MessageDelete,
+			GuildID: m.GuildID,
+		}, err)
+	}
+	defer conn.Release()
+
+	ch, err := bot.DB.ChannelsConn(conn, m.GuildID)
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
 			Event:   keys.MessageDelete,
@@ -48,7 +57,7 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 		channelID = channel.ParentID
 	}
 	var blacklisted bool
-	if bot.DB.Pool.QueryRow(context.Background(), "select exists(select id from guilds where $1 = any(ignored_channels) and id = $2)", channelID, m.GuildID).Scan(&blacklisted); blacklisted {
+	if conn.QueryRow(context.Background(), "select exists(select id from guilds where $1 = any(ignored_channels) and id = $2)", channelID, m.GuildID).Scan(&blacklisted); blacklisted {
 		return
 	}
 
@@ -61,7 +70,7 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 		return
 	}
 
-	redirects, err := bot.DB.Redirects(m.GuildID)
+	redirects, err := bot.DB.Redirects(conn, m.GuildID)
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
 			Event:   keys.MessageDelete,
@@ -87,14 +96,14 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 	// trigger messages should be ignored too
 	bot.ProxiedTriggersMu.Lock()
 	if _, ok := bot.ProxiedTriggers[m.ID]; ok {
-		bot.DB.DeleteMessage(m.ID)
+		bot.DB.DeleteMessage(conn, m.ID)
 		delete(bot.ProxiedTriggers, m.ID)
 		bot.ProxiedTriggersMu.Unlock()
 		return
 	}
 	bot.ProxiedTriggersMu.Unlock()
 
-	msg, err := bot.DB.GetMessage(m.ID)
+	msg, err := bot.DB.GetMessage(conn, m.ID)
 	if err != nil {
 		e := discord.Embed{
 			Title:       "Message deleted",
@@ -112,7 +121,7 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 
 	// ignore any pk;edit messages
 	if hasAnyPrefixLower(msg.Content, editPrefixes...) {
-		bot.DB.DeleteMessage(m.ID)
+		bot.DB.DeleteMessage(conn, m.ID)
 		return
 	}
 
@@ -183,7 +192,7 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 
 	bot.Queue(wh, keys.MessageDelete, e)
 
-	err = bot.DB.DeleteMessage(msg.MsgID)
+	err = bot.DB.DeleteMessage(conn, msg.MsgID)
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
 			Event:   keys.MessageDelete,

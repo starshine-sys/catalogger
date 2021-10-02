@@ -32,7 +32,16 @@ func (bot *Bot) bulkMessageDelete(ev *gateway.MessageDeleteBulkEvent) {
 		return
 	}
 
-	ch, err := bot.DB.Channels(ev.GuildID)
+	conn, err := bot.DB.Obtain()
+	if err != nil {
+		bot.DB.Report(db.ErrorContext{
+			Event:   keys.MessageDeleteBulk,
+			GuildID: ev.GuildID,
+		}, err)
+	}
+	defer conn.Release()
+
+	ch, err := bot.DB.ChannelsConn(conn, ev.GuildID)
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
 			Event:   keys.MessageDeleteBulk,
@@ -51,7 +60,7 @@ func (bot *Bot) bulkMessageDelete(ev *gateway.MessageDeleteBulkEvent) {
 		channelID = channel.ParentID
 	}
 	var blacklisted bool
-	if bot.DB.Pool.QueryRow(context.Background(), "select exists(select id from guilds where $1 = any(ignored_channels) and id = $2)", channelID, ev.GuildID).Scan(&blacklisted); blacklisted {
+	if conn.QueryRow(context.Background(), "select exists(select id from guilds where $1 = any(ignored_channels) and id = $2)", channelID, ev.GuildID).Scan(&blacklisted); blacklisted {
 		return
 	}
 
@@ -64,7 +73,7 @@ func (bot *Bot) bulkMessageDelete(ev *gateway.MessageDeleteBulkEvent) {
 		return
 	}
 
-	redirects, err := bot.DB.Redirects(ev.GuildID)
+	redirects, err := bot.DB.Redirects(conn, ev.GuildID)
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
 			Event:   keys.MessageDeleteBulk,
@@ -90,7 +99,7 @@ func (bot *Bot) bulkMessageDelete(ev *gateway.MessageDeleteBulkEvent) {
 
 	for _, id := range ev.IDs {
 		// first, try getting the ID of a normal message
-		m, err := bot.DB.GetMessage(id)
+		m, err := bot.DB.GetMessage(conn, id)
 		if err == nil && m.UserID != 0 {
 			if u, ok := users[m.UserID]; ok {
 				m.Username = u.Username + "#" + u.Discriminator

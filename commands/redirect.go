@@ -9,8 +9,14 @@ import (
 )
 
 func (bot *Bot) redirect(ctx *bcr.Context) (err error) {
+	conn, err := bot.DB.Obtain()
+	if err != nil {
+		return bot.DB.ReportCtx(ctx, err)
+	}
+	defer conn.Release()
+
 	if len(ctx.Args) == 0 {
-		m, err := bot.DB.Redirects(ctx.Message.GuildID)
+		m, err := bot.DB.Redirects(conn, ctx.Message.GuildID)
 		if err != nil {
 			return bot.DB.ReportCtx(ctx, err)
 		}
@@ -36,7 +42,7 @@ func (bot *Bot) redirect(ctx *bcr.Context) (err error) {
 		return
 	}
 
-	m, err := bot.DB.Redirects(ctx.Message.GuildID)
+	m, err := bot.DB.Redirects(conn, ctx.Message.GuildID)
 	if err != nil {
 		return bot.DB.ReportCtx(ctx, err)
 	}
@@ -66,7 +72,7 @@ func (bot *Bot) redirect(ctx *bcr.Context) (err error) {
 		m[src.ID.String()] = dest
 	}
 
-	err = bot.DB.SetRedirects(ctx.Message.GuildID, m)
+	err = bot.DB.SetRedirects(conn, ctx.Message.GuildID, m)
 	if err != nil {
 		return bot.DB.ReportCtx(ctx, err)
 	}

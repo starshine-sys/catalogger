@@ -99,12 +99,17 @@ var DefaultEventMap EventMap = EventMap{
 
 // Channels gets the server's event:channel map
 func (db *DB) Channels(id discord.GuildID) (ch EventMap, err error) {
+	return db.ChannelsConn(db.Pool, id)
+}
+
+// ChannelsConn gets the server's event:channel map
+func (db *DB) ChannelsConn(conn Querier, id discord.GuildID) (ch EventMap, err error) {
 	sql, args, err := sq.Select("channels").From("guilds").Where(squirrel.Eq{"id": id}).ToSql()
 	if err != nil {
 		return nil, err
 	}
 
-	err = db.Pool.QueryRow(context.Background(), sql, args...).Scan(&ch)
+	err = conn.QueryRow(context.Background(), sql, args...).Scan(&ch)
 	return
 }
 
@@ -127,23 +132,23 @@ type RedirectMap = map[string]discord.ChannelID
 var DefaultRedirectMap = RedirectMap{}
 
 // Redirects gets the server's channel:channel map
-func (db *DB) Redirects(id discord.GuildID) (m RedirectMap, err error) {
+func (db *DB) Redirects(conn Querier, id discord.GuildID) (m RedirectMap, err error) {
 	sql, args, err := sq.Select("redirects").From("guilds").Where(squirrel.Eq{"id": id}).ToSql()
 	if err != nil {
 		return nil, err
 	}
 
-	err = db.Pool.QueryRow(context.Background(), sql, args...).Scan(&m)
+	err = conn.QueryRow(context.Background(), sql, args...).Scan(&m)
 	return
 }
 
 // SetRedirects sets the server's channel:channel map
-func (db *DB) SetRedirects(id discord.GuildID, m RedirectMap) (err error) {
+func (db *DB) SetRedirects(conn Querier, id discord.GuildID, m RedirectMap) (err error) {
 	sql, args, err := sq.Update("guilds").Set("redirects", m).Where(squirrel.Eq{"id": id}).ToSql()
 	if err != nil {
 		return err
 	}
 
-	_, err = db.Pool.Exec(context.Background(), sql, args...)
+	_, err = conn.Exec(context.Background(), sql, args...)
 	return
 }
