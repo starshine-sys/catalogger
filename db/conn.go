@@ -11,6 +11,7 @@ import (
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/logrusorgru/aurora/v3"
 	"go.uber.org/zap"
 )
 
@@ -81,9 +82,10 @@ func (c *Conn) Release() {
 		c.timer = nil
 	}
 
-	c.Log.Infof("Releasing connection %s, open for %s with %d queries. Open connections: %d", c.ConnID, time.Now().Sub(c.StartTime).Round(time.Millisecond), atomic.LoadInt32(&c.queries), atomic.LoadInt32(c.openConns)-1)
-
 	atomic.AddInt32(c.openConns, -1)
+
+	c.Log.Infof("Releasing connection %s, open for %s with %d queries. Open connections: %d", aurora.Yellow(c.ConnID), aurora.Green(time.Now().Sub(c.StartTime).Round(time.Millisecond)), aurora.Blue(atomic.LoadInt32(&c.queries)), aurora.Blue(atomic.LoadInt32(c.openConns)))
+
 	c.conn.Release()
 }
 
@@ -105,9 +107,14 @@ func (c *Conn) Query(ctx context.Context, query string, args ...interface{}) (pg
 
 	atomic.AddInt32(&c.queries, 1)
 
-	c.Log.Debugf("Executing query on connection %s, current query count: %d", c.ConnID, atomic.LoadInt32(&c.queries))
+	t := time.Now()
 
-	return c.conn.Query(ctx, query, args...)
+	rows, err := c.conn.Query(ctx, query, args...)
+
+	if time.Since(t) > LongQueryThreshold {
+		c.Log.Warnf("Query %s on connection %s took %s", aurora.Blue(query), aurora.Yellow(c.ConnID), aurora.Green(time.Since(t).Round(time.Microsecond)))
+	}
+	return rows, err
 }
 
 // QueryRow queries the database and returns a pgx.Row
@@ -116,9 +123,15 @@ func (c *Conn) QueryRow(ctx context.Context, query string, args ...interface{}) 
 
 	atomic.AddInt32(&c.queries, 1)
 
-	c.Log.Debugf("Executing query on connection %s, current query count: %d", c.ConnID, atomic.LoadInt32(&c.queries))
+	t := time.Now()
 
-	return c.conn.QueryRow(ctx, query, args...)
+	row := c.conn.QueryRow(ctx, query, args...)
+
+	if time.Since(t) > LongQueryThreshold {
+		c.Log.Warnf("Query %s on connection %s took %s", aurora.Blue(query), aurora.Yellow(c.ConnID), aurora.Green(time.Since(t).Round(time.Microsecond)))
+	}
+
+	return row
 }
 
 // Exec executes a query on the database.
@@ -127,7 +140,13 @@ func (c *Conn) Exec(ctx context.Context, query string, args ...interface{}) (pgc
 
 	atomic.AddInt32(&c.queries, 1)
 
-	c.Log.Debugf("Executing query on connection %s, current query count: %d", c.ConnID, atomic.LoadInt32(&c.queries))
+	t := time.Now()
 
-	return c.conn.Exec(ctx, query, args...)
+	ct, err := c.conn.Exec(ctx, query, args...)
+
+	if time.Since(t) > LongQueryThreshold {
+		c.Log.Warnf("Query %s on connection %s took %s", aurora.Blue(query), aurora.Yellow(c.ConnID), aurora.Green(time.Since(t).Round(time.Microsecond)))
+	}
+
+	return ct, err
 }

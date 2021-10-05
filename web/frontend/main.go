@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/ReneKroon/ttlcache/v2"
@@ -15,10 +14,10 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/julienschmidt/httprouter"
 	basedb "github.com/starshine-sys/catalogger/db"
+	"github.com/starshine-sys/catalogger/logsetup"
 	"github.com/starshine-sys/catalogger/web/frontend/db"
 	"github.com/starshine-sys/catalogger/web/proto"
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
 var (
@@ -51,23 +50,7 @@ func main() {
 		return
 	}
 
-	debug, _ := strconv.ParseBool(os.Getenv("DEBUG_LOGGING"))
-
-	// set up a logger
-	zcfg := zap.NewProductionConfig()
-	zcfg.Encoding = "console"
-	zcfg.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-	zcfg.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
-	zcfg.EncoderConfig.EncodeCaller = zapcore.ShortCallerEncoder
-	zcfg.EncoderConfig.EncodeDuration = zapcore.StringDurationEncoder
-
-	if debug {
-		zcfg.Level.SetLevel(zapcore.DebugLevel)
-	} else {
-		zcfg.Level.SetLevel(zapcore.InfoLevel)
-	}
-
-	zap, err := zcfg.Build(zap.AddStacktrace(zapcore.ErrorLevel))
+	zap, err := logsetup.SetupLogging()
 	if err != nil {
 		panic(err)
 	}

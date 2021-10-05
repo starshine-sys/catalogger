@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"embed"
 	"os"
+	"time"
 
 	"github.com/getsentry/sentry-go"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -15,6 +16,9 @@ import (
 
 	"go.uber.org/zap"
 )
+
+// LongQueryThreshold is the threshold above which queries (not arguments) are logged.
+const LongQueryThreshold = 20 * time.Millisecond
 
 //go:embed migrations
 var fs embed.FS
