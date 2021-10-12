@@ -32,16 +32,7 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 		return
 	}
 
-	conn, err := bot.DB.Obtain()
-	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.MessageUpdate,
-			GuildID: m.GuildID,
-		}, err)
-	}
-	defer conn.Release()
-
-	ch, err := bot.DB.ChannelsConn(conn, m.GuildID)
+	ch, err := bot.DB.Channels(m.GuildID)
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
 			Event:   keys.MessageUpdate,
@@ -60,19 +51,19 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 		channelID = channel.ParentID
 	}
 	var blacklisted bool
-	if conn.QueryRow(context.Background(), "select exists(select id from guilds where $1 = any(ignored_channels) and id = $2)", channelID, m.GuildID).Scan(&blacklisted); blacklisted {
+	if bot.DB.Pool.QueryRow(context.Background(), "select exists(select id from guilds where $1 = any(ignored_channels) and id = $2)", channelID, m.GuildID).Scan(&blacklisted); blacklisted {
 		return
 	}
 
 	// try getting the message
-	msg, err := bot.DB.GetMessage(conn, m.ID)
+	msg, err := bot.DB.GetMessage(m.ID)
 	if err != nil {
 		if errors.Cause(err) != pgx.ErrNoRows {
 			bot.Sugar.Errorf("Error fetching message ID %v from database: %v", m.ID, err)
 		}
 
 		// insert message and return
-		bot.DB.InsertMessage(conn, db.Message{
+		bot.DB.InsertMessage(db.Message{
 			MsgID:     m.ID,
 			UserID:    m.Author.ID,
 			ChannelID: m.ChannelID,
@@ -93,7 +84,7 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 		return
 	}
 
-	redirects, err := bot.DB.Redirects(conn, m.GuildID)
+	redirects, err := bot.DB.Redirects(m.GuildID)
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
 			Event:   keys.MessageUpdate,
@@ -289,7 +280,7 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 		username += "#" + m.Author.Discriminator
 	}
 
-	bot.DB.InsertMessage(conn, db.Message{
+	bot.DB.InsertMessage(db.Message{
 		MsgID:     m.ID,
 		UserID:    m.Author.ID,
 		ChannelID: m.ChannelID,

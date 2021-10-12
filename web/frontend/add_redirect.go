@@ -69,15 +69,7 @@ func (s *server) addRedirect(w http.ResponseWriter, r *http.Request, params http
 	from := discord.ChannelID(fromID)
 	to := discord.ChannelID(toID)
 
-	conn, err := s.DB.ObtainCtx(ctx)
-	if err != nil {
-		s.Sugar.Errorf("Couldn't obtain database: %v", err)
-		http.Error(w, "Internal server error.", http.StatusInternalServerError)
-		return
-	}
-	defer conn.Release()
-
-	m, err := s.DB.Redirects(conn, discord.GuildID(resp.GetId()))
+	m, err := s.DB.Redirects(discord.GuildID(resp.GetId()))
 	if err != nil {
 		s.Sugar.Errorf("Couldn't get current redirects: %v", err)
 		http.Error(w, "Internal server error.", http.StatusInternalServerError)
@@ -86,7 +78,7 @@ func (s *server) addRedirect(w http.ResponseWriter, r *http.Request, params http
 
 	m[from.String()] = to
 
-	err = s.DB.SetRedirects(conn, discord.GuildID(resp.GetId()), m)
+	err = s.DB.SetRedirects(discord.GuildID(resp.GetId()), m)
 	if err != nil {
 		s.Sugar.Errorf("Couldn't set redirects: %v", err)
 		http.Error(w, "Internal server error.", http.StatusInternalServerError)

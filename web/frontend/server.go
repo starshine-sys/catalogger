@@ -130,15 +130,7 @@ func (s *server) serverPage(w http.ResponseWriter, r *http.Request, params httpr
 		return data.Guild.Channels[i].Name < data.Guild.Channels[j].Name
 	})
 
-	conn, err := s.DB.ObtainCtx(ctx)
-	if err != nil {
-		s.Sugar.Errorf("Couldn't obtain database: %v", err)
-		http.Error(w, "Internal server error.", http.StatusInternalServerError)
-		return
-	}
-	defer conn.Release()
-
-	redirMap, err := s.DB.Redirects(conn, discord.GuildID(resp.GetId()))
+	redirMap, err := s.DB.Redirects(discord.GuildID(resp.GetId()))
 	if err != nil {
 		id := s.error(w, http.StatusInternalServerError, true, "Couldn't get this server's channels.")
 		s.Sugar.Errorf("[%s] Error getting redirected channels: %v", id, err)

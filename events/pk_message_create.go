@@ -32,16 +32,7 @@ func (bot *Bot) pkMessageCreate(m *gateway.MessageCreateEvent) {
 		return
 	}
 
-	conn, err := bot.DB.Obtain()
-	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   "pk_message_create",
-			GuildID: m.GuildID,
-		}, err)
-	}
-	defer conn.Release()
-
-	ch, err := bot.DB.ChannelsConn(conn, m.GuildID)
+	ch, err := bot.DB.Channels(m.GuildID)
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
 			Event:   "pk_message_create",
@@ -112,7 +103,7 @@ func (bot *Bot) pkMessageCreate(m *gateway.MessageCreateEvent) {
 		Content: msg.Content,
 	}
 
-	err = bot.DB.InsertMessage(conn, dbMsg)
+	err = bot.DB.InsertMessage(dbMsg)
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
 			Event:   "pk_message_create",
