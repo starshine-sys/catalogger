@@ -10,6 +10,7 @@ import (
 
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
+	"github.com/diamondburned/arikawa/v3/state"
 	"github.com/diamondburned/arikawa/v3/utils/wsutil"
 	"github.com/getsentry/sentry-go"
 	_ "github.com/joho/godotenv/autoload"
@@ -98,8 +99,18 @@ func main() {
 	defer func() {
 		db.Pool.Close()
 		log.Info("Closed database connection.")
-		r.ShardManager.Close()
-		log.Info("Disconnected from Discord.")
+
+		// set a status message
+		// we're not actually properly closing the gateway so it'll stay for a few minutes
+		// who needs a clean disconnection anyway :~]
+		b.ForEach(func(s *state.State) {
+			s.UpdateStatus(gateway.UpdateStatusData{
+				Status: discord.IdleStatus,
+				Activities: []discord.Activity{{
+					Name: "Restarting, please wait...",
+				}},
+			})
+		})
 	}()
 
 	log.Info("Connected to Discord. Press Ctrl-C or send an interrupt signal to stop.")

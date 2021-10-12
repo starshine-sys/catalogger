@@ -58,6 +58,14 @@ func New(redisURL string, r *bcr.Router, db *db.DB, log *zap.SugaredLogger) (b *
 	return b, nil
 }
 
+// ForEach runs the given function on each shard
+func (bot *Bot) ForEach(fn func(s *state.State)) {
+	bot.Router.ShardManager.ForEach(func(s shard.Shard) {
+		state := s.(*state.State)
+		fn(state)
+	})
+}
+
 // MultiDo executes the given Actions in order, and returns the error of the first to return a non-nil error.
 func (bot *Bot) MultiDo(ctx context.Context, actions ...radix.Action) error {
 	for _, action := range actions {
