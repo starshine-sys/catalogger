@@ -185,6 +185,10 @@ func (bot *Bot) channelUpdate(ev *gateway.ChannelUpdateEvent) {
 		e.Fields = append(e.Fields, f)
 	}
 
+	if len(e.Fields) > 20 {
+		e.Fields = e.Fields[:20]
+	}
+
 	if !changed {
 		return
 	}

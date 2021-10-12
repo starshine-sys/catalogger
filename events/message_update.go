@@ -201,7 +201,7 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 		})
 		if len(updated) > 2000 {
 			val := updated[1000:]
-			if len(val) > 1024 {
+			if len(val) >= 1024 {
 				val = val[:1015] + "..."
 			}
 
@@ -211,7 +211,7 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 			})
 		} else {
 			e.Fields = append(e.Fields, discord.EmbedField{
-				Name:  "Old content (cont.)",
+				Name:  "New content (cont.)",
 				Value: "..." + updated[1000:],
 			})
 		}

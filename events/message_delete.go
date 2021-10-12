@@ -136,10 +136,15 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 		}
 	}
 
+	content := msg.Content
+	if len(content) > 4000 {
+		content = content[:4000] + "..."
+	}
+
 	e := discord.Embed{
 		Author:      author,
 		Title:       "Message deleted",
-		Description: msg.Content,
+		Description: content,
 		Color:       bcr.ColourRed,
 		Footer: &discord.EmbedFooter{
 			Text: fmt.Sprintf("ID: %v", msg.MsgID),
