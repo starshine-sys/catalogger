@@ -11,7 +11,6 @@ import (
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/logrusorgru/aurora/v3"
 	"go.uber.org/zap"
 )
 
@@ -84,7 +83,7 @@ func (c *Conn) Release() {
 
 	atomic.AddInt32(c.openConns, -1)
 
-	c.Log.Infof("Releasing connection %s, open for %s with %d queries. Open connections: %d", aurora.Yellow(c.ConnID), aurora.Green(time.Now().Sub(c.StartTime).Round(time.Millisecond)), aurora.Blue(atomic.LoadInt32(&c.queries)), aurora.Blue(atomic.LoadInt32(c.openConns)))
+	c.Log.Infof("Releasing connection %s, open for %s with %d queries. Open connections: %d", c.ConnID, time.Now().Sub(c.StartTime).Round(time.Millisecond), atomic.LoadInt32(&c.queries), atomic.LoadInt32(c.openConns))
 
 	c.conn.Release()
 }
@@ -112,7 +111,7 @@ func (c *Conn) Query(ctx context.Context, query string, args ...interface{}) (pg
 	rows, err := c.conn.Query(ctx, query, args...)
 
 	if time.Since(t) > LongQueryThreshold {
-		c.Log.Warnf("Query %s on connection %s took %s", aurora.Blue(query), aurora.Yellow(c.ConnID), aurora.Green(time.Since(t).Round(time.Microsecond)))
+		c.Log.Warnf("Query %s on connection %s took %s", query, c.ConnID, time.Since(t).Round(time.Microsecond))
 	}
 	return rows, err
 }
@@ -128,7 +127,7 @@ func (c *Conn) QueryRow(ctx context.Context, query string, args ...interface{}) 
 	row := c.conn.QueryRow(ctx, query, args...)
 
 	if time.Since(t) > LongQueryThreshold {
-		c.Log.Warnf("Query %s on connection %s took %s", aurora.Blue(query), aurora.Yellow(c.ConnID), aurora.Green(time.Since(t).Round(time.Microsecond)))
+		c.Log.Warnf("Query %s on connection %s took %s", query, c.ConnID, time.Since(t).Round(time.Microsecond))
 	}
 
 	return row
@@ -145,7 +144,7 @@ func (c *Conn) Exec(ctx context.Context, query string, args ...interface{}) (pgc
 	ct, err := c.conn.Exec(ctx, query, args...)
 
 	if time.Since(t) > LongQueryThreshold {
-		c.Log.Warnf("Query %s on connection %s took %s", aurora.Blue(query), aurora.Yellow(c.ConnID), aurora.Green(time.Since(t).Round(time.Microsecond)))
+		c.Log.Warnf("Query %s on connection %s took %s", query, c.ConnID, time.Since(t).Round(time.Microsecond))
 	}
 
 	return ct, err

@@ -15,7 +15,6 @@ require (
 	github.com/jackc/pgx/v4 v4.11.0
 	github.com/joho/godotenv v1.3.0
 	github.com/julienschmidt/httprouter v1.2.0
-	github.com/logrusorgru/aurora/v3 v3.0.0
 	github.com/mediocregopher/radix/v4 v4.0.0-beta.1
 	github.com/rubenv/sql-migrate v0.0.0-20210614095031-55d5740dbbcc
 	github.com/russross/blackfriday/v2 v2.0.1
