@@ -2,16 +2,20 @@ package stats
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"reflect"
+	"runtime"
 	"sync"
 	"syscall"
 	"time"
 
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	"github.com/influxdata/influxdb-client-go/v2/api"
+	"github.com/shirou/gopsutil/v3/cpu"
+	"github.com/shirou/gopsutil/v3/mem"
 )
 
 // Client is an InfluxDB client
@@ -135,10 +139,36 @@ func (c *Client) submitInner() {
 	p := influxdb2.NewPoint("events", nil, im, time.Now())
 	c.Client.WritePoint(p)
 
-	p = influxdb2.NewPoint("statistics", nil, map[string]interface{}{
-		"queries":  queries,
-		"events":   totalEvents,
-		"commands": cmds,
-	}, time.Now())
+	stats := runtime.MemStats{}
+	runtime.ReadMemStats(&stats)
+
+	data := map[string]interface{}{
+		"queries":     queries,
+		"events":      totalEvents,
+		"commands":    cmds,
+		"alloc":       stats.Alloc,
+		"sys":         stats.Sys,
+		"total_alloc": stats.TotalAlloc,
+		"goroutines":  runtime.NumGoroutine(),
+	}
+
+	sysMem, err := mem.VirtualMemory()
+	if err != nil {
+		log.Println("Error getting system memory:", err)
+	} else {
+		data["total_sys"] = sysMem.Used
+		data["total_sys_percent"] = sysMem.UsedPercent
+	}
+
+	cpuData, err := cpu.Percent(time.Minute, true)
+	if err != nil {
+		log.Println("Error getting cpu info:", err)
+	} else {
+		for i, d := range cpuData {
+			data[fmt.Sprintf("cpu_%d", i)] = d
+		}
+	}
+
+	p = influxdb2.NewPoint("statistics", nil, data, time.Now())
 	c.Client.WritePoint(p)
 }

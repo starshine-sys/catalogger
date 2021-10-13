@@ -19,6 +19,7 @@ require (
 	github.com/mediocregopher/radix/v4 v4.0.0-beta.1
 	github.com/rubenv/sql-migrate v0.0.0-20210614095031-55d5740dbbcc
 	github.com/russross/blackfriday/v2 v2.0.1
+	github.com/shirou/gopsutil/v3 v3.21.9
 	github.com/spf13/pflag v1.0.5
 	github.com/starshine-sys/bcr v0.21.1-0.20210929173146-1f0a766ade82
 	github.com/starshine-sys/pkgo v1.1.1
