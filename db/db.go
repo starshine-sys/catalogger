@@ -5,11 +5,13 @@ import (
 	"database/sql"
 	"embed"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/getsentry/sentry-go"
 	"github.com/jackc/pgx/v4/pgxpool"
 	migrate "github.com/rubenv/sql-migrate"
+	"github.com/starshine-sys/catalogger/db/stats"
 
 	// pgx driver for migrations
 	_ "github.com/jackc/pgx/v4/stdlib"
@@ -34,6 +36,8 @@ type DB struct {
 	AESKey [32]byte
 
 	openConns int32
+
+	Stats *stats.Client
 }
 
 // New ...
@@ -54,6 +58,14 @@ func New(url string, sugar *zap.SugaredLogger, hub *sentry.Hub) (*DB, error) {
 		Pool:  pool,
 		Sugar: log,
 		Hub:   hub,
+	}
+
+	influxURL := os.Getenv("INFLUX_URL")
+	influxToken := os.Getenv("INFLUX_TOKEN")
+	influxDB := os.Getenv("INFLUX_DB")
+	if influxURL != "" && influxToken != "" && influxDB != "" {
+		idb := strings.SplitN(influxDB, ":", 2)
+		db.Stats = stats.New(influxURL, influxToken, idb[0], idb[1])
 	}
 
 	copy(db.AESKey[:], []byte(os.Getenv("AES_KEY")))

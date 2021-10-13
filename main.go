@@ -78,6 +78,10 @@ func main() {
 	}
 	log.Infof("Opened database connection.")
 
+	if db.Stats != nil {
+		r.AddHandler(db.Stats.EventHandler)
+	}
+
 	// add message create + interaction create handler
 	b, err := bot.New(os.Getenv("REDIS"), r, db, sugar)
 	if err != nil {

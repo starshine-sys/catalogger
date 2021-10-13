@@ -26,7 +26,13 @@ func SetupLogging() (*zap.Logger, error) {
 		zcfg.Level.SetLevel(zapcore.InfoLevel)
 	}
 
-	return zcfg.Build(zap.AddStacktrace(zapcore.ErrorLevel))
+	log, err := zcfg.Build(zap.AddStacktrace(zapcore.ErrorLevel))
+	if err != nil {
+		return nil, err
+	}
+
+	zap.RedirectStdLog(log)
+	return log, err
 }
 
 const layout = "15:04:05.000"

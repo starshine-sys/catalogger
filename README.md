@@ -68,6 +68,9 @@ Catalogger is configured through a `.env` file. The following keys are available
 - `DASHBOARD_BASE`: the base URL to the dashboard. (not needed for self-hosting)
 - `SENTRY_URL`: URL to connect to Sentry, for improved error logging (not needed for self-hosting)
 - `DEBUG_LOGGING`: if enabled, will enable debug level logging. Not needed for self-hosting, might be useful in development and for reporting errors.
+- `INFLUX_URL`: URL to an [InfluxDB](https://www.influxdata.com/products/influxdb-overview/) to report statistics to. (not needed for self-hosting)
+- `INFLUX_TOKEN`: Token for InfluxDB (not needed for self-hosting)
+- `INFLUX_DB`: Database name to report statistics to. (not needed for self-hosting)
 
 ### Dashboard
 
