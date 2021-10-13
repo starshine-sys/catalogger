@@ -51,7 +51,7 @@ func (bot *Bot) ping(ctx bcr.Contexter) (err error) {
 
 	// message counts! that's all we store anyway
 	var msgCount int64
-	err = bot.DB.Pool.QueryRow(context.Background(), "select count(*) from messages").Scan(&msgCount)
+	err = bot.DB.QueryRow(context.Background(), "select count(*) from messages").Scan(&msgCount)
 	if err != nil {
 		return bot.DB.ReportCtx(ctx, err)
 	}

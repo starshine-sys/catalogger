@@ -51,7 +51,7 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 		channelID = channel.ParentID
 	}
 	var blacklisted bool
-	if bot.DB.Pool.QueryRow(context.Background(), "select exists(select id from guilds where $1 = any(ignored_channels) and id = $2)", channelID, m.GuildID).Scan(&blacklisted); blacklisted {
+	if bot.DB.QueryRow(context.Background(), "select exists(select id from guilds where $1 = any(ignored_channels) and id = $2)", channelID, m.GuildID).Scan(&blacklisted); blacklisted {
 		return
 	}
 

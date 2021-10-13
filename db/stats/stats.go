@@ -18,6 +18,12 @@ import (
 type Client struct {
 	Client api.WriteAPI
 
+	queriesMu sync.Mutex
+	queries   uint32
+
+	cmdsMu sync.Mutex
+	cmds   uint32
+
 	m  map[string]uint32
 	mu sync.Mutex
 }
@@ -38,15 +44,40 @@ func New(url, token, organization, database string) *Client {
 
 // EventHandler handles Arikawa events
 func (c *Client) EventHandler(ev interface{}) {
+	c.RegisterEvent(reflect.ValueOf(ev).Elem().Type().Name())
+}
+
+// RegisterEvent registers an event name. Separate from EventHandler to allow us to log our own, custom events (currently: nick update + kick)
+func (c *Client) RegisterEvent(name string) {
 	if c == nil {
 		return
 	}
 
-	name := reflect.ValueOf(ev).Elem().Type().Name()
-
 	c.mu.Lock()
 	c.m[name]++
 	c.mu.Unlock()
+}
+
+// IncQuery increments the query count by one
+func (c *Client) IncQuery() {
+	if c == nil {
+		return
+	}
+
+	c.queriesMu.Lock()
+	c.queries++
+	c.queriesMu.Unlock()
+}
+
+// IncCommand increments the command count by one
+func (c *Client) IncCommand() {
+	if c == nil {
+		return
+	}
+
+	c.cmdsMu.Lock()
+	c.cmds++
+	c.cmdsMu.Unlock()
 }
 
 func (c *Client) submit() {
@@ -80,14 +111,34 @@ func (c *Client) submitInner() {
 
 	log.Println("Submitting metrics to InfluxDB")
 
+	var cmds, queries, totalEvents uint32
+
+	c.queriesMu.Lock()
+	queries = c.queries
+	c.queries = 0
+	c.queriesMu.Unlock()
+
+	c.cmdsMu.Lock()
+	cmds = c.cmds
+	c.cmds = 0
+	c.cmdsMu.Unlock()
+
 	c.mu.Lock()
 	im := make(map[string]interface{}, len(c.m))
 	for k, v := range c.m {
+		totalEvents += v
 		im[k] = v
 		c.m[k] = 0
 	}
 	c.mu.Unlock()
 
 	p := influxdb2.NewPoint("events", nil, im, time.Now())
+	c.Client.WritePoint(p)
+
+	p = influxdb2.NewPoint("statistics", nil, map[string]interface{}{
+		"queries":  queries,
+		"events":   totalEvents,
+		"commands": cmds,
+	}, time.Now())
 	c.Client.WritePoint(p)
 }

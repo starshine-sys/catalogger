@@ -92,7 +92,7 @@ func (s *server) serverPage(w http.ResponseWriter, r *http.Request, params httpr
 		return data.Redirects[i].From.Name < data.Redirects[j].From.Name
 	})
 
-	err = s.DB.Pool.QueryRow(ctx, "select ignored_channels from guilds where id = $1", resp.GetId()).Scan(&data.IgnoredChannels)
+	err = s.DB.QueryRow(ctx, "select ignored_channels from guilds where id = $1", resp.GetId()).Scan(&data.IgnoredChannels)
 	if err != nil {
 		id := s.error(w, http.StatusInternalServerError, true, "Couldn't get this server's channels.")
 		s.Sugar.Errorf("[%s] Error getting ignored channels: %v", id, err)

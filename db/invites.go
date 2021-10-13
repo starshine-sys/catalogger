@@ -22,7 +22,7 @@ func (db *DB) GetInvites(guildID discord.GuildID, invites map[string]string) (na
 		return nil, err
 	}
 
-	err = pgxscan.Select(context.Background(), db.Pool, &list, sql, args...)
+	err = pgxscan.Select(context.Background(), db, &list, sql, args...)
 	if err != nil {
 		return
 	}
@@ -58,7 +58,7 @@ func (db *DB) NameInvite(guildID discord.GuildID, code, name string) (err error)
 		return err
 	}
 
-	_, err = db.Pool.Exec(context.Background(), sql, args...)
+	_, err = db.Exec(context.Background(), sql, args...)
 	return err
 }
 
@@ -70,7 +70,7 @@ func (db *DB) GetInviteName(code string) (name string, err error) {
 		return "Unnamed", err
 	}
 
-	err = db.Pool.QueryRow(context.Background(), sql, args...).Scan(&name)
+	err = db.QueryRow(context.Background(), sql, args...).Scan(&name)
 	if err != nil {
 		return "Unnamed", nil
 	}

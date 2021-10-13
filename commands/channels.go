@@ -33,7 +33,7 @@ func (bot *Bot) channels(ctx bcr.Contexter) (err error) {
 	}
 
 	var ignored []uint64
-	err = bot.DB.Pool.QueryRow(context.Background(), "select ignored_channels from guilds where id = $1", ctx.GetGuild().ID).Scan(&ignored)
+	err = bot.DB.QueryRow(context.Background(), "select ignored_channels from guilds where id = $1", ctx.GetGuild().ID).Scan(&ignored)
 	if err == nil && len(ignored) > 0 {
 		f := discord.EmbedField{Name: "Ignored channels"}
 		for i, ch := range ignored {

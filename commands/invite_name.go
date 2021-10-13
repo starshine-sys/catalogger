@@ -37,7 +37,7 @@ func (bot *Bot) renameInvite(ctx *bcr.Context) (err error) {
 	name := strings.TrimSpace(strings.TrimPrefix(ctx.RawArgs, ctx.Args[0]))
 
 	if strings.EqualFold(name, "-clear") {
-		_, err = bot.DB.Pool.Exec(context.Background(), "delete from invites where code = $1", inv.Code)
+		_, err = bot.DB.Exec(context.Background(), "delete from invites where code = $1", inv.Code)
 	} else {
 		err = bot.DB.NameInvite(ctx.Message.GuildID, inv.Code, name)
 	}
@@ -79,7 +79,7 @@ func (bot *Bot) renameInviteSlash(ctx bcr.Contexter) (err error) {
 	}
 
 	if invName == "" {
-		_, err = bot.DB.Pool.Exec(context.Background(), "delete from invites where code = $1", inv.Code)
+		_, err = bot.DB.Exec(context.Background(), "delete from invites where code = $1", inv.Code)
 	} else {
 		err = bot.DB.NameInvite(ctx.GetGuild().ID, inv.Code, invName)
 	}

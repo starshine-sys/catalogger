@@ -45,7 +45,7 @@ func (db *DB) InsertMessage(m Message) (err error) {
 	}
 	m.Username = hex.EncodeToString(out)
 
-	_, err = db.Pool.Exec(context.Background(), `insert into messages
+	_, err = db.Exec(context.Background(), `insert into messages
 (msg_id, user_id, channel_id, server_id, content, username, member, system) values
 ($1, $2, $3, $4, $5, $6, $7, $8)
 on conflict (msg_id) do update
@@ -61,7 +61,7 @@ func (db *DB) GetMessage(id discord.MessageID) (m *Message, err error) {
 	if err != nil {
 		return nil, err
 	}
-	err = pgxscan.Get(context.Background(), db.Pool, m, sql, args...)
+	err = pgxscan.Get(context.Background(), db, m, sql, args...)
 
 	b, err := hex.DecodeString(m.Content)
 	if err != nil {
@@ -91,6 +91,6 @@ func (db *DB) GetMessage(id discord.MessageID) (m *Message, err error) {
 
 // DeleteMessage deletes a message from the database
 func (db *DB) DeleteMessage(id discord.MessageID) (err error) {
-	_, err = db.Pool.Exec(context.Background(), "delete from messages where msg_id = $1", id)
+	_, err = db.Exec(context.Background(), "delete from messages where msg_id = $1", id)
 	return
 }

@@ -129,6 +129,9 @@ func (bot *Bot) guildMemberUpdate(ev *gateway.GuildMemberUpdateEvent) {
 }
 
 func (bot *Bot) guildMemberNickUpdate(ev *gateway.GuildMemberUpdateEvent, m discord.Member) {
+	// Discord sends this as part of the normal guild member update event, so we register this event manually
+	bot.DB.Stats.RegisterEvent("GuildMemberNickUpdateEvent")
+
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{

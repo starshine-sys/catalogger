@@ -33,13 +33,13 @@ func (bot *Bot) ignore(ctx bcr.Contexter) (err error) {
 	}
 
 	var blacklisted bool
-	err = bot.DB.Pool.QueryRow(context.Background(), "select exists(select id from guilds where $1 = any(ignored_channels) and id = $2)", chID, guildID).Scan(&blacklisted)
+	err = bot.DB.QueryRow(context.Background(), "select exists(select id from guilds where $1 = any(ignored_channels) and id = $2)", chID, guildID).Scan(&blacklisted)
 	if err != nil {
 		return bot.DB.ReportCtx(ctx, err)
 	}
 
 	if blacklisted {
-		_, err = bot.DB.Pool.Exec(context.Background(), "update guilds set ignored_channels = array_remove(ignored_channels, $1) where id = $2", chID, guildID)
+		_, err = bot.DB.Exec(context.Background(), "update guilds set ignored_channels = array_remove(ignored_channels, $1) where id = $2", chID, guildID)
 		if err != nil {
 			return bot.DB.ReportCtx(ctx, err)
 		}
@@ -48,7 +48,7 @@ func (bot *Bot) ignore(ctx bcr.Contexter) (err error) {
 		return
 	}
 
-	_, err = bot.DB.Pool.Exec(context.Background(), "update guilds set ignored_channels = array_append(ignored_channels, $1) where id = $2", chID, guildID)
+	_, err = bot.DB.Exec(context.Background(), "update guilds set ignored_channels = array_append(ignored_channels, $1) where id = $2", chID, guildID)
 	if err != nil {
 		return bot.DB.ReportCtx(ctx, err)
 	}

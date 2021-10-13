@@ -117,6 +117,8 @@ func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) {
 		bot.Sugar.Errorf("Error executing command: %v", err)
 		return
 	}
+
+	bot.DB.Stats.IncCommand()
 }
 
 func (bot *Bot) interactionCreate(ic *gateway.InteractionCreateEvent) {
@@ -151,4 +153,6 @@ func (bot *Bot) interactionCreate(ic *gateway.InteractionCreateEvent) {
 	if err != nil {
 		bot.Sugar.Errorf("Couldn't create slash context: %v", err)
 	}
+
+	bot.DB.Stats.IncCommand()
 }

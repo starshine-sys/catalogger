@@ -66,7 +66,7 @@ func (s *server) saveIgnored(w http.ResponseWriter, r *http.Request, params http
 	fmt.Println(r.Form["ignored-channels"])
 	fmt.Println(channels)
 
-	_, err = s.DB.Pool.Exec(ctx, "update guilds set ignored_channels = $1 where id = $2", channels, resp.GetId())
+	_, err = s.DB.Exec(ctx, "update guilds set ignored_channels = $1 where id = $2", channels, resp.GetId())
 	if err != nil {
 		s.Sugar.Errorf("Error setting ignored channels: %v", err)
 		http.Error(w, "Error setting channels.", http.StatusInternalServerError)

@@ -35,7 +35,7 @@ func (bot *Bot) inviteDelete(g *gateway.InviteDeleteEvent) {
 	// wait 0.5 seconds so we can log the event
 	time.Sleep(500 * time.Millisecond)
 
-	_, err := bot.DB.Pool.Exec(context.Background(), "delete from invites where code = $1", g.Code)
+	_, err := bot.DB.Exec(context.Background(), "delete from invites where code = $1", g.Code)
 	if err != nil {
 		bot.Sugar.Errorf("Error deleting invite name: %v", err)
 	}

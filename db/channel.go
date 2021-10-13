@@ -104,7 +104,7 @@ func (db *DB) Channels(id discord.GuildID) (ch EventMap, err error) {
 		return nil, err
 	}
 
-	err = db.Pool.QueryRow(context.Background(), sql, args...).Scan(&ch)
+	err = db.QueryRow(context.Background(), sql, args...).Scan(&ch)
 	return
 }
 
@@ -115,7 +115,7 @@ func (db *DB) SetChannels(id discord.GuildID, ch EventMap) (err error) {
 		return err
 	}
 
-	_, err = db.Pool.Exec(context.Background(), sql, args...)
+	_, err = db.Exec(context.Background(), sql, args...)
 	return
 }
 
@@ -133,7 +133,7 @@ func (db *DB) Redirects(id discord.GuildID) (m RedirectMap, err error) {
 		return nil, err
 	}
 
-	err = db.Pool.QueryRow(context.Background(), sql, args...).Scan(&m)
+	err = db.QueryRow(context.Background(), sql, args...).Scan(&m)
 	return
 }
 
@@ -144,6 +144,6 @@ func (db *DB) SetRedirects(id discord.GuildID, m RedirectMap) (err error) {
 		return err
 	}
 
-	_, err = db.Pool.Exec(context.Background(), sql, args...)
+	_, err = db.Exec(context.Background(), sql, args...)
 	return
 }

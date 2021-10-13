@@ -17,7 +17,7 @@ func (bot *Bot) clearData(ctx bcr.Contexter) (err error) {
 	// get count
 	var msgCount int64
 
-	err = bot.DB.Pool.QueryRow(context.Background(), `select count(msg_id) from messages where server_id = $1`, guildID).Scan(&msgCount)
+	err = bot.DB.QueryRow(context.Background(), `select count(msg_id) from messages where server_id = $1`, guildID).Scan(&msgCount)
 	if err != nil {
 		return bot.DB.ReportCtx(ctx, err)
 	}
@@ -36,24 +36,24 @@ func (bot *Bot) clearData(ctx bcr.Contexter) (err error) {
 		return
 	}
 
-	c, err := bot.DB.Pool.Exec(context.Background(), "delete from messages where server_id = $1", guildID)
+	c, err := bot.DB.Exec(context.Background(), "delete from messages where server_id = $1", guildID)
 	if err != nil {
 		return bot.DB.ReportCtx(ctx, err)
 	}
 	deleted := c.RowsAffected()
 
-	_, err = bot.DB.Pool.Exec(context.Background(), "update guilds set channels = $1, ignored_channels = array[]::bigint[], banned_systems = array[]::char(5)[] where id = $2", db.DefaultEventMap, guildID)
+	_, err = bot.DB.Exec(context.Background(), "update guilds set channels = $1, ignored_channels = array[]::bigint[], banned_systems = array[]::char(5)[] where id = $2", db.DefaultEventMap, guildID)
 	if err != nil {
 		return bot.DB.ReportCtx(ctx, err)
 	}
 
-	c, err = bot.DB.Pool.Exec(context.Background(), "delete from invites where guild_id = $1", guildID)
+	c, err = bot.DB.Exec(context.Background(), "delete from invites where guild_id = $1", guildID)
 	if err != nil {
 		return bot.DB.ReportCtx(ctx, err)
 	}
 	invites := c.RowsAffected()
 
-	c, err = bot.DB.Pool.Exec(context.Background(), "delete from watchlist where guild_id = $1", guildID)
+	c, err = bot.DB.Exec(context.Background(), "delete from watchlist where guild_id = $1", guildID)
 	if err != nil {
 		return bot.DB.ReportCtx(ctx, err)
 	}

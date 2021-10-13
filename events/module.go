@@ -227,7 +227,7 @@ func (bot *Bot) State(id discord.GuildID) *state.State {
 
 func (bot *Bot) cleanMessages() {
 	for {
-		ct, err := bot.DB.Pool.Exec(context.Background(), "delete from messages where msg_id < $1", discord.NewSnowflake(time.Now().UTC().Add(15*-24*time.Hour)))
+		ct, err := bot.DB.Exec(context.Background(), "delete from messages where msg_id < $1", discord.NewSnowflake(time.Now().UTC().Add(15*-24*time.Hour)))
 		if err != nil {
 			time.Sleep(1 * time.Minute)
 			continue

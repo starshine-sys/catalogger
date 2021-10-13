@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/getsentry/sentry-go"
+	"github.com/jackc/pgconn"
+	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	migrate "github.com/rubenv/sql-migrate"
 	"github.com/starshine-sys/catalogger/db/stats"
@@ -100,4 +102,22 @@ func runMigrations(url string, sugar *zap.SugaredLogger) (err error) {
 
 	err = db.Close()
 	return err
+}
+
+// QueryRow ...
+func (db *DB) QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row {
+	go db.Stats.IncQuery()
+	return db.Pool.QueryRow(ctx, sql, args...)
+}
+
+// Query ...
+func (db *DB) Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error) {
+	go db.Stats.IncQuery()
+	return db.Pool.Query(ctx, sql, args...)
+}
+
+// Exec ...
+func (db *DB) Exec(ctx context.Context, sql string, args ...interface{}) (pgconn.CommandTag, error) {
+	go db.Stats.IncQuery()
+	return db.Pool.Exec(ctx, sql, args...)
 }
