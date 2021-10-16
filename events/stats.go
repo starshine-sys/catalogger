@@ -3,9 +3,12 @@ package events
 import (
 	"context"
 	"fmt"
+	"os"
 	"os/exec"
+	"os/signal"
 	"runtime"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/diamondburned/arikawa/v3/api"
@@ -49,25 +52,10 @@ func (bot *Bot) ping(ctx bcr.Contexter) (err error) {
 	// can't do much about that though
 	heartbeat := ctx.Session().Gateway.PacerLoop.EchoBeat.Time().Sub(ctx.Session().Gateway.PacerLoop.SentBeat.Time()).Round(time.Millisecond)
 
-	// message counts! that's all we store anyway
-	var msgCount int64
-	err = bot.DB.QueryRow(context.Background(), "select count(*) from messages").Scan(&msgCount)
-	if err != nil {
-		return bot.DB.ReportCtx(ctx, err)
-	}
-
-	bot.GuildsMu.Lock()
-	guilds := len(bot.Guilds)
-	bot.GuildsMu.Unlock()
-
 	// database latency
 	t = time.Now()
 	bot.DB.Channels(ctx.GetChannel().GuildID)
 	dbLatency := time.Since(t).Round(time.Microsecond)
-
-	bot.MembersMu.Lock()
-	bot.ChannelsMu.Lock()
-	bot.RolesMu.Lock()
 
 	e := discord.Embed{
 		Color:     bcr.ColourPurple,
@@ -108,22 +96,65 @@ func (bot *Bot) ping(ctx bcr.Contexter) (err error) {
 				Value: fmt.Sprintf(
 					`%v messages from %v servers
 Cached %v members, %v channels, and %v roles`,
-					humanize.Comma(msgCount), humanize.Comma(int64(guilds)),
-					humanize.Comma(int64(len(bot.Members))),
-					humanize.Comma(int64(len(bot.Channels))),
-					humanize.Comma(int64(len(bot.Roles))),
+					humanize.Comma(bot.msgCount), humanize.Comma(bot.guildCount),
+					humanize.Comma(bot.memberCount),
+					humanize.Comma(bot.channelCount),
+					humanize.Comma(bot.roleCount),
 				),
 			},
 		},
 	}
-
-	bot.MembersMu.Unlock()
-	bot.ChannelsMu.Unlock()
-	bot.RolesMu.Unlock()
 
 	_, err = ctx.EditOriginal(api.EditInteractionResponseData{
 		Content: option.NewNullableString(""),
 		Embeds:  &[]discord.Embed{e},
 	})
 	return err
+}
+
+func (bot *Bot) countsLoop() {
+	if bot.DB.Stats != nil {
+		return
+	}
+
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
+	defer stop()
+
+	ticker := time.NewTicker(time.Minute)
+
+	for {
+		select {
+		case <-ticker.C:
+			// submit metrics
+			go bot.counts()
+		case <-ctx.Done():
+			// break if we're shutting down
+			ticker.Stop()
+			return
+		}
+	}
+}
+
+func (bot *Bot) counts() (int64, int64, int64, int64, int64) {
+	bot.GuildsMu.Lock()
+	bot.guildCount = int64(len(bot.Guilds))
+	bot.GuildsMu.Unlock()
+
+	bot.MembersMu.Lock()
+	bot.memberCount = int64(len(bot.Members))
+	bot.MembersMu.Unlock()
+
+	bot.ChannelsMu.Lock()
+	bot.channelCount = int64(len(bot.Channels))
+	bot.ChannelsMu.Unlock()
+
+	bot.RolesMu.Lock()
+	bot.roleCount = int64(len(bot.Roles))
+	bot.RolesMu.Unlock()
+
+	err := bot.DB.QueryRow(context.Background(), "select count(*) from messages").Scan(&bot.msgCount)
+	if err != nil {
+		bot.Sugar.Errorf("Error getting message count: %v", err)
+	}
+	return bot.guildCount, bot.memberCount, bot.channelCount, bot.roleCount, bot.msgCount
 }

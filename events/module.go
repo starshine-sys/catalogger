@@ -58,6 +58,8 @@ type Bot struct {
 
 	WebhookClients map[discord.WebhookID]*webhook.Client
 	WebhooksMu     sync.Mutex
+
+	guildCount, memberCount, roleCount, channelCount, msgCount int64
 }
 
 // Init ...
@@ -81,6 +83,13 @@ func Init(bot *bot.Bot, log *zap.SugaredLogger) (clearCacheFunc func(discord.Gui
 		WebhookClients: map[discord.WebhookID]*webhook.Client{},
 
 		BotJoinLeaveLog: discord.ChannelID(joinLeaveLog),
+	}
+
+	// either add counts to metrics collector, or spawn loop to collect stats every minute
+	if b.DB.Stats != nil {
+		b.DB.Stats.Counts = b.counts
+	} else {
+		go b.countsLoop()
 	}
 
 	// add member cache handlers
