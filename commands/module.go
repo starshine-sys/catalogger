@@ -411,6 +411,69 @@ func Init(bot *bot.Bot, log *zap.SugaredLogger) {
 		},
 	})
 
+	keyroles := b.Router.AddCommand(&bcr.Command{
+		Name:         "keyrole",
+		Aliases:      []string{"keyroles", "key-role", "key-roles"},
+		Summary:      "List and manage this server's key roles.",
+		SlashCommand: b.keyroleList,
+		Permissions:  discord.PermissionManageGuild,
+	})
+
+	keyroles.AddSubcommand(&bcr.Command{
+		Name:        "add",
+		Summary:     "Add a key role.",
+		Usage:       "<role>",
+		Args:        bcr.MinArgs(1),
+		Command:     b.keyroleAdd,
+		Permissions: discord.PermissionManageGuild,
+	})
+
+	keyroles.AddSubcommand(&bcr.Command{
+		Name:        "remove",
+		Summary:     "Remove a key role.",
+		Usage:       "<role>",
+		Args:        bcr.MinArgs(1),
+		Command:     b.keyroleRemove,
+		Permissions: discord.PermissionManageGuild,
+	})
+
+	b.Router.AddGroup(&bcr.Group{
+		Name:        "keyroles",
+		Description: "List and manage this server's key roles.",
+		Subcommands: []*bcr.Command{
+			{
+				Name:         "list",
+				Summary:      "List the current key roles.",
+				SlashCommand: b.keyroleList,
+				Permissions:  discord.PermissionManageGuild,
+			},
+			{
+				Name:         "add",
+				Summary:      "Add a key role.",
+				SlashCommand: b.keyroleAddSlash,
+				Permissions:  discord.PermissionManageGuild,
+				Options: &[]discord.CommandOption{{
+					Name:        "role",
+					Type:        discord.RoleOption,
+					Description: "The role to add.",
+					Required:    true,
+				}},
+			},
+			{
+				Name:         "remove",
+				Summary:      "Remove a key role.",
+				SlashCommand: b.keyroleRemoveSlash,
+				Permissions:  discord.PermissionManageGuild,
+				Options: &[]discord.CommandOption{{
+					Name:        "role",
+					Type:        discord.RoleOption,
+					Description: "The role to remove.",
+					Required:    true,
+				}},
+			},
+		},
+	})
+
 	b.Router.AddGroup(helpGroup)
 	b.Router.AddGroup(invGroup)
 }

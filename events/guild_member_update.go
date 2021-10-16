@@ -65,6 +65,8 @@ func (bot *Bot) guildMemberUpdate(ev *gateway.GuildMemberUpdateEvent) {
 		return
 	}
 
+	go bot.keyroleUpdate(ch[keys.GuildKeyRoleUpdate], ev, addedRoles, removedRoles)
+
 	if !ch[keys.GuildMemberUpdate].IsValid() {
 		return
 	}

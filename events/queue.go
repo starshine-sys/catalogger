@@ -15,6 +15,7 @@ import (
 var shouldQueue = map[string]bool{
 	keys.GuildMemberUpdate:     true,
 	keys.GuildMemberNickUpdate: true,
+	keys.GuildKeyRoleUpdate:    true,
 	keys.MessageDelete:         true,
 	keys.MessageUpdate:         true,
 	keys.GuildMemberAdd:        true,
