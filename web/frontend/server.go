@@ -1,13 +1,16 @@
 package main
 
 import (
+	"fmt"
 	"html/template"
 	"net/http"
+	"regexp"
 	"sort"
 	"strings"
 
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/julienschmidt/httprouter"
+	"github.com/russross/blackfriday/v2"
 	"github.com/starshine-sys/catalogger/db"
 	"github.com/starshine-sys/catalogger/web/proto"
 )
@@ -190,6 +193,10 @@ func (s *server) serverPage(w http.ResponseWriter, r *http.Request, params httpr
 	}
 }
 
+const emojiBaseURL = "https://cdn.discordapp.com/emojis/"
+
+var emojiMatch = regexp.MustCompile("<(?P<animated>a)?:(?P<name>\\w+):(?P<emoteID>\\d{15,})>")
+
 var funcs template.FuncMap = map[string]interface{}{
 	"selectOptions": func(channels []channel, selected discord.ChannelID) template.HTML {
 		var b strings.Builder
@@ -241,6 +248,34 @@ var funcs template.FuncMap = map[string]interface{}{
 			b.WriteString(">#" + ch.Name + "</option>\n")
 		}
 		return template.HTML(strings.TrimSpace(b.String()))
+	},
+	"markdownParse": func(s string) template.HTML {
+		return template.HTML(blackfriday.Run(
+			[]byte(s),
+			blackfriday.WithExtensions(blackfriday.Autolink|blackfriday.Strikethrough|blackfriday.HardLineBreak)))
+	},
+	"emojiToImgs": func(s string) string {
+		emojis := emojiMatch.FindAllString(s, -1)
+		if emojis == nil {
+			return s
+		}
+
+		for _, e := range emojis {
+			ext := ".png"
+			groups := emojiMatch.FindStringSubmatch(e)
+			if groups[1] == "a" {
+				ext = ".gif"
+			}
+			name := groups[2]
+			url := emojiBaseURL + groups[3] + ext
+
+			s = strings.NewReplacer(e, fmt.Sprintf(`<img class="emoji" src="%v" alt="%v" />`, url, name)).Replace(s)
+		}
+
+		return s
+	},
+	"timestamp": func(sf discord.MessageID) string {
+		return sf.Time().Format("Jan 02, 15:04") + " UTC"
 	},
 }
 

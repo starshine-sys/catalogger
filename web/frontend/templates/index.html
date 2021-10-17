@@ -18,6 +18,14 @@
         .screenshot {
             margin: 0.5em 0;
         }
+
+        .message-author {
+            font-weight: bold;
+        }
+
+        .emoji {
+            height: 1em;
+        }
     </style>
 </head>
 
@@ -74,6 +82,30 @@
             <p>It also shows system information for new members joining your server, and can notify you if an account
                 linked to a banned system joins your server. Which invite a member used is also logged.</p>
         </div>
+
+        {{if .News}}
+        <div>
+            <h2>Latest announcements</h2>
+            <hr />
+            {{range .News}}
+            {{if .Content}}
+
+            <p class="message-author">{{.ID | timestamp}} &middot; From {{.Author.Username}}#{{.Author.Discriminator}}:</p>
+
+            {{.Content | emojiToImgs | markdownParse}}
+
+            {{if .Attachments}}
+            {{range .Attachments}}
+            <p>
+                <img src="{{.URL}}" style="max-width: 80vw;" alt="{{.Filename}}" />
+            </p>
+            {{end}}
+            {{end}}
+            <hr />
+            {{end}}
+            {{end}}
+        </div>
+        {{end}}
 
         <div class="row">
             <div class="col-md-4 screenshot">

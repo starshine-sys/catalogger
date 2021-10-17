@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/ReneKroon/ttlcache/v2"
+	"github.com/diamondburned/arikawa/v3/api"
+	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/mediocregopher/radix/v4"
 	"google.golang.org/grpc"
 
@@ -38,6 +40,11 @@ type server struct {
 	Sugar *zap.SugaredLogger
 
 	UserCache *ttlcache.Cache
+
+	news          []discord.Message
+	newsChannel   discord.ChannelID
+	newsClient    *api.Client
+	newsFetchTime time.Time
 }
 
 func main() {
@@ -61,6 +68,23 @@ func main() {
 		UserCache: ttlcache.NewCache(),
 	}
 	s.Mux = newRouter(s)
+
+	if os.Getenv("ANNOUNCEMENTS") != "" && os.Getenv("TOKEN") != "" {
+		s.newsClient = api.NewClient("Bot " + os.Getenv("TOKEN"))
+		id, err := discord.ParseSnowflake(os.Getenv("ANNOUNCEMENTS"))
+		if err != nil {
+			sugar.Fatalf("Couldn't parse \"%v\" as a snowflake!", os.Getenv("ANNOUNCEMENTS"))
+		}
+		s.newsChannel = discord.ChannelID(id)
+
+		news, err := s.newsClient.Messages(s.newsChannel, 5)
+		if err != nil {
+			sugar.Fatalf("Couldn't fetch news messages: %v", err)
+		}
+		s.news = news
+		sugar.Infof("Fetched %v news messages", len(s.news))
+		s.newsFetchTime = time.Now()
+	}
 
 	s.UserCache.SetTTL(30 * time.Minute)
 	s.UserCache.SetCacheSizeLimit(10000)
