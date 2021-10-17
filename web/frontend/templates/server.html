@@ -210,6 +210,19 @@
 
                         <div class="channel-entry">
                             <div class="form-floating">
+                                <select id="GUILD_KEY_ROLE_UPDATE" name="GUILD_KEY_ROLE_UPDATE" aria-describedby="keyroleHelp"
+                                    class="form-select" aria-label="Key roles">
+                                    {{selectOptions .Guild.Channels $.CurrentChannels.GUILD_KEY_ROLE_UPDATE}}
+                                </select>
+                                <label for="GUILD_KEY_ROLE_UPDATE">Key roles</label>
+                            </div>
+                            <div id="keyroleHelp" class="form-text">
+                                Logs key roles (configurable through the bot) being added and removed from users, along with <em>who</em> added or removed them.
+                            </div>
+                        </div>
+
+                        <div class="channel-entry">
+                            <div class="form-floating">
                                 <select id="GUILD_MEMBER_NICK_UPDATE" name="GUILD_MEMBER_NICK_UPDATE"
                                     class="form-select" aria-label="Member name/avatar changes">
                                     {{selectOptions .Guild.Channels $.CurrentChannels.GUILD_MEMBER_NICK_UPDATE}}
