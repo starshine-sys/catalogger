@@ -88,6 +88,13 @@ func (s *server) serverPage(w http.ResponseWriter, r *http.Request, params httpr
 		return
 	}
 
+	// just gonna hack this for now, TODO: actually make this work well
+	// basically doing this so *every* event has a channel set, even if that channel is 0
+	for k := range db.DefaultEventMap {
+		ch := data.CurrentChannels[k]
+		data.CurrentChannels[k] = ch
+	}
+
 	sort.Slice(data.Redirects, func(i, j int) bool {
 		return data.Redirects[i].From.Name < data.Redirects[j].From.Name
 	})
