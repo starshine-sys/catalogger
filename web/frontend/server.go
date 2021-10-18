@@ -11,6 +11,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/julienschmidt/httprouter"
 	"github.com/russross/blackfriday/v2"
+	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/db"
 	"github.com/starshine-sys/catalogger/web/proto"
 )
@@ -70,6 +71,9 @@ func (s *server) serverPage(w http.ResponseWriter, r *http.Request, params httpr
 	}
 
 	resp, err := s.RPC.Guild(r.Context(), &proto.GuildRequest{Id: uint64(guildID), UserId: uint64(client.User.ID)})
+
+	fmt.Printf("User %v has permissions %v", client.User.Tag(), bcr.PermStrings(discord.Permissions(resp.GetPermissions())))
+
 	if err != nil || !discord.Permissions(resp.GetPermissions()).Has(discord.PermissionManageGuild) {
 		s.error(w, http.StatusNotFound, false, guildNotFound)
 		return
