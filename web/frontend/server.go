@@ -8,10 +8,10 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/Starshine113/bcr"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/julienschmidt/httprouter"
 	"github.com/russross/blackfriday/v2"
+	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/db"
 	"github.com/starshine-sys/catalogger/web/proto"
 )
