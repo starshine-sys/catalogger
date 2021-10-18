@@ -72,6 +72,22 @@ func (s *server) serverPage(w http.ResponseWriter, r *http.Request, params httpr
 	}
 
 	resp, err := s.RPC.Guild(r.Context(), &proto.GuildRequest{Id: uint64(guildID), UserId: uint64(client.User.ID)})
+	if err == nil {
+		if resp.Permissions == 0 {
+			guilds, err := s.guilds(ctx, client)
+			if err == nil {
+				for _, g := range guilds {
+					if g.ID == discord.GuildID(guildID) {
+						resp.Permissions = uint64(g.Permissions)
+					}
+				}
+			}
+		}
+
+		if discord.Permissions(resp.Permissions).Has(discord.PermissionAdministrator) {
+			resp.Permissions = uint64(discord.PermissionAll)
+		}
+	}
 
 	if err != nil || !discord.Permissions(resp.GetPermissions()).Has(discord.PermissionManageGuild) {
 		if err == nil {
