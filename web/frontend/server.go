@@ -8,10 +8,10 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/Starshine113/bcr"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/julienschmidt/httprouter"
 	"github.com/russross/blackfriday/v2"
-	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/db"
 	"github.com/starshine-sys/catalogger/web/proto"
 )
@@ -66,15 +66,19 @@ func (s *server) serverPage(w http.ResponseWriter, r *http.Request, params httpr
 
 	guildID, err := discord.ParseSnowflake(params.ByName("id"))
 	if err != nil {
+		s.Sugar.Infof("Couldn't parse guild ID \"%v\"", params.ByName("id"))
 		s.error(w, http.StatusNotFound, false, guildNotFound)
 		return
 	}
 
 	resp, err := s.RPC.Guild(r.Context(), &proto.GuildRequest{Id: uint64(guildID), UserId: uint64(client.User.ID)})
 
-	fmt.Printf("User %v has permissions %v", client.User.Tag(), bcr.PermStrings(discord.Permissions(resp.GetPermissions())))
-
 	if err != nil || !discord.Permissions(resp.GetPermissions()).Has(discord.PermissionManageGuild) {
+		if err == nil {
+			s.Sugar.Infof("User %v has permissions %v, does not have permission to manage server.", client.User.Tag(), bcr.PermStrings(discord.Permissions(resp.GetPermissions())))
+		} else {
+			s.Sugar.Errorf("Error fetching guild: %v", err)
+		}
 		s.error(w, http.StatusNotFound, false, guildNotFound)
 		return
 	}
