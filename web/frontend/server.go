@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -52,6 +53,27 @@ type channel struct {
 	Type     discord.ChannelType
 }
 
+func (s *server) rpcGuild(ctx context.Context, guildID discord.GuildID, client *userCache) (*proto.GuildResponse, error) {
+	resp, err := s.RPC.Guild(ctx, &proto.GuildRequest{Id: uint64(guildID), UserId: uint64(client.User.ID)})
+	if err == nil {
+		if resp.Permissions == 0 {
+			guilds, err := s.guilds(ctx, client)
+			if err == nil {
+				for _, g := range guilds {
+					if g.ID == discord.GuildID(guildID) {
+						resp.Permissions = uint64(g.Permissions)
+					}
+				}
+			}
+		}
+
+		if discord.Permissions(resp.Permissions).Has(discord.PermissionAdministrator) {
+			resp.Permissions = uint64(discord.PermissionAll)
+		}
+	}
+	return resp, err
+}
+
 const guildNotFound = "You've taken a wrong turn! Either this isn't a server, or you're not in it, or you don't have permission to change its settings."
 
 func (s *server) serverPage(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
@@ -71,24 +93,7 @@ func (s *server) serverPage(w http.ResponseWriter, r *http.Request, params httpr
 		return
 	}
 
-	resp, err := s.RPC.Guild(r.Context(), &proto.GuildRequest{Id: uint64(guildID), UserId: uint64(client.User.ID)})
-	if err == nil {
-		if resp.Permissions == 0 {
-			guilds, err := s.guilds(ctx, client)
-			if err == nil {
-				for _, g := range guilds {
-					if g.ID == discord.GuildID(guildID) {
-						resp.Permissions = uint64(g.Permissions)
-					}
-				}
-			}
-		}
-
-		if discord.Permissions(resp.Permissions).Has(discord.PermissionAdministrator) {
-			resp.Permissions = uint64(discord.PermissionAll)
-		}
-	}
-
+	resp, err := s.rpcGuild(ctx, discord.GuildID(guildID), client)
 	if err != nil || !discord.Permissions(resp.GetPermissions()).Has(discord.PermissionManageGuild) {
 		if err == nil {
 			s.Sugar.Infof("User %v has permissions %v, does not have permission to manage server.", client.User.Tag(), bcr.PermStrings(discord.Permissions(resp.GetPermissions())))

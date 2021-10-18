@@ -27,7 +27,7 @@ func (s *server) saveChannels(w http.ResponseWriter, r *http.Request, params htt
 		return
 	}
 
-	resp, err := s.RPC.Guild(r.Context(), &proto.GuildRequest{Id: uint64(guildID), UserId: uint64(client.User.ID)})
+	resp, err := s.rpcGuild(ctx, discord.GuildID(guildID), client)
 	if err != nil || !discord.Permissions(resp.GetPermissions()).Has(discord.PermissionManageGuild) {
 		http.Error(w, "Missing permissions.", http.StatusUnauthorized)
 		return

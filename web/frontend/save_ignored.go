@@ -7,7 +7,6 @@ import (
 
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/julienschmidt/httprouter"
-	"github.com/starshine-sys/catalogger/web/proto"
 )
 
 func (s *server) saveIgnored(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
@@ -26,7 +25,7 @@ func (s *server) saveIgnored(w http.ResponseWriter, r *http.Request, params http
 		return
 	}
 
-	resp, err := s.RPC.Guild(r.Context(), &proto.GuildRequest{Id: uint64(guildID), UserId: uint64(client.User.ID)})
+	resp, err := s.rpcGuild(ctx, discord.GuildID(guildID), client)
 	if err != nil || !discord.Permissions(resp.GetPermissions()).Has(discord.PermissionManageGuild) {
 		http.Error(w, "Missing permissions.", http.StatusUnauthorized)
 		return
