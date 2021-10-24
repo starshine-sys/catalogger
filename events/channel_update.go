@@ -33,6 +33,11 @@ func (bot *Bot) channelUpdate(ev *gateway.ChannelUpdateEvent) {
 		return
 	}
 
+	// this shouldn't ever change at the same time as other stuff, so. ignore
+	if ev.Position != old.Position {
+		return
+	}
+
 	wh, err := bot.webhookCache(keys.ChannelUpdate, ev.GuildID, ch[keys.ChannelUpdate])
 	if err != nil {
 		bot.Sugar.Errorf("Error getting webhook: %v", err)

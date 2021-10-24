@@ -93,5 +93,9 @@ func (bot *Bot) channelCreate(ev *gateway.ChannelCreateEvent) {
 		e.Fields = append(e.Fields, f)
 	}
 
+	if len(e.Fields) > 24 {
+		e.Fields = e.Fields[:24]
+	}
+
 	bot.Send(wh, keys.ChannelCreate, e)
 }

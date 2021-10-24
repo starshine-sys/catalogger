@@ -242,10 +242,10 @@ func (bot *Bot) cleanMessages() {
 			continue
 		}
 
-		if n := ct.RowsAffected(); n == 0 {
-			bot.Sugar.Debugf("Deleted 0 normal messages older than %v days.", deleteAfterDays)
+		if ct.RowsAffected() == 0 {
+			bot.Sugar.Debugf("Deleted 0 messages older than %v days.", deleteAfterDays)
 		} else {
-			bot.Sugar.Infof("Deleted %v normal messages older than %v days.", n, deleteAfterDays)
+			bot.Sugar.Infof("Deleted %v messages older than %v days.", ct.RowsAffected(), deleteAfterDays)
 		}
 
 		time.Sleep(1 * time.Minute)
