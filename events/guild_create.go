@@ -8,9 +8,10 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
+	"github.com/starshine-sys/catalogger/events/handler"
 )
 
-func (bot *Bot) guildCreate(g *gateway.GuildCreateEvent) {
+func (bot *Bot) guildCreate(g *gateway.GuildCreateEvent) (resp *handler.Response, err error) {
 	bot.GuildsMu.Lock()
 	bot.Guilds[g.ID] = g.Guild
 	bot.GuildsMu.Unlock()
@@ -42,9 +43,8 @@ func (bot *Bot) guildCreate(g *gateway.GuildCreateEvent) {
 		Timestamp: discord.NowTimestamp(),
 	}
 
-	_, err := bot.State(g.ID).SendEmbeds(bot.BotJoinLeaveLog, e)
-	if err != nil {
-		bot.Sugar.Errorf("Error sending join log message: %v", err)
-	}
-	return
+	return &handler.Response{
+		ChannelID: bot.BotJoinLeaveLog,
+		Embeds:    []discord.Embed{e},
+	}, nil
 }

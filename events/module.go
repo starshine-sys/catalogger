@@ -14,9 +14,9 @@ import (
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/diamondburned/arikawa/v3/gateway/shard"
 	"github.com/diamondburned/arikawa/v3/state"
-	"github.com/diamondburned/arikawa/v3/utils/handler"
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/bot"
+	"github.com/starshine-sys/catalogger/events/handler"
 	"go.uber.org/zap"
 )
 
@@ -96,15 +96,13 @@ func Init(bot *bot.Bot, log *zap.SugaredLogger) (clearCacheFunc func(discord.Gui
 	b.Router.AddHandler(b.requestGuildMembers)
 	b.Router.AddHandler(b.guildMemberChunk)
 
-	// add join/leave log handlers
-	b.Router.ShardManager.ForEach(func(s shard.Shard) {
-		state := s.(*state.State)
+	evh := handler.New()
 
-		state.PreHandler = handler.New()
-		state.PreHandler.Synchronous = true
-		state.PreHandler.AddHandler(b.guildDelete)
-		state.AddHandler(b.guildCreate)
-	})
+	b.Router.AddHandler(evh.Call)
+
+	// add join/leave log handlers
+	evh.AddHandler(b.guildCreate)
+	evh.AddHandler(b.guildDelete)
 
 	// add guild create handler
 	b.Router.AddHandler(b.DB.CreateServerIfNotExists)
