@@ -1,6 +1,7 @@
 package events
 
 import (
+	"reflect"
 	"sync"
 	"time"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/api/webhook"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/starshine-sys/catalogger/db"
+	"github.com/starshine-sys/catalogger/events/handler"
 )
 
 // shouldQueue is a map of all events that should be put into a webhook queue
@@ -172,4 +174,23 @@ func (bot *Bot) queueInner(client *webhook.Client, embeds []discord.Embed) (err 
 		},
 	})
 	return
+}
+
+func (bot *Bot) handleResponse(ev reflect.Value, resp *handler.Response) {
+	if !resp.ChannelID.IsValid() {
+		return
+	}
+
+	evName := ev.Elem().Type().Name()
+
+	wh, err := bot.webhookCacheNew(resp.GuildID, resp.ChannelID)
+	if err != nil {
+		bot.DB.Report(db.ErrorContext{
+			Event:   evName,
+			GuildID: resp.GuildID,
+		}, err)
+		return
+	}
+
+	bot.Send(wh, evName, resp.Embeds...)
 }

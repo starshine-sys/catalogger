@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"reflect"
 	"strings"
 	"sync"
 	"time"
@@ -16,6 +17,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/state"
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/bot"
+	"github.com/starshine-sys/catalogger/db"
 	"github.com/starshine-sys/catalogger/events/handler"
 	"go.uber.org/zap"
 )
@@ -97,6 +99,14 @@ func Init(bot *bot.Bot, log *zap.SugaredLogger) (clearCacheFunc func(discord.Gui
 	b.Router.AddHandler(b.guildMemberChunk)
 
 	evh := handler.New()
+	evh.HandleResponse = b.handleResponse
+	evh.HandleError = func(ev reflect.Value, err error) {
+		evName := ev.Elem().Type().Name()
+
+		bot.DB.Report(db.ErrorContext{
+			Event: evName,
+		}, err)
+	}
 
 	b.Router.AddHandler(evh.Call)
 

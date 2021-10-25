@@ -142,8 +142,8 @@ func (bot *Bot) ResetCache(id discord.GuildID, channels ...discord.ChannelID) {
 	}
 }
 
-func (bot *Bot) getWebhook(guildID discord.GuildID, channelID discord.ChannelID, name string) (*discord.Webhook, error) {
-	ws, err := bot.State(guildID).ChannelWebhooks(channelID)
+func (bot *Bot) getWebhook(channelID discord.ChannelID, name string) (*discord.Webhook, error) {
+	ws, err := bot.State(0).ChannelWebhooks(channelID)
 	if err == nil {
 		for _, w := range ws {
 			if w.Name == name && (w.User.ID == bot.Router.Bot.ID || !w.User.ID.IsValid()) {
@@ -154,7 +154,7 @@ func (bot *Bot) getWebhook(guildID discord.GuildID, channelID discord.ChannelID,
 		return nil, err
 	}
 
-	w, err := bot.State(guildID).CreateWebhook(channelID, api.CreateWebhookData{
+	w, err := bot.State(0).CreateWebhook(channelID, api.CreateWebhookData{
 		Name: name,
 	})
 	return w, err
@@ -172,7 +172,7 @@ func (bot *Bot) webhookCache(t string, guildID discord.GuildID, ch discord.Chann
 			bot.Sugar.Errorf("Error fetching webhook: %v", err)
 		}
 
-		wh, err = bot.getWebhook(guildID, ch, bot.Router.Bot.Username)
+		wh, err = bot.getWebhook(ch, bot.Router.Bot.Username)
 		if err != nil {
 			return nil, err
 		}
@@ -207,7 +207,7 @@ func (bot *Bot) getRedirect(guildID discord.GuildID, ch discord.ChannelID) (*dis
 	bot.Sugar.Debugf("Couldn't find webhook for %v in cache, falling back to fetching webhook", ch)
 
 	// else, create or fetch webhook
-	wh, err := bot.getWebhook(guildID, ch, bot.Router.Bot.Username)
+	wh, err := bot.getWebhook(ch, bot.Router.Bot.Username)
 	if err != nil {
 		return nil, err
 	}
@@ -226,4 +226,6 @@ func (bot *Bot) getRedirect(guildID discord.GuildID, ch discord.ChannelID) (*dis
 
 func (bot *Bot) webhooksUpdate(ev *gateway.WebhooksUpdateEvent) {
 	bot.ResetCache(ev.GuildID, ev.ChannelID)
+
+	bot.ResetCacheNew(ev.GuildID, ev.ChannelID)
 }

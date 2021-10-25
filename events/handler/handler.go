@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"sync"
 
@@ -46,14 +47,20 @@ func (h *Handler) Call(ev interface{}) {
 func (h *Handler) call(hn handler, ev reflect.Value) {
 	resps := hn.call(ev)
 
-	err := resps[1].Interface().(error)
-	if err != nil {
-		h.HandleError(ev, err)
+	erri := resps[1].Interface()
+	if erri != nil {
+		err := erri.(error)
+		if err != nil {
+			h.HandleError(ev, err)
+		}
 	}
 
-	resp := resps[0].Interface().(*Response)
-	if resp != nil {
-		h.HandleResponse(ev, resp)
+	respi := resps[0].Interface()
+	if respi != nil {
+		resp := respi.(*Response)
+		if resp != nil {
+			h.HandleResponse(ev, resp)
+		}
 	}
 }
 
@@ -71,6 +78,8 @@ func (h *Handler) AddHandler(fn interface{}) {
 
 // Response must be returned by handler functions.
 type Response struct {
+	// Guild ID to log to
+	GuildID discord.GuildID
 	// Channel ID to log to
 	ChannelID discord.ChannelID
 
@@ -84,7 +93,7 @@ type handler struct {
 }
 
 var returnType0 = reflect.TypeOf(&Response{})
-var returnType1 = reflect.TypeOf(error(nil))
+var returnType1 = reflect.TypeOf((*error)(nil)).Elem()
 
 func newHandler(fn interface{}) (handler, error) {
 	fnV := reflect.ValueOf(fn)
@@ -113,6 +122,8 @@ func newHandler(fn interface{}) (handler, error) {
 	}
 
 	if fnT.Out(1) != returnType1 {
+		fmt.Printf("%s\n%s\n", fnT.Out(1), returnType1)
+
 		return handler, errors.New("return 1 must be an error")
 	}
 
