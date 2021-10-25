@@ -31,8 +31,8 @@ type Bot struct {
 	ProxiedTriggers   map[discord.MessageID]struct{}
 	ProxiedTriggersMu sync.Mutex
 
-	BotMessages   map[discord.MessageID]struct{}
-	BotMessagesMu sync.Mutex
+	HandledMessages   map[discord.MessageID]struct{}
+	HandledMessagesMu sync.Mutex
 
 	Invites  map[discord.GuildID][]discord.Invite
 	InviteMu sync.Mutex
@@ -72,7 +72,7 @@ func Init(bot *bot.Bot, log *zap.SugaredLogger) (clearCacheFunc func(discord.Gui
 		Start: time.Now().UTC(),
 
 		ProxiedTriggers: map[discord.MessageID]struct{}{},
-		BotMessages:     map[discord.MessageID]struct{}{},
+		HandledMessages: map[discord.MessageID]struct{}{},
 
 		Invites:        map[discord.GuildID][]discord.Invite{},
 		Members:        map[memberCacheKey]discord.Member{},
@@ -108,10 +108,6 @@ func Init(bot *bot.Bot, log *zap.SugaredLogger) (clearCacheFunc func(discord.Gui
 
 	// add guild create handler
 	b.Router.AddHandler(b.DB.CreateServerIfNotExists)
-
-	// add pluralkit message create handlers
-	b.Router.AddHandler(b.pkMessageCreate)
-	b.Router.AddHandler(b.pkMessageCreateFallback)
 
 	// add message create/update/delete handlers
 	b.Router.AddHandler(b.messageCreate)

@@ -26,7 +26,7 @@ func (db *DB) Report(ctx ErrorContext, err error) *sentry.EventID {
 	if cs == "" {
 		cs = ctx.Command
 	}
-	db.Sugar.Errorf("Error in %v: %v", err)
+	db.Sugar.Errorf("Error in %v: %v", cs, err)
 
 	if db.Hub == nil {
 		return nil

@@ -7,6 +7,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/starshine-sys/catalogger/crypt"
+	"github.com/starshine-sys/pkgo"
 
 	"github.com/Masterminds/squirrel"
 )
@@ -51,6 +52,28 @@ func (db *DB) InsertMessage(m Message) (err error) {
 on conflict (msg_id) do update
 set content = $5`, m.MsgID, m.UserID, m.ChannelID, m.ServerID, m.Content, m.Username, m.Member, m.System)
 	return err
+}
+
+// UpdatePKInfo updates the PluralKit info for the given message, if it exists in the database.
+func (db *DB) UpdatePKInfo(msgID discord.MessageID, userID pkgo.Snowflake, system, member string) (err error) {
+	sql, args, err := sq.Update("messages").Set("user_id", userID).Set("system", system).Set("member", member).Where(squirrel.Eq{"msg_id": msgID}).ToSql()
+	if err != nil {
+		return
+	}
+
+	_, err = db.Exec(context.Background(), sql, args...)
+	return
+}
+
+// UpdateUserID updates *just* the user ID for the given message, if it exists in the database.
+func (db *DB) UpdateUserID(msgID discord.MessageID, userID discord.UserID) (err error) {
+	sql, args, err := sq.Update("messages").Set("user_id", userID).Where(squirrel.Eq{"msg_id": msgID}).ToSql()
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(context.Background(), sql, args...)
+	return
 }
 
 // GetMessage gets a single message
