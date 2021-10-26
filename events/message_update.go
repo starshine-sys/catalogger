@@ -10,39 +10,32 @@ import (
 	"github.com/jackc/pgx/v4"
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/db"
+	"github.com/starshine-sys/catalogger/events/handler"
 )
 
-func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
+func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) (*handler.Response, error) {
 	if !m.GuildID.IsValid() || !m.Author.ID.IsValid() {
-		return
+		return nil, nil
 	}
 
 	// sometimes we get message update events without any content
 	// so just ignore those
 	if m.Content == "" {
-		return
+		return nil, nil
 	}
 
 	channel, err := bot.State(m.GuildID).Channel(m.ChannelID)
 	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.MessageUpdate,
-			GuildID: m.GuildID,
-		}, err)
-		return
+		return nil, err
 	}
 
 	ch, err := bot.DB.Channels(m.GuildID)
 	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.MessageUpdate,
-			GuildID: m.GuildID,
-		}, err)
-		return
+		return nil, err
 	}
 
 	if !ch[keys.MessageUpdate].IsValid() {
-		return
+		return nil, nil
 	}
 
 	// if the channel is blacklisted, return
@@ -52,18 +45,18 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 	}
 	var blacklisted bool
 	if bot.DB.QueryRow(context.Background(), "select exists(select id from guilds where $1 = any(ignored_channels) and id = $2)", channelID, m.GuildID).Scan(&blacklisted); blacklisted {
-		return
+		return nil, nil
 	}
 
 	// try getting the message
 	msg, err := bot.DB.GetMessage(m.ID)
 	if err != nil {
 		if errors.Cause(err) != pgx.ErrNoRows {
-			bot.Sugar.Errorf("Error fetching message ID %v from database: %v", m.ID, err)
+			return nil, err
 		}
 
 		// insert message and return
-		bot.DB.InsertMessage(db.Message{
+		err = bot.DB.InsertMessage(db.Message{
 			MsgID:     m.ID,
 			UserID:    m.Author.ID,
 			ChannelID: m.ChannelID,
@@ -72,36 +65,19 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 
 			Content: m.Content,
 		})
-		return
+		return nil, err
 	}
 
-	wh, err := bot.webhookCache(keys.MessageUpdate, m.GuildID, ch[keys.MessageUpdate])
-	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.MessageUpdate,
-			GuildID: m.GuildID,
-		}, err)
-		return
-	}
+	var resp handler.Response
+	resp.ChannelID = ch[keys.MessageUpdate]
 
 	redirects, err := bot.DB.Redirects(m.GuildID)
 	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.MessageUpdate,
-			GuildID: m.GuildID,
-		}, err)
-		return
+		return nil, err
 	}
 
 	if redirects[channelID.String()].IsValid() {
-		wh, err = bot.getRedirect(m.GuildID, redirects[channelID.String()])
-		if err != nil {
-			bot.DB.Report(db.ErrorContext{
-				Event:   keys.MessageUpdate,
-				GuildID: m.GuildID,
-			}, err)
-			return
-		}
+		resp.ChannelID = redirects[channelID.String()]
 	}
 
 	mention := fmt.Sprintf("%v\n%v#%v\nID: %v", m.Author.Mention(), m.Author.Username, m.Author.Discriminator, m.Author.ID)
@@ -129,7 +105,7 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 	// including stuff like the message getting pinned
 	// so we just ignore those updates
 	if updated == msg.Content {
-		return
+		return nil, nil
 	}
 
 	if len(msg.Content) > 1000 {
@@ -272,7 +248,7 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 		Value: fmt.Sprintf("https://discord.com/channels/%v/%v/%v", m.GuildID, m.ChannelID, m.ID),
 	})
 
-	bot.Queue(wh, keys.MessageUpdate, e)
+	resp.Embeds = append(resp.Embeds, e)
 
 	// update the message
 	username := m.Author.Username
@@ -280,7 +256,7 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 		username += "#" + m.Author.Discriminator
 	}
 
-	bot.DB.InsertMessage(db.Message{
+	err = bot.DB.InsertMessage(db.Message{
 		MsgID:     m.ID,
 		UserID:    m.Author.ID,
 		ChannelID: m.ChannelID,
@@ -291,4 +267,5 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) {
 
 		Content: m.Content,
 	})
+	return &resp, err
 }

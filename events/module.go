@@ -17,7 +17,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/state"
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/bot"
-	"github.com/starshine-sys/catalogger/db"
+	"github.com/starshine-sys/catalogger/events/eventcollector"
 	"github.com/starshine-sys/catalogger/events/handler"
 	"go.uber.org/zap"
 )
@@ -29,6 +29,8 @@ const deleteAfterDays = 15
 type Bot struct {
 	*bot.Bot
 	Sugar *zap.SugaredLogger
+
+	SentryEnricher *handler.SentryHandler
 
 	ProxiedTriggers   map[discord.MessageID]struct{}
 	ProxiedTriggersMu sync.Mutex
@@ -69,20 +71,21 @@ func Init(bot *bot.Bot, log *zap.SugaredLogger) (clearCacheFunc func(discord.Gui
 	joinLeaveLog, _ := discord.ParseSnowflake(os.Getenv("JOIN_LEAVE_LOG"))
 
 	b := &Bot{
-		Bot:   bot,
-		Sugar: log.Named("event"),
-		Start: time.Now().UTC(),
+		Bot:            bot,
+		Sugar:          log.Named("event"),
+		Start:          time.Now().UTC(),
+		SentryEnricher: eventcollector.New(),
 
-		ProxiedTriggers: map[discord.MessageID]struct{}{},
-		HandledMessages: map[discord.MessageID]struct{}{},
+		ProxiedTriggers: make(map[discord.MessageID]struct{}),
+		HandledMessages: make(map[discord.MessageID]struct{}),
 
-		Invites:        map[discord.GuildID][]discord.Invite{},
-		Members:        map[memberCacheKey]discord.Member{},
-		Channels:       map[discord.ChannelID]discord.Channel{},
-		Roles:          map[discord.RoleID]discord.Role{},
-		Guilds:         map[discord.GuildID]discord.Guild{},
-		Queues:         map[discord.WebhookID]*Queue{},
-		WebhookClients: map[discord.WebhookID]*webhook.Client{},
+		Invites:        make(map[discord.GuildID][]discord.Invite),
+		Members:        make(map[memberCacheKey]discord.Member),
+		Channels:       make(map[discord.ChannelID]discord.Channel),
+		Roles:          make(map[discord.RoleID]discord.Role),
+		Guilds:         make(map[discord.GuildID]discord.Guild),
+		Queues:         make(map[discord.WebhookID]*Queue),
+		WebhookClients: make(map[discord.WebhookID]*webhook.Client),
 
 		BotJoinLeaveLog: discord.ChannelID(joinLeaveLog),
 	}
@@ -100,13 +103,7 @@ func Init(bot *bot.Bot, log *zap.SugaredLogger) (clearCacheFunc func(discord.Gui
 
 	evh := handler.New()
 	evh.HandleResponse = b.handleResponse
-	evh.HandleError = func(ev reflect.Value, err error) {
-		evName := ev.Elem().Type().Name()
-
-		bot.DB.Report(db.ErrorContext{
-			Event: evName,
-		}, err)
-	}
+	evh.HandleError = b.handleError
 
 	b.Router.AddHandler(evh.Call)
 
@@ -118,10 +115,10 @@ func Init(bot *bot.Bot, log *zap.SugaredLogger) (clearCacheFunc func(discord.Gui
 	b.Router.AddHandler(b.DB.CreateServerIfNotExists)
 
 	// add message create/update/delete handlers
-	b.Router.AddHandler(b.messageCreate)
-	b.Router.AddHandler(b.messageUpdate)
-	b.Router.AddHandler(b.messageDelete)
-	b.Router.AddHandler(b.bulkMessageDelete)
+	evh.AddHandler(b.messageCreate)
+	evh.AddHandler(b.messageUpdate)
+	evh.AddHandler(b.messageDelete)
+	evh.AddHandler(b.bulkMessageDelete)
 
 	// add guild member handlers
 	b.Router.AddHandler(b.guildMemberAdd)
@@ -343,4 +340,21 @@ func (bot *Bot) updateStatusLoop(s *state.State) {
 
 		time.Sleep(10 * time.Minute)
 	}
+}
+
+// handleError handles any errors in event handlers
+func (bot *Bot) handleError(ev reflect.Value, err error) {
+	evName := ev.Elem().Type().Name()
+
+	bot.Sugar.Errorf("Error in %v: %v", evName, err)
+
+	if bot.DB.Hub == nil {
+		return
+	}
+
+	hub := bot.DB.Hub.Clone()
+
+	bot.SentryEnricher.Handle(hub, ev.Interface())
+
+	hub.CaptureException(err)
 }

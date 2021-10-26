@@ -9,37 +9,29 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
-	"github.com/starshine-sys/catalogger/db"
+	"github.com/starshine-sys/catalogger/events/handler"
 )
 
 // Messages with these prefixes will get ignored
-var editPrefixes = []string{"pk;edit", "pk!edit"}
+var editPrefixes = []string{"pk;edit", "pk!edit", "pk;e ", "pk!e "}
 
-func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
+func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) (*handler.Response, error) {
 	if !m.GuildID.IsValid() {
-		return
+		return nil, nil
 	}
 
 	channel, err := bot.State(m.GuildID).Channel(m.ChannelID)
 	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.MessageDelete,
-			GuildID: m.GuildID,
-		}, err)
-		return
+		return nil, err
 	}
 
 	ch, err := bot.DB.Channels(m.GuildID)
 	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.MessageDelete,
-			GuildID: m.GuildID,
-		}, err)
-		return
+		return nil, err
 	}
 
 	if !ch[keys.MessageDelete].IsValid() {
-		return
+		return nil, nil
 	}
 
 	// if the channel is blacklisted, return
@@ -49,36 +41,19 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 	}
 	var blacklisted bool
 	if bot.DB.QueryRow(context.Background(), "select exists(select id from guilds where $1 = any(ignored_channels) and id = $2)", channelID, m.GuildID).Scan(&blacklisted); blacklisted {
-		return
+		return nil, nil
 	}
 
-	wh, err := bot.webhookCache(keys.MessageDelete, m.GuildID, ch[keys.MessageDelete])
-	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.MessageDelete,
-			GuildID: m.GuildID,
-		}, err)
-		return
-	}
+	var resp handler.Response
+	resp.ChannelID = ch[keys.MessageDelete]
 
 	redirects, err := bot.DB.Redirects(m.GuildID)
 	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.MessageDelete,
-			GuildID: m.GuildID,
-		}, err)
-		return
+		return nil, err
 	}
 
 	if redirects[channelID.String()].IsValid() {
-		wh, err = bot.getRedirect(m.GuildID, redirects[channelID.String()])
-		if err != nil {
-			bot.DB.Report(db.ErrorContext{
-				Event:   keys.MessageDelete,
-				GuildID: m.GuildID,
-			}, err)
-			return
-		}
+		resp.ChannelID = redirects[channelID.String()]
 	}
 
 	// sleep for 5 seconds to give other handlers time to do their thing
@@ -90,7 +65,7 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 		bot.DB.DeleteMessage(m.ID)
 		delete(bot.ProxiedTriggers, m.ID)
 		bot.ProxiedTriggersMu.Unlock()
-		return
+		return nil, nil
 	}
 	bot.ProxiedTriggersMu.Unlock()
 
@@ -106,14 +81,14 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 			Timestamp: discord.NewTimestamp(m.ID.Time()),
 		}
 
-		bot.Send(wh, keys.MessageDelete, e)
-		return
+		resp.Embeds = append(resp.Embeds, e)
+		return &resp, nil
 	}
 
 	// ignore any pk;edit messages
 	if hasAnyPrefixLower(msg.Content, editPrefixes...) {
 		bot.DB.DeleteMessage(m.ID)
-		return
+		return nil, nil
 	}
 
 	mention := msg.UserID.Mention()
@@ -186,15 +161,10 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) {
 		}...)
 	}
 
-	bot.Queue(wh, keys.MessageDelete, e)
-
 	err = bot.DB.DeleteMessage(msg.MsgID)
-	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.MessageDelete,
-			GuildID: m.GuildID,
-		}, err)
-	}
+
+	resp.Embeds = append(resp.Embeds, e)
+	return &resp, err
 }
 
 func hasAnyPrefixLower(s string, prefixes ...string) bool {

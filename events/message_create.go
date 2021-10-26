@@ -8,6 +8,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/catalogger/db"
+	"github.com/starshine-sys/catalogger/events/handler"
 	"github.com/starshine-sys/pkgo"
 )
 
@@ -23,41 +24,29 @@ var ignoreBotNames = [...]string{
 	"GitHub",
 }
 
-func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) {
+func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) (*handler.Response, error) {
 	if !m.GuildID.IsValid() {
-		return
+		return nil, nil
 	}
 
 	ch, err := bot.DB.Channels(m.GuildID)
 	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   "message_create",
-			GuildID: m.GuildID,
-		}, err)
-		return
+		return nil, err
 	}
 
 	if !ch[keys.MessageDelete].IsValid() && !ch[keys.MessageUpdate].IsValid() && !ch[keys.MessageDeleteBulk].IsValid() {
-		return
+		return nil, nil
 	}
 
 	// if the channel is blacklisted, return
 	var blacklisted bool
 	if bot.DB.QueryRow(context.Background(), "select exists(select id from guilds where $1 = any(ignored_channels) and id = $2)", m.ChannelID, m.GuildID).Scan(&blacklisted); blacklisted {
-		return
+		return nil, nil
 	}
 
 	for _, id := range pkBotsToCheck {
 		if m.Author.ID == id {
-			err = bot.pkMessageCreate(m)
-			if err != nil {
-				bot.DB.Report(db.ErrorContext{
-					Event:   "message_create",
-					GuildID: m.GuildID,
-				}, err)
-			}
-
-			return
+			return bot.pkMessageCreate(m)
 		}
 	}
 
@@ -78,15 +67,11 @@ func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) {
 
 	err = bot.DB.InsertMessage(msg)
 	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   "message_create",
-			GuildID: m.GuildID,
-		}, err)
-		return
+		return nil, err
 	}
 
 	if !m.WebhookID.IsValid() {
-		return
+		return nil, nil
 	}
 
 	// set bot name
@@ -101,7 +86,7 @@ func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) {
 		for _, name := range ignoreBotNames {
 			if m.Author.Username == name {
 				bot.Sugar.Debugf("Ignoring webhook message by %v", m.Author.Tag())
-				return
+				return nil, nil
 			}
 		}
 	}
@@ -114,7 +99,7 @@ func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) {
 	if _, ok := bot.HandledMessages[m.ID]; ok {
 		delete(bot.HandledMessages, m.ID)
 		bot.HandledMessagesMu.Unlock()
-		return
+		return nil, nil
 	}
 	bot.HandledMessagesMu.Unlock()
 
@@ -123,15 +108,11 @@ func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) {
 	pkm, err := pk.Message(pkgo.Snowflake(m.ID))
 	if err != nil {
 		if err == pkgo.ErrMsgNotFound || err == pkgo.ErrNotFound {
-			return
+			return nil, nil
 		}
 
 		bot.Sugar.Errorf("Error getting message info from the PK API: %v", err)
-		bot.DB.Report(db.ErrorContext{
-			Event:   "message_create",
-			GuildID: m.GuildID,
-		}, err)
-		return
+		return nil, err
 	}
 
 	bot.ProxiedTriggersMu.Lock()
@@ -139,12 +120,7 @@ func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) {
 	bot.ProxiedTriggersMu.Unlock()
 
 	err = bot.DB.UpdatePKInfo(m.ID, pkm.Sender, pkm.System.ID, pkm.Member.ID)
-	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   "message_create",
-			GuildID: m.GuildID,
-		}, err)
-	}
+	return nil, err
 }
 
 var pkBotsToCheck = []discord.UserID{466378653216014359}
@@ -154,7 +130,7 @@ var (
 	footerRegex = regexp.MustCompile(`^System ID: (\w{5,6}) \| Member ID: (\w{5,6}) \| Sender: .+ \((\d+)\) \| Message ID: (\d+) \| Original Message ID: (\d+)$`)
 )
 
-func (bot *Bot) pkMessageCreate(m *gateway.MessageCreateEvent) (err error) {
+func (bot *Bot) pkMessageCreate(m *gateway.MessageCreateEvent) (resp *handler.Response, err error) {
 	// ensure we've actually stored the message
 	time.Sleep(500 * time.Millisecond)
 
@@ -192,12 +168,12 @@ func (bot *Bot) pkMessageCreate(m *gateway.MessageCreateEvent) (err error) {
 
 	err = bot.DB.UpdatePKInfo(msgID, pkgo.Snowflake(userID), sysID, memberID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	bot.HandledMessagesMu.Lock()
 	bot.HandledMessages[msgID] = struct{}{}
 	bot.HandledMessagesMu.Unlock()
 
-	return nil
+	return nil, nil
 }

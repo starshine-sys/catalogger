@@ -8,24 +8,24 @@ import (
 	"github.com/diamondburned/arikawa/v3/api"
 	"github.com/diamondburned/arikawa/v3/api/webhook"
 	"github.com/diamondburned/arikawa/v3/discord"
+	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/catalogger/db"
 	"github.com/starshine-sys/catalogger/events/handler"
 )
 
 // shouldQueue is a map of all events that should be put into a webhook queue
 // doesn't need a mutex because it's never modified
+// yes this is a mess of reflection, but at least that means we'll get a compiler error if any of these types change
 var shouldQueue = map[string]bool{
-	keys.GuildMemberUpdate:     true,
-	keys.GuildMemberNickUpdate: true,
-	keys.GuildKeyRoleUpdate:    true,
-	keys.MessageDelete:         true,
-	keys.MessageUpdate:         true,
-	keys.GuildMemberAdd:        true,
-	keys.GuildMemberRemove:     true,
-	keys.GuildBanAdd:           true,
-	keys.GuildBanRemove:        true,
-	keys.InviteCreate:          true,
-	keys.InviteDelete:          true,
+	reflect.ValueOf(&gateway.GuildMemberUpdateEvent{}).Elem().Type().Name(): true,
+	reflect.ValueOf(&gateway.MessageDeleteEvent{}).Elem().Type().Name():     true,
+	reflect.ValueOf(&gateway.MessageUpdateEvent{}).Elem().Type().Name():     true,
+	reflect.ValueOf(&gateway.GuildMemberAddEvent{}).Elem().Type().Name():    true,
+	reflect.ValueOf(&gateway.GuildMemberRemoveEvent{}).Elem().Type().Name(): true,
+	reflect.ValueOf(&gateway.GuildBanAddEvent{}).Elem().Type().Name():       true,
+	reflect.ValueOf(&gateway.GuildBanRemoveEvent{}).Elem().Type().Name():    true,
+	reflect.ValueOf(&gateway.InviteCreateEvent{}).Elem().Type().Name():      true,
+	reflect.ValueOf(&gateway.InviteDeleteEvent{}).Elem().Type().Name():      true,
 }
 
 // Send either sends a slice of embeds immediately, or queues a single embed
@@ -189,6 +189,24 @@ func (bot *Bot) handleResponse(ev reflect.Value, resp *handler.Response) {
 			Event:   evName,
 			GuildID: resp.GuildID,
 		}, err)
+		return
+	}
+
+	if len(resp.Files) != 0 {
+		client := bot.WebhookClient(wh)
+
+		_, err = client.ExecuteAndWait(webhook.ExecuteData{
+			AvatarURL: bot.Router.Bot.AvatarURL(),
+			Embeds:    resp.Embeds,
+			Files:     resp.Files,
+			// won't ping anyway because it's all embeds, but can't hurt
+			AllowedMentions: &api.AllowedMentions{
+				Parse: []api.AllowedMentionType{},
+			},
+		})
+		if err != nil {
+			bot.handleError(ev, err)
+		}
 		return
 	}
 

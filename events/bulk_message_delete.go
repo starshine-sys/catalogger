@@ -7,16 +7,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/diamondburned/arikawa/v3/api/webhook"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/diamondburned/arikawa/v3/utils/sendpart"
 	"github.com/starshine-sys/bcr"
 
 	"github.com/starshine-sys/catalogger/db"
+	"github.com/starshine-sys/catalogger/events/handler"
 )
 
-func (bot *Bot) bulkMessageDelete(ev *gateway.MessageDeleteBulkEvent) {
+func (bot *Bot) bulkMessageDelete(ev *gateway.MessageDeleteBulkEvent) (resp *handler.Response, err error) {
 	s, _ := bot.Router.StateFromGuildID(ev.GuildID)
 
 	if !ev.GuildID.IsValid() {
@@ -25,20 +25,12 @@ func (bot *Bot) bulkMessageDelete(ev *gateway.MessageDeleteBulkEvent) {
 
 	channel, err := bot.State(ev.GuildID).Channel(ev.ChannelID)
 	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.MessageDeleteBulk,
-			GuildID: ev.GuildID,
-		}, err)
-		return
+		return nil, err
 	}
 
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.MessageDeleteBulk,
-			GuildID: ev.GuildID,
-		}, err)
-		return
+		return nil, err
 	}
 
 	if !ch[keys.MessageDeleteBulk].IsValid() {
@@ -55,13 +47,8 @@ func (bot *Bot) bulkMessageDelete(ev *gateway.MessageDeleteBulkEvent) {
 		return
 	}
 
-	wh, err := bot.webhookCache(keys.MessageDeleteBulk, ev.GuildID, ch[keys.MessageDeleteBulk])
-	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.MessageDeleteBulk,
-			GuildID: ev.GuildID,
-		}, err)
-		return
+	resp = &handler.Response{
+		ChannelID: ch[keys.MessageDeleteBulk],
 	}
 
 	redirects, err := bot.DB.Redirects(ev.GuildID)
@@ -74,14 +61,7 @@ func (bot *Bot) bulkMessageDelete(ev *gateway.MessageDeleteBulkEvent) {
 	}
 
 	if redirects[channelID.String()].IsValid() {
-		wh, err = bot.getRedirect(ev.GuildID, redirects[channelID.String()])
-		if err != nil {
-			bot.DB.Report(db.ErrorContext{
-				Event:   keys.MessageDeleteBulk,
-				GuildID: ev.GuildID,
-			}, err)
-			return
-		}
+		resp.ChannelID = redirects[channelID.String()]
 	}
 
 	var msgs []*db.Message
@@ -147,30 +127,17 @@ PK system: %v / PK member: %v
 		buf += s
 	}
 
-	file := sendpart.File{
+	resp.Files = []sendpart.File{{
 		Name:   fmt.Sprintf("bulk-delete-%v-%v.txt", ev.ChannelID, time.Now().UTC().Format("2006-01-02T15-04-05")),
 		Reader: strings.NewReader(buf),
-	}
+	}}
 
-	e := discord.Embed{
+	resp.Embeds = []discord.Embed{{
 		Title:       "Bulk message deletion",
 		Description: fmt.Sprintf("%v messages were deleted in %v.\n%v messages archived, %v messages not found.", len(ev.IDs), ev.ChannelID.Mention(), found, notFound),
 		Color:       bcr.ColourRed,
 		Timestamp:   discord.NowTimestamp(),
-	}
+	}}
 
-	client := bot.WebhookClient(wh)
-
-	_, err = client.ExecuteAndWait(webhook.ExecuteData{
-		AvatarURL: bot.Router.Bot.AvatarURL(),
-		Embeds:    []discord.Embed{e},
-		Files:     []sendpart.File{file},
-	})
-	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.MessageDeleteBulk,
-			GuildID: ev.GuildID,
-		}, err)
-		return
-	}
+	return resp, nil
 }
