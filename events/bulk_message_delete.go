@@ -2,6 +2,7 @@ package events
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -11,6 +12,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/diamondburned/arikawa/v3/utils/sendpart"
 	"github.com/starshine-sys/bcr"
+	"github.com/starshine-sys/dischtml"
 
 	"github.com/starshine-sys/catalogger/db"
 	"github.com/starshine-sys/catalogger/events/handler"
@@ -98,6 +100,16 @@ func (bot *Bot) bulkMessageDelete(ev *gateway.MessageDeleteBulkEvent) (resp *han
 	// now sort the messages
 	sort.Slice(msgs, func(i, j int) bool { return msgs[i].MsgID < msgs[j].MsgID })
 
+	html, err := bot.bulkHTML(ev.GuildID, ev.ChannelID, msgs)
+	if err != nil {
+		bot.Sugar.Errorf("Error creating HTML output: %v", err)
+	} else {
+		resp.Files = append(resp.Files, sendpart.File{
+			Name:   fmt.Sprintf("bulk-delete-%v-%v.html", ev.ChannelID, time.Now().UTC().Format("2006-01-02T15-04-05")),
+			Reader: strings.NewReader(html),
+		})
+	}
+
 	var buf string
 	for _, m := range msgs {
 		s := fmt.Sprintf(`[%v | %v] %v (%v)
@@ -123,10 +135,10 @@ PK system: %v / PK member: %v
 		buf += s
 	}
 
-	resp.Files = []sendpart.File{{
+	resp.Files = append(resp.Files, sendpart.File{
 		Name:   fmt.Sprintf("bulk-delete-%v-%v.txt", ev.ChannelID, time.Now().UTC().Format("2006-01-02T15-04-05")),
 		Reader: strings.NewReader(buf),
-	}}
+	})
 
 	resp.Embeds = []discord.Embed{{
 		Title:       "Bulk message deletion",
@@ -136,4 +148,98 @@ PK system: %v / PK member: %v
 	}}
 
 	return resp, nil
+}
+
+func (bot *Bot) bulkHTML(guildID discord.GuildID, channelID discord.ChannelID, msgs []*db.Message) (string, error) {
+	bot.GuildsMu.RLock()
+	g, ok := bot.Guilds[guildID]
+	if !ok {
+		bot.GuildsMu.RUnlock()
+		return "", errors.New("guild not found")
+	}
+	bot.GuildsMu.RUnlock()
+
+	bot.ChannelsMu.RLock()
+	ch, ok := bot.Channels[channelID]
+	if !ok {
+		bot.ChannelsMu.RUnlock()
+		return "", errors.New("channel not found")
+	}
+	bot.ChannelsMu.RUnlock()
+
+	chans, err := bot.State(g.ID).Channels(g.ID)
+	if err != nil {
+		return "", err
+	}
+
+	rls, err := bot.State(g.ID).Roles(g.ID)
+	if err != nil {
+		return "", err
+	}
+
+	members := bot.GuildMembers(g.ID)
+	users := make([]discord.User, len(members))
+	for i, m := range members {
+		users[i] = m.User
+	}
+
+	c := dischtml.Converter{
+		Guild:    g,
+		Channels: chans,
+		Roles:    rls,
+		Members:  members,
+		Users:    users,
+	}
+
+	dm := make([]discord.Message, len(msgs))
+	for i, m := range msgs {
+		var u discord.User
+		var found bool
+
+		for _, user := range users {
+			if user.ID == m.UserID {
+				u = user
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			u = discord.User{
+				ID:            m.UserID,
+				Username:      m.Username,
+				Discriminator: "#0000",
+				Avatar:        "",
+			}
+		}
+
+		dm[i] = discord.Message{
+			ID:        m.MsgID,
+			ChannelID: m.ChannelID,
+			GuildID:   m.ServerID,
+			Content:   m.Content,
+			Author:    u,
+		}
+	}
+
+	s, err := c.ConvertHTML(dm)
+	if err != nil {
+		return "", err
+	}
+
+	return dischtml.Wrap(g, ch, s, len(dm))
+}
+
+// GuildMembers returns all cached members of the given guild.
+func (bot *Bot) GuildMembers(id discord.GuildID) (members []discord.Member) {
+	bot.MembersMu.RLock()
+	defer bot.MembersMu.RUnlock()
+
+	for k, m := range bot.Members {
+		if k.GuildID == id {
+			members = append(members, m)
+		}
+	}
+
+	return members
 }

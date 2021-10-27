@@ -42,16 +42,16 @@ type Bot struct {
 	InviteMu sync.Mutex
 
 	Members   map[memberCacheKey]discord.Member
-	MembersMu sync.Mutex
+	MembersMu sync.RWMutex
 
 	Channels   map[discord.ChannelID]discord.Channel
-	ChannelsMu sync.Mutex
+	ChannelsMu sync.RWMutex
 
 	Roles   map[discord.RoleID]discord.Role
 	RolesMu sync.Mutex
 
 	Guilds   map[discord.GuildID]discord.Guild
-	GuildsMu sync.Mutex
+	GuildsMu sync.RWMutex
 
 	BotJoinLeaveLog discord.ChannelID
 
