@@ -10,21 +10,30 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
-	"github.com/starshine-sys/catalogger/db"
+	"github.com/starshine-sys/catalogger/events/handler"
 )
 
-func (bot *Bot) keyroleUpdate(ch discord.ChannelID, ev *gateway.GuildMemberUpdateEvent, added, removed []discord.RoleID) {
-	if !ch.IsValid() {
+// GuildKeyRoleUpdateEvent ...
+type GuildKeyRoleUpdateEvent struct {
+	*gateway.GuildMemberUpdateEvent
+
+	ChannelID    discord.ChannelID
+	AddedRoles   []discord.RoleID
+	RemovedRoles []discord.RoleID
+}
+
+func (bot *Bot) keyroleUpdate(ev *GuildKeyRoleUpdateEvent) (resp *handler.Response, err error) {
+	if !ev.ChannelID.IsValid() {
 		return
 	}
 
+	resp = &handler.Response{
+		ChannelID: ev.ChannelID,
+	}
+
 	var keyRoles []uint64
-	err := bot.DB.QueryRow(context.Background(), "select key_roles from guilds where id = $1", ev.GuildID).Scan(&keyRoles)
+	err = bot.DB.QueryRow(context.Background(), "select key_roles from guilds where id = $1", ev.GuildID).Scan(&keyRoles)
 	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.GuildKeyRoleUpdate,
-			GuildID: ev.GuildID,
-		}, err)
 		return
 	}
 
@@ -33,7 +42,7 @@ func (bot *Bot) keyroleUpdate(ch discord.ChannelID, ev *gateway.GuildMemberUpdat
 	}
 
 	var addedKeyRoles, removedKeyRoles []discord.RoleID
-	for _, r := range added {
+	for _, r := range ev.AddedRoles {
 		for _, k := range keyRoles {
 			if r == discord.RoleID(k) {
 				addedKeyRoles = append(addedKeyRoles, r)
@@ -41,7 +50,7 @@ func (bot *Bot) keyroleUpdate(ch discord.ChannelID, ev *gateway.GuildMemberUpdat
 		}
 	}
 
-	for _, r := range removed {
+	for _, r := range ev.RemovedRoles {
 		for _, k := range keyRoles {
 			if r == discord.RoleID(k) {
 				removedKeyRoles = append(removedKeyRoles, r)
@@ -54,16 +63,7 @@ func (bot *Bot) keyroleUpdate(ch discord.ChannelID, ev *gateway.GuildMemberUpdat
 	}
 
 	// register event in metrics
-	go bot.DB.Stats.RegisterEvent("GuildKeyRoleUpdate")
-
-	wh, err := bot.webhookCache(keys.GuildKeyRoleUpdate, ev.GuildID, ch)
-	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.GuildKeyRoleUpdate,
-			GuildID: ev.GuildID,
-		}, err)
-		return
-	}
+	go bot.DB.Stats.RegisterEvent("GuildKeyRoleUpdateEvent")
 
 	e := discord.Embed{
 		Title: "Key roles added or removed",
@@ -149,5 +149,6 @@ func (bot *Bot) keyroleUpdate(ch discord.ChannelID, ev *gateway.GuildMemberUpdat
 		})
 	}
 
-	bot.Queue(wh, keys.GuildKeyRoleUpdate, e)
+	resp.Embeds = append(resp.Embeds, e)
+	return resp, err
 }

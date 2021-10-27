@@ -6,10 +6,10 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
-	"github.com/starshine-sys/catalogger/db"
+	"github.com/starshine-sys/catalogger/events/handler"
 )
 
-func (bot *Bot) guildUpdate(ev *gateway.GuildUpdateEvent) {
+func (bot *Bot) guildUpdate(ev *gateway.GuildUpdateEvent) (resp *handler.Response, err error) {
 	bot.GuildsMu.Lock()
 	old, ok := bot.Guilds[ev.ID]
 	if !ok {
@@ -23,10 +23,6 @@ func (bot *Bot) guildUpdate(ev *gateway.GuildUpdateEvent) {
 
 	ch, err := bot.DB.Channels(ev.ID)
 	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.GuildUpdate,
-			GuildID: ev.ID,
-		}, err)
 		return
 	}
 
@@ -34,13 +30,9 @@ func (bot *Bot) guildUpdate(ev *gateway.GuildUpdateEvent) {
 		return
 	}
 
-	wh, err := bot.webhookCache(keys.GuildUpdate, ev.ID, ch[keys.GuildUpdate])
-	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.GuildUpdate,
-			GuildID: ev.ID,
-		}, err)
-		return
+	resp = &handler.Response{
+		ChannelID: ch[keys.GuildUpdate],
+		GuildID:   ev.ID,
 	}
 
 	var changed bool
@@ -72,13 +64,11 @@ func (bot *Bot) guildUpdate(ev *gateway.GuildUpdateEvent) {
 	if ev.OwnerID != old.OwnerID {
 		newOwner, err := bot.State(ev.ID).User(ev.OwnerID)
 		if err != nil {
-			bot.Sugar.Errorf("Error getting new owner: %v", err)
-			return
+			return nil, err
 		}
 		oldOwner, err := bot.State(ev.ID).User(old.OwnerID)
 		if err != nil {
-			bot.Sugar.Errorf("Error getting old owner: %v", err)
-			return
+			return nil, err
 		}
 
 		e.Fields = append(e.Fields, discord.EmbedField{
@@ -92,5 +82,6 @@ func (bot *Bot) guildUpdate(ev *gateway.GuildUpdateEvent) {
 		return
 	}
 
-	bot.Send(wh, keys.GuildUpdate, e)
+	resp.Embeds = append(resp.Embeds, e)
+	return
 }

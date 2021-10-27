@@ -7,10 +7,10 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
-	"github.com/starshine-sys/catalogger/db"
+	"github.com/starshine-sys/catalogger/events/handler"
 )
 
-func (bot *Bot) guildRoleDelete(ev *gateway.GuildRoleDeleteEvent) {
+func (bot *Bot) guildRoleDelete(ev *gateway.GuildRoleDeleteEvent) (resp *handler.Response, err error) {
 	bot.RolesMu.Lock()
 	old, ok := bot.Roles[ev.RoleID]
 	delete(bot.Roles, ev.RoleID)
@@ -23,10 +23,6 @@ func (bot *Bot) guildRoleDelete(ev *gateway.GuildRoleDeleteEvent) {
 
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.GuildRoleDelete,
-			GuildID: ev.GuildID,
-		}, err)
 		return
 	}
 
@@ -34,13 +30,9 @@ func (bot *Bot) guildRoleDelete(ev *gateway.GuildRoleDeleteEvent) {
 		return
 	}
 
-	wh, err := bot.webhookCache(keys.GuildRoleDelete, ev.GuildID, ch[keys.GuildRoleDelete])
-	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.GuildRoleDelete,
-			GuildID: ev.GuildID,
-		}, err)
-		return
+	resp = &handler.Response{
+		ChannelID: ch[keys.GuildRoleDelete],
+		GuildID:   ev.GuildID,
 	}
 
 	e := discord.Embed{
@@ -66,5 +58,6 @@ Created <t:%v> (%v)`, old.Name, old.Color, old.Mentionable, old.Hoist, old.Posit
 		})
 	}
 
-	bot.Send(wh, keys.GuildRoleDelete, e)
+	resp.Embeds = append(resp.Embeds, e)
+	return
 }

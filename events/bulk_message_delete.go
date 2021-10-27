@@ -53,10 +53,6 @@ func (bot *Bot) bulkMessageDelete(ev *gateway.MessageDeleteBulkEvent) (resp *han
 
 	redirects, err := bot.DB.Redirects(ev.GuildID)
 	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.MessageDeleteBulk,
-			GuildID: ev.GuildID,
-		}, err)
 		return
 	}
 

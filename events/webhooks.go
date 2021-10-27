@@ -10,7 +10,6 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/mediocregopher/radix/v4"
-	"github.com/starshine-sys/catalogger/db"
 )
 
 // Errors for the webhook cache
@@ -80,18 +79,8 @@ func redirKey(channelID discord.ChannelID) string {
 // 10 minutes
 const webhookCacheExpiry = "600"
 
-// SetWebhook ...
-func (bot *Bot) SetWebhook(key string, guildID discord.GuildID, w *Webhook) error {
-	return bot.Redis.Do(context.Background(), radix.Cmd(nil, "SET", whKey(key, guildID), w.ID.String()+":"+w.Token, "EX", webhookCacheExpiry))
-}
-
 func (bot *Bot) setRedirWebhook(chID discord.ChannelID, w *Webhook) error {
 	return bot.Redis.Do(context.Background(), radix.Cmd(nil, "SET", redirKey(chID), w.ID.String()+":"+w.Token, "EX", webhookCacheExpiry))
-}
-
-// GetWebhook gets a cached webhook from redis
-func (bot *Bot) GetWebhook(key string, id discord.GuildID) (*Webhook, error) {
-	return bot.fetchCachedKey(whKey(key, id))
 }
 
 func (bot *Bot) fetchCachedKey(key string) (*Webhook, error) {
@@ -122,26 +111,6 @@ func (bot *Bot) fetchCachedKey(key string) (*Webhook, error) {
 	}, nil
 }
 
-// ResetCache ...
-func (bot *Bot) ResetCache(id discord.GuildID, channels ...discord.ChannelID) {
-	var keys []string
-
-	for _, ev := range db.Events {
-		keys = append(keys, whKey(ev, id))
-	}
-
-	for _, ch := range channels {
-		keys = append(keys, redirKey(ch))
-	}
-
-	bot.Sugar.Debugf("Deleting cache entries for %v", id)
-
-	err := bot.Redis.Do(context.Background(), radix.Cmd(nil, "DEL", keys...))
-	if err != nil {
-		bot.Sugar.Errorf("Error resetting webhook cache: %v", err)
-	}
-}
-
 func (bot *Bot) getWebhook(channelID discord.ChannelID, name string) (*discord.Webhook, error) {
 	ws, err := bot.State(0).ChannelWebhooks(channelID)
 	if err == nil {
@@ -158,39 +127,6 @@ func (bot *Bot) getWebhook(channelID discord.ChannelID, name string) (*discord.W
 		Name: name,
 	})
 	return w, err
-}
-
-func (bot *Bot) webhookCache(t string, guildID discord.GuildID, ch discord.ChannelID) (*discord.Webhook, error) {
-	// try getting the cached webhook
-	var wh *discord.Webhook
-
-	w, err := bot.GetWebhook(t, guildID)
-	if err != nil {
-		bot.Sugar.Debugf("Couldn't find webhook for %v in cache, falling back to fetching webhook", ch)
-
-		if err != ErrNotExists && err != ErrInvalid {
-			bot.Sugar.Errorf("Error fetching webhook: %v", err)
-		}
-
-		wh, err = bot.getWebhook(ch, bot.Router.Bot.Username)
-		if err != nil {
-			return nil, err
-		}
-
-		bot.SetWebhook(t, guildID, &Webhook{
-			ID:    wh.ID,
-			Token: wh.Token,
-		})
-	} else {
-		wh = &discord.Webhook{
-			ID:        w.ID,
-			Token:     w.Token,
-			ChannelID: ch,
-		}
-	}
-
-	wh.GuildID = guildID
-	return wh, nil
 }
 
 func (bot *Bot) getRedirect(guildID discord.GuildID, ch discord.ChannelID) (*discord.Webhook, error) {
@@ -226,6 +162,67 @@ func (bot *Bot) getRedirect(guildID discord.GuildID, ch discord.ChannelID) (*dis
 
 func (bot *Bot) webhooksUpdate(ev *gateway.WebhooksUpdateEvent) {
 	bot.ResetCache(ev.GuildID, ev.ChannelID)
+}
 
-	bot.ResetCacheNew(ev.GuildID, ev.ChannelID)
+func whKeyNew(id discord.ChannelID) string {
+	return "wh:" + id.String()
+}
+
+// SetWebhook ...
+func (bot *Bot) SetWebhook(channelID discord.ChannelID, w *Webhook) error {
+	return bot.Redis.Do(context.Background(), radix.Cmd(nil, "SET", whKeyNew(channelID), w.ID.String()+":"+w.Token, "EX", webhookCacheExpiry))
+}
+
+// GetWebhook gets a cached webhook from redis
+func (bot *Bot) GetWebhook(id discord.ChannelID) (*Webhook, error) {
+	return bot.fetchCachedKey(whKeyNew(id))
+}
+
+// ResetCache ...
+func (bot *Bot) ResetCache(id discord.GuildID, channels ...discord.ChannelID) {
+	var keys []string
+
+	for _, ch := range channels {
+		keys = append(keys, whKeyNew(ch))
+	}
+
+	bot.Sugar.Debugf("Deleting cache entries for %v", id)
+
+	err := bot.Redis.Do(context.Background(), radix.Cmd(nil, "DEL", keys...))
+	if err != nil {
+		bot.Sugar.Errorf("Error resetting webhook cache: %v", err)
+	}
+}
+
+func (bot *Bot) webhookCache(guildID discord.GuildID, ch discord.ChannelID) (*discord.Webhook, error) {
+	// try getting the cached webhook
+	var wh *discord.Webhook
+
+	w, err := bot.GetWebhook(ch)
+	if err != nil {
+		bot.Sugar.Debugf("Couldn't find webhook for %v in cache, falling back to fetching webhook", ch)
+
+		if err != ErrNotExists && err != ErrInvalid {
+			bot.Sugar.Errorf("Error fetching webhook: %v", err)
+		}
+
+		wh, err = bot.getWebhook(ch, bot.Router.Bot.Username)
+		if err != nil {
+			return nil, err
+		}
+
+		bot.SetWebhook(ch, &Webhook{
+			ID:    wh.ID,
+			Token: wh.Token,
+		})
+	} else {
+		wh = &discord.Webhook{
+			ID:        w.ID,
+			Token:     w.Token,
+			ChannelID: ch,
+		}
+	}
+
+	wh.GuildID = guildID
+	return wh, nil
 }

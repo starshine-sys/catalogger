@@ -7,10 +7,10 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
-	"github.com/starshine-sys/catalogger/db"
+	"github.com/starshine-sys/catalogger/events/handler"
 )
 
-func (bot *Bot) guildMemberUpdate(ev *gateway.GuildMemberUpdateEvent) {
+func (bot *Bot) guildMemberUpdate(ev *gateway.GuildMemberUpdateEvent) (resp *handler.Response, err error) {
 	bot.MembersMu.Lock()
 	m, ok := bot.Members[memberCacheKey{
 		GuildID: ev.GuildID,
@@ -36,7 +36,7 @@ func (bot *Bot) guildMemberUpdate(ev *gateway.GuildMemberUpdateEvent) {
 
 	if m.Nick != ev.Nick || m.User.Username+"#"+m.User.Discriminator != ev.User.Username+"#"+ev.User.Discriminator || m.User.Avatar != ev.User.Avatar {
 		// username or nickname changed, so run that handler
-		bot.guildMemberNickUpdate(ev, m)
+		return bot.guildMemberNickUpdate(ev, m)
 	}
 
 	// check for added roles
@@ -58,26 +58,22 @@ func (bot *Bot) guildMemberUpdate(ev *gateway.GuildMemberUpdateEvent) {
 
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.GuildMemberUpdate,
-			GuildID: ev.GuildID,
-		}, err)
 		return
 	}
 
-	go bot.keyroleUpdate(ch[keys.GuildKeyRoleUpdate], ev, addedRoles, removedRoles)
+	bot.EventHandler.Call(&GuildKeyRoleUpdateEvent{
+		GuildMemberUpdateEvent: ev,
+		ChannelID:              ch[keys.GuildKeyRoleUpdate],
+		AddedRoles:             addedRoles,
+		RemovedRoles:           removedRoles,
+	})
 
 	if !ch[keys.GuildMemberUpdate].IsValid() {
 		return
 	}
 
-	wh, err := bot.webhookCache(keys.GuildMemberUpdate, ev.GuildID, ch[keys.GuildMemberUpdate])
-	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.GuildMemberUpdate,
-			GuildID: ev.GuildID,
-		}, err)
-		return
+	resp = &handler.Response{
+		ChannelID: ch[keys.GuildMemberUpdate],
 	}
 
 	e := discord.Embed{
@@ -127,19 +123,16 @@ func (bot *Bot) guildMemberUpdate(ev *gateway.GuildMemberUpdateEvent) {
 		})
 	}
 
-	bot.Queue(wh, keys.GuildMemberUpdate, e)
+	resp.Embeds = append(resp.Embeds, e)
+	return resp, err
 }
 
-func (bot *Bot) guildMemberNickUpdate(ev *gateway.GuildMemberUpdateEvent, m discord.Member) {
+func (bot *Bot) guildMemberNickUpdate(ev *gateway.GuildMemberUpdateEvent, m discord.Member) (resp *handler.Response, err error) {
 	// Discord sends this as part of the normal guild member update event, so we register this event manually
 	bot.DB.Stats.RegisterEvent("GuildMemberNickUpdateEvent")
 
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.GuildMemberNickUpdate,
-			GuildID: ev.GuildID,
-		}, err)
 		return
 	}
 
@@ -147,13 +140,8 @@ func (bot *Bot) guildMemberNickUpdate(ev *gateway.GuildMemberUpdateEvent, m disc
 		return
 	}
 
-	wh, err := bot.webhookCache(keys.GuildMemberNickUpdate, ev.GuildID, ch[keys.GuildMemberNickUpdate])
-	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.GuildMemberNickUpdate,
-			GuildID: ev.GuildID,
-		}, err)
-		return
+	resp = &handler.Response{
+		ChannelID: ch[keys.GuildMemberNickUpdate],
 	}
 
 	e := discord.Embed{
@@ -204,7 +192,8 @@ func (bot *Bot) guildMemberNickUpdate(ev *gateway.GuildMemberUpdateEvent, m disc
 		})
 	}
 
-	bot.Queue(wh, keys.GuildMemberNickUpdate, e)
+	resp.Embeds = append(resp.Embeds, e)
+	return resp, err
 }
 
 func roleIn(s []discord.RoleID, id discord.RoleID) (exists bool) {

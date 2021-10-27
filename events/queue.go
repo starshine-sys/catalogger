@@ -18,6 +18,7 @@ import (
 // yes this is a mess of reflection, but at least that means we'll get a compiler error if any of these types change
 var shouldQueue = map[string]bool{
 	reflect.ValueOf(&gateway.GuildMemberUpdateEvent{}).Elem().Type().Name(): true,
+	reflect.ValueOf(&GuildKeyRoleUpdateEvent{}).Elem().Type().Name():        true,
 	reflect.ValueOf(&gateway.MessageDeleteEvent{}).Elem().Type().Name():     true,
 	reflect.ValueOf(&gateway.MessageUpdateEvent{}).Elem().Type().Name():     true,
 	reflect.ValueOf(&gateway.GuildMemberAddEvent{}).Elem().Type().Name():    true,
@@ -183,7 +184,7 @@ func (bot *Bot) handleResponse(ev reflect.Value, resp *handler.Response) {
 
 	evName := ev.Elem().Type().Name()
 
-	wh, err := bot.webhookCacheNew(resp.GuildID, resp.ChannelID)
+	wh, err := bot.webhookCache(resp.GuildID, resp.ChannelID)
 	if err != nil {
 		bot.DB.Report(db.ErrorContext{
 			Event:   evName,
@@ -208,6 +209,10 @@ func (bot *Bot) handleResponse(ev reflect.Value, resp *handler.Response) {
 			bot.handleError(ev, err)
 		}
 		return
+	}
+
+	if len(resp.Embeds) == 0 {
+		bot.Sugar.Infof("Response for event %v was not nil, but has no embeds", evName)
 	}
 
 	bot.Send(wh, evName, resp.Embeds...)

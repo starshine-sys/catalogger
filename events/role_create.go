@@ -7,33 +7,25 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
-	"github.com/starshine-sys/catalogger/db"
+	"github.com/starshine-sys/catalogger/events/handler"
 )
 
-func (bot *Bot) guildRoleCreate(ev *gateway.GuildRoleCreateEvent) {
+func (bot *Bot) guildRoleCreate(ev *gateway.GuildRoleCreateEvent) (resp *handler.Response, err error) {
 	bot.RolesMu.Lock()
 	bot.Roles[ev.Role.ID] = ev.Role
 	bot.RolesMu.Unlock()
 
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.GuildRoleCreate,
-			GuildID: ev.GuildID,
-		}, err)
 		return
 	}
 	if !ch[keys.GuildRoleCreate].IsValid() {
 		return
 	}
 
-	wh, err := bot.webhookCache(keys.GuildRoleCreate, ev.GuildID, ch[keys.GuildRoleCreate])
-	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.GuildRoleCreate,
-			GuildID: ev.GuildID,
-		}, err)
-		return
+	resp = &handler.Response{
+		ChannelID: ch[keys.GuildRoleCreate],
+		GuildID:   ev.GuildID,
 	}
 
 	e := discord.Embed{
@@ -58,5 +50,6 @@ func (bot *Bot) guildRoleCreate(ev *gateway.GuildRoleCreateEvent) {
 		})
 	}
 
-	bot.Send(wh, keys.GuildRoleCreate, e)
+	resp.Embeds = append(resp.Embeds, e)
+	return
 }

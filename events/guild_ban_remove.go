@@ -8,17 +8,13 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
-	"github.com/starshine-sys/catalogger/db"
+	"github.com/starshine-sys/catalogger/events/handler"
 	"github.com/starshine-sys/pkgo"
 )
 
-func (bot *Bot) guildBanRemove(ev *gateway.GuildBanRemoveEvent) {
+func (bot *Bot) guildBanRemove(ev *gateway.GuildBanRemoveEvent) (resp *handler.Response, err error) {
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.GuildBanRemove,
-			GuildID: ev.GuildID,
-		}, err)
 		return
 	}
 
@@ -26,13 +22,8 @@ func (bot *Bot) guildBanRemove(ev *gateway.GuildBanRemoveEvent) {
 		return
 	}
 
-	wh, err := bot.webhookCache(keys.GuildBanRemove, ev.GuildID, ch[keys.GuildBanRemove])
-	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.GuildBanRemove,
-			GuildID: ev.GuildID,
-		}, err)
-		return
+	resp = &handler.Response{
+		ChannelID: ch[keys.GuildBanRemove],
 	}
 
 	e := discord.Embed{
@@ -132,5 +123,6 @@ func (bot *Bot) guildBanRemove(ev *gateway.GuildBanRemoveEvent) {
 		}
 	}
 
-	bot.Send(wh, keys.GuildBanRemove, e)
+	resp.Embeds = append(resp.Embeds, e)
+	return
 }

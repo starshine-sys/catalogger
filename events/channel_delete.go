@@ -6,33 +6,25 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
-	"github.com/starshine-sys/catalogger/db"
+	"github.com/starshine-sys/catalogger/events/handler"
 )
 
-func (bot *Bot) channelDelete(ev *gateway.ChannelDeleteEvent) {
+func (bot *Bot) channelDelete(ev *gateway.ChannelDeleteEvent) (resp *handler.Response, err error) {
 	bot.ChannelsMu.Lock()
 	delete(bot.Channels, ev.ID)
 	bot.ChannelsMu.Unlock()
 
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.ChannelDelete,
-			GuildID: ev.GuildID,
-		}, err)
 		return
 	}
 	if !ch[keys.ChannelDelete].IsValid() {
 		return
 	}
 
-	wh, err := bot.webhookCache(keys.ChannelDelete, ev.GuildID, ch[keys.ChannelDelete])
-	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.ChannelDelete,
-			GuildID: ev.GuildID,
-		}, err)
-		return
+	resp = &handler.Response{
+		ChannelID: ch[keys.ChannelDelete],
+		GuildID:   ev.GuildID,
 	}
 
 	desc := fmt.Sprintf("**Name:** #%v", ev.Name)
@@ -60,5 +52,6 @@ func (bot *Bot) channelDelete(ev *gateway.ChannelDeleteEvent) {
 		})
 	}
 
-	bot.Send(wh, keys.ChannelDelete, e)
+	resp.Embeds = append(resp.Embeds, e)
+	return
 }

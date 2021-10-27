@@ -63,6 +63,8 @@ type Bot struct {
 	WebhookClients map[discord.WebhookID]*webhook.Client
 	WebhooksMu     sync.Mutex
 
+	EventHandler *handler.Handler
+
 	guildCount, memberCount, roleCount, channelCount, msgCount int64
 }
 
@@ -97,11 +99,18 @@ func Init(bot *bot.Bot, log *zap.SugaredLogger) (clearCacheFunc func(discord.Gui
 		go b.countsLoop()
 	}
 
-	// add member cache handlers
+	// add default handlers
+	// these don't actually log anything and just request/update info
 	b.Router.AddHandler(b.requestGuildMembers)
 	b.Router.AddHandler(b.guildMemberChunk)
+	b.Router.AddHandler(b.DB.CreateServerIfNotExists)
+	b.Router.AddHandler(b.invitesReady)
+	b.Router.AddHandler(b.inviteCreate)
+	b.Router.AddHandler(b.inviteDelete)
+	b.Router.AddHandler(b.webhooksUpdate)
 
 	evh := handler.New()
+	b.EventHandler = evh
 	evh.HandleResponse = b.handleResponse
 	evh.HandleError = b.handleError
 
@@ -111,9 +120,6 @@ func Init(bot *bot.Bot, log *zap.SugaredLogger) (clearCacheFunc func(discord.Gui
 	evh.AddHandler(b.guildCreate)
 	evh.AddHandler(b.guildDelete)
 
-	// add guild create handler
-	b.Router.AddHandler(b.DB.CreateServerIfNotExists)
-
 	// add message create/update/delete handlers
 	evh.AddHandler(b.messageCreate)
 	evh.AddHandler(b.messageUpdate)
@@ -121,39 +127,32 @@ func Init(bot *bot.Bot, log *zap.SugaredLogger) (clearCacheFunc func(discord.Gui
 	evh.AddHandler(b.bulkMessageDelete)
 
 	// add guild member handlers
-	b.Router.AddHandler(b.guildMemberAdd)
-	b.Router.AddHandler(b.guildMemberUpdate)
-	b.Router.AddHandler(b.guildMemberRemove)
-
-	// add invite handlers
-	b.Router.AddHandler(b.invitesReady)
-	b.Router.AddHandler(b.inviteCreate)
-	b.Router.AddHandler(b.inviteDelete)
+	evh.AddHandler(b.guildMemberAdd)
+	evh.AddHandler(b.guildMemberUpdate)
+	evh.AddHandler(b.keyroleUpdate)
+	evh.AddHandler(b.guildMemberRemove)
 
 	// add invite create/delete handlers
-	b.Router.AddHandler(b.inviteCreateEvent)
-	b.Router.AddHandler(b.inviteDeleteEvent)
+	evh.AddHandler(b.inviteCreateEvent)
+	evh.AddHandler(b.inviteDeleteEvent)
 
 	// add ban handlers
-	b.Router.AddHandler(b.guildBanAdd)
-	b.Router.AddHandler(b.guildBanRemove)
+	evh.AddHandler(b.guildBanAdd)
+	evh.AddHandler(b.guildBanRemove)
 
 	// add channel handlers
-	b.Router.AddHandler(b.channelCreate)
-	b.Router.AddHandler(b.channelUpdate)
-	b.Router.AddHandler(b.channelDelete)
+	evh.AddHandler(b.channelCreate)
+	evh.AddHandler(b.channelUpdate)
+	evh.AddHandler(b.channelDelete)
 
 	// add role handlers
-	b.Router.AddHandler(b.guildRoleCreate)
-	b.Router.AddHandler(b.guildRoleUpdate)
-	b.Router.AddHandler(b.guildRoleDelete)
+	evh.AddHandler(b.guildRoleCreate)
+	evh.AddHandler(b.guildRoleUpdate)
+	evh.AddHandler(b.guildRoleDelete)
 
 	// add guild handlers
-	b.Router.AddHandler(b.guildUpdate)
-	b.Router.AddHandler(b.emojiUpdate)
-
-	// add webhook update handler
-	b.Router.AddHandler(b.webhooksUpdate)
+	evh.AddHandler(b.guildUpdate)
+	evh.AddHandler(b.emojiUpdate)
 
 	// add clear cache command
 	b.Router.AddCommand(&bcr.Command{

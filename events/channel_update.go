@@ -7,10 +7,10 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
-	"github.com/starshine-sys/catalogger/db"
+	"github.com/starshine-sys/catalogger/events/handler"
 )
 
-func (bot *Bot) channelUpdate(ev *gateway.ChannelUpdateEvent) {
+func (bot *Bot) channelUpdate(ev *gateway.ChannelUpdateEvent) (resp *handler.Response, err error) {
 	bot.ChannelsMu.Lock()
 	old, ok := bot.Channels[ev.ID]
 	if !ok {
@@ -23,24 +23,19 @@ func (bot *Bot) channelUpdate(ev *gateway.ChannelUpdateEvent) {
 
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.ChannelUpdate,
-			GuildID: ev.GuildID,
-		}, err)
 		return
 	}
 	if !ch[keys.ChannelUpdate].IsValid() {
 		return
 	}
 
-	// this shouldn't ever change at the same time as other stuff, so. ignore
-	if ev.Position != old.Position {
-		return
+	resp = &handler.Response{
+		ChannelID: ch[keys.ChannelUpdate],
+		GuildID:   ev.GuildID,
 	}
 
-	wh, err := bot.webhookCache(keys.ChannelUpdate, ev.GuildID, ch[keys.ChannelUpdate])
-	if err != nil {
-		bot.Sugar.Errorf("Error getting webhook: %v", err)
+	// this shouldn't ever change at the same time as other stuff, so. ignore
+	if ev.Position != old.Position {
 		return
 	}
 
@@ -198,7 +193,8 @@ func (bot *Bot) channelUpdate(ev *gateway.ChannelUpdateEvent) {
 		return
 	}
 
-	bot.Send(wh, keys.ChannelUpdate, e)
+	resp.Embeds = append(resp.Embeds, e)
+	return
 }
 
 func overwriteIn(s []discord.Overwrite, p discord.Overwrite) (exists bool) {

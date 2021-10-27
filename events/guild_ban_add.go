@@ -8,17 +8,13 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
-	"github.com/starshine-sys/catalogger/db"
+	"github.com/starshine-sys/catalogger/events/handler"
 	"github.com/starshine-sys/pkgo"
 )
 
-func (bot *Bot) guildBanAdd(ev *gateway.GuildBanAddEvent) {
+func (bot *Bot) guildBanAdd(ev *gateway.GuildBanAddEvent) (resp *handler.Response, err error) {
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.GuildBanAdd,
-			GuildID: ev.GuildID,
-		}, err)
 		return
 	}
 
@@ -26,16 +22,11 @@ func (bot *Bot) guildBanAdd(ev *gateway.GuildBanAddEvent) {
 		return
 	}
 
-	wh, err := bot.webhookCache("ban-add", ev.GuildID, ch[keys.GuildBanAdd])
-	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.GuildBanAdd,
-			GuildID: ev.GuildID,
-		}, err)
-		return
+	resp = &handler.Response{
+		ChannelID: ch[keys.GuildBanAdd],
 	}
 
-	e := discord.Embed{
+	resp.Embeds = []discord.Embed{{
 		Author: &discord.EmbedAuthor{
 			Icon: ev.User.AvatarURL(),
 			Name: ev.User.Username + "#" + ev.User.Discriminator,
@@ -59,7 +50,7 @@ func (bot *Bot) guildBanAdd(ev *gateway.GuildBanAddEvent) {
 		},
 		Timestamp: discord.NowTimestamp(),
 		Color:     bcr.ColourRed,
-	}
+	}}
 
 	// get ban reason/moderator
 	// we need to sleep for this because discord can be slow
@@ -72,16 +63,16 @@ func (bot *Bot) guildBanAdd(ev *gateway.GuildBanAddEvent) {
 		for _, l := range logs.Entries {
 			if discord.UserID(l.TargetID) == ev.User.ID && l.ID.Time().After(time.Now().Add(-10*time.Second)) {
 				if l.Reason != "" {
-					e.Fields[0].Value = l.Reason
+					resp.Embeds[0].Fields[0].Value = l.Reason
 				}
 
 				mod, err := bot.State(ev.GuildID).User(l.UserID)
 				if err != nil {
-					e.Fields[1].Value = l.UserID.String()
+					resp.Embeds[0].Fields[1].Value = l.UserID.String()
 					break
 				}
 
-				e.Fields[1].Value = fmt.Sprintf("%v#%v (%v)", mod.Username, mod.Discriminator, mod.ID)
+				resp.Embeds[0].Fields[1].Value = fmt.Sprintf("%v#%v (%v)", mod.Username, mod.Discriminator, mod.ID)
 
 				break
 			}
@@ -91,13 +82,13 @@ func (bot *Bot) guildBanAdd(ev *gateway.GuildBanAddEvent) {
 	sys, err := pk.Account(pkgo.Snowflake(ev.User.ID))
 	if err == nil {
 		if sys.Name != "" {
-			e.Fields = append(e.Fields, discord.EmbedField{
+			resp.Embeds[0].Fields = append(resp.Embeds[0].Fields, discord.EmbedField{
 				Name:  "PluralKit system name",
 				Value: sys.Name,
 			})
 		}
 
-		e.Fields = append(e.Fields, discord.EmbedField{
+		resp.Embeds[0].Fields = append(resp.Embeds[0].Fields, discord.EmbedField{
 			Name:  "PluralKit system ID",
 			Value: sys.ID,
 		})
@@ -108,7 +99,7 @@ func (bot *Bot) guildBanAdd(ev *gateway.GuildBanAddEvent) {
 		}
 
 		if banned {
-			e.Fields = append(e.Fields, discord.EmbedField{
+			resp.Embeds[0].Fields = append(resp.Embeds[0].Fields, discord.EmbedField{
 				Name:  "System banned",
 				Value: "The system linked to this account has already been banned.",
 			})
@@ -116,12 +107,12 @@ func (bot *Bot) guildBanAdd(ev *gateway.GuildBanAddEvent) {
 			err = bot.DB.BanSystem(ev.GuildID, sys.ID)
 			if err != nil {
 				bot.Sugar.Errorf("Erorr banning system: %v", err)
-				e.Fields = append(e.Fields, discord.EmbedField{
+				resp.Embeds[0].Fields = append(resp.Embeds[0].Fields, discord.EmbedField{
 					Name:  "System not banned",
 					Value: "There was an error trying to ban the linked system.\nYou will **not** be warned when an account linked to this system joins.",
 				})
 			} else {
-				e.Fields = append(e.Fields, discord.EmbedField{
+				resp.Embeds[0].Fields = append(resp.Embeds[0].Fields, discord.EmbedField{
 					Name:  "System banned",
 					Value: "The system linked to this account has been banned.\nYou will be warned when an account linked to this system joins.",
 				})
@@ -130,5 +121,5 @@ func (bot *Bot) guildBanAdd(ev *gateway.GuildBanAddEvent) {
 
 	}
 
-	bot.Send(wh, keys.GuildBanAdd, e)
+	return resp, nil
 }

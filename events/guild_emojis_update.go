@@ -7,11 +7,10 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
-	"github.com/starshine-sys/catalogger/db"
+	"github.com/starshine-sys/catalogger/events/handler"
 )
 
-// TODO: this doesn't currently work because the event contains *no* emojis at all?? figure out if this is our fault, the library's fault, or Discord's fault, and fix
-func (bot *Bot) emojiUpdate(ev *gateway.GuildEmojisUpdateEvent) {
+func (bot *Bot) emojiUpdate(ev *gateway.GuildEmojisUpdateEvent) (resp *handler.Response, err error) {
 	bot.GuildsMu.Lock()
 	guild, ok := bot.Guilds[ev.GuildID]
 	if !ok {
@@ -102,10 +101,6 @@ func (bot *Bot) emojiUpdate(ev *gateway.GuildEmojisUpdateEvent) {
 
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.GuildEmojisUpdate,
-			GuildID: ev.GuildID,
-		}, err)
 		return
 	}
 
@@ -113,20 +108,15 @@ func (bot *Bot) emojiUpdate(ev *gateway.GuildEmojisUpdateEvent) {
 		return
 	}
 
-	wh, err := bot.webhookCache(keys.GuildEmojisUpdate, ev.GuildID, ch[keys.GuildEmojisUpdate])
-	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.GuildEmojisUpdate,
-			GuildID: ev.GuildID,
-		}, err)
-		return
-	}
-
 	if len(embeds) > 10 {
 		embeds = embeds[:9]
 	}
 
-	bot.Send(wh, keys.GuildEmojisUpdate, embeds...)
+	return &handler.Response{
+		ChannelID: ch[keys.GuildEmojisUpdate],
+		GuildID:   ev.GuildID,
+		Embeds:    embeds,
+	}, nil
 }
 
 func emojiRenameEmbed(old, new []discord.Emoji) *discord.Embed {

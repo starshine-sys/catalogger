@@ -7,16 +7,12 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
-	"github.com/starshine-sys/catalogger/db"
+	"github.com/starshine-sys/catalogger/events/handler"
 )
 
-func (bot *Bot) guildMemberRemove(ev *gateway.GuildMemberRemoveEvent) {
+func (bot *Bot) guildMemberRemove(ev *gateway.GuildMemberRemoveEvent) (resp *handler.Response, err error) {
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.GuildMemberRemove,
-			GuildID: ev.GuildID,
-		}, err)
 		return
 	}
 
@@ -24,13 +20,9 @@ func (bot *Bot) guildMemberRemove(ev *gateway.GuildMemberRemoveEvent) {
 		return
 	}
 
-	wh, err := bot.webhookCache("leave", ev.GuildID, ch[keys.GuildMemberRemove])
-	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.GuildMemberRemove,
-			GuildID: ev.GuildID,
-		}, err)
-		return
+	resp = &handler.Response{
+		ChannelID: ch[keys.GuildMemberRemove],
+		GuildID:   ev.GuildID,
 	}
 
 	e := discord.Embed{
@@ -79,5 +71,6 @@ func (bot *Bot) guildMemberRemove(ev *gateway.GuildMemberRemoveEvent) {
 	}
 	bot.MembersMu.Unlock()
 
-	bot.Send(wh, keys.GuildMemberRemove, e)
+	resp.Embeds = append(resp.Embeds, e)
+	return resp, err
 }

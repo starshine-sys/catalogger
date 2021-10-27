@@ -10,11 +10,11 @@ import (
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/jackc/pgx/v4"
 	"github.com/starshine-sys/bcr"
-	"github.com/starshine-sys/catalogger/db"
+	"github.com/starshine-sys/catalogger/events/handler"
 	"github.com/starshine-sys/pkgo"
 )
 
-func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) {
+func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) (resp *handler.Response, err error) {
 	bot.MembersMu.Lock()
 	bot.Members[memberCacheKey{
 		GuildID: m.GuildID,
@@ -24,10 +24,6 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) {
 
 	ch, err := bot.DB.Channels(m.GuildID)
 	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.GuildMemberAdd,
-			GuildID: m.GuildID,
-		}, err)
 		return
 	}
 
@@ -35,13 +31,9 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) {
 		return
 	}
 
-	wh, err := bot.webhookCache("join", m.GuildID, ch[keys.GuildMemberAdd])
-	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.GuildMemberAdd,
-			GuildID: m.GuildID,
-		}, err)
-		return
+	resp = &handler.Response{
+		ChannelID: ch[keys.GuildMemberAdd],
+		GuildID:   m.GuildID,
 	}
 
 	e := discord.Embed{
@@ -185,10 +177,10 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) {
 		}
 	}
 
-	embeds := []discord.Embed{e}
+	resp.Embeds = append(resp.Embeds, e)
 
 	if m.User.CreatedAt().After(time.Now().UTC().Add(-168 * time.Hour)) {
-		embeds = append(embeds, discord.Embed{
+		resp.Embeds = append(resp.Embeds, discord.Embed{
 			Title:       "New account",
 			Description: fmt.Sprintf("⚠️ This account was created only **%v** (<t:%v>)", bcr.HumanizeTime(bcr.DurationPrecisionSeconds, m.User.CreatedAt()), m.User.CreatedAt().Unix()),
 			Color:       bcr.ColourOrange,
@@ -213,21 +205,16 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) {
 				e.Description = "⚠️ The system associated with this account has been banned from the server."
 			}
 
-			embeds = append(embeds, e)
+			resp.Embeds = append(resp.Embeds, e)
 		}
 	}
 
 	wl, err := bot.DB.UserWatchlist(m.GuildID, m.User.ID)
 	if err != nil || wl == nil {
-		bot.Send(wh, keys.GuildMemberAdd, embeds...)
-		if errors.Cause(err) != pgx.ErrNoRows {
-			bot.DB.Report(db.ErrorContext{
-				Event:   keys.GuildMemberAdd,
-				GuildID: m.GuildID,
-			}, err)
-			return
+		if errors.Cause(err) == pgx.ErrNoRows {
+			err = nil
 		}
-		return
+		return resp, err
 	}
 
 	e = discord.Embed{
@@ -274,5 +261,7 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) {
 		})
 	}
 
-	bot.Send(wh, keys.GuildMemberAdd, append(embeds, e)...)
+	resp.Embeds = append(resp.Embeds, e)
+
+	return resp, nil
 }

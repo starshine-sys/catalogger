@@ -7,16 +7,14 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
-	"github.com/starshine-sys/catalogger/db"
+	"github.com/starshine-sys/catalogger/events/handler"
 )
 
-func (bot *Bot) inviteCreateEvent(ev *gateway.InviteCreateEvent) {
+func (bot *Bot) inviteCreateEvent(ev *gateway.InviteCreateEvent) (resp *handler.Response, err error) {
+	bot.Sugar.Info("received invite create event")
+
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.InviteCreate,
-			GuildID: ev.GuildID,
-		}, err)
 		return
 	}
 
@@ -24,13 +22,9 @@ func (bot *Bot) inviteCreateEvent(ev *gateway.InviteCreateEvent) {
 		return
 	}
 
-	wh, err := bot.webhookCache(keys.InviteCreate, ev.GuildID, ch[keys.InviteCreate])
-	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.InviteCreate,
-			GuildID: ev.GuildID,
-		}, err)
-		return
+	resp = &handler.Response{
+		ChannelID: ch[keys.InviteCreate],
+		GuildID:   ev.GuildID,
 	}
 
 	maxUses := fmt.Sprint(ev.MaxUses)
@@ -42,7 +36,7 @@ func (bot *Bot) inviteCreateEvent(ev *gateway.InviteCreateEvent) {
 		expires = fmt.Sprintf("<t:%v>", time.Now().UTC().Add(ev.MaxAge.Duration()).Unix())
 	}
 
-	e := discord.Embed{
+	resp.Embeds = []discord.Embed{{
 		Title:       "Invite created",
 		Color:       bcr.ColourGreen,
 		Description: fmt.Sprintf("A new invite (**%v**) was created for %v.", ev.Code, ev.ChannelID.Mention()),
@@ -68,12 +62,12 @@ func (bot *Bot) inviteCreateEvent(ev *gateway.InviteCreateEvent) {
 			Text: ev.Code,
 		},
 		Timestamp: discord.NowTimestamp(),
-	}
+	}}
 
-	bot.Send(wh, keys.InviteCreate, e)
+	return resp, nil
 }
 
-func (bot *Bot) inviteDeleteEvent(ev *gateway.InviteDeleteEvent) {
+func (bot *Bot) inviteDeleteEvent(ev *gateway.InviteDeleteEvent) (resp *handler.Response, err error) {
 	var (
 		found bool
 		inv   discord.Invite
@@ -94,10 +88,6 @@ func (bot *Bot) inviteDeleteEvent(ev *gateway.InviteDeleteEvent) {
 
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.InviteDelete,
-			GuildID: ev.GuildID,
-		}, err)
 		return
 	}
 
@@ -105,13 +95,8 @@ func (bot *Bot) inviteDeleteEvent(ev *gateway.InviteDeleteEvent) {
 		return
 	}
 
-	wh, err := bot.webhookCache(keys.InviteDelete, ev.GuildID, ch[keys.InviteDelete])
-	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.InviteDelete,
-			GuildID: ev.GuildID,
-		}, err)
-		return
+	resp = &handler.Response{
+		ChannelID: ch[keys.InviteDelete],
 	}
 
 	maxUses := fmt.Sprint(inv.MaxUses)
@@ -119,7 +104,7 @@ func (bot *Bot) inviteDeleteEvent(ev *gateway.InviteDeleteEvent) {
 		maxUses = "Infinite"
 	}
 
-	e := discord.Embed{
+	resp.Embeds = []discord.Embed{{
 		Title:       "Invite deleted",
 		Color:       bcr.ColourRed,
 		Description: fmt.Sprintf("An invite (**%v**) was deleted in %v.", ev.Code, ev.ChannelID.Mention()),
@@ -145,7 +130,7 @@ func (bot *Bot) inviteDeleteEvent(ev *gateway.InviteDeleteEvent) {
 			Text: ev.Code,
 		},
 		Timestamp: discord.NowTimestamp(),
-	}
+	}}
 
-	bot.Send(wh, keys.InviteDelete, e)
+	return resp, nil
 }

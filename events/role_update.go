@@ -7,10 +7,10 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
-	"github.com/starshine-sys/catalogger/db"
+	"github.com/starshine-sys/catalogger/events/handler"
 )
 
-func (bot *Bot) guildRoleUpdate(ev *gateway.GuildRoleUpdateEvent) {
+func (bot *Bot) guildRoleUpdate(ev *gateway.GuildRoleUpdateEvent) (resp *handler.Response, err error) {
 	bot.RolesMu.Lock()
 	old, ok := bot.Roles[ev.Role.ID]
 	if !ok {
@@ -24,10 +24,6 @@ func (bot *Bot) guildRoleUpdate(ev *gateway.GuildRoleUpdateEvent) {
 
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.GuildRoleUpdate,
-			GuildID: ev.GuildID,
-		}, err)
 		return
 	}
 
@@ -35,13 +31,9 @@ func (bot *Bot) guildRoleUpdate(ev *gateway.GuildRoleUpdateEvent) {
 		return
 	}
 
-	wh, err := bot.webhookCache(keys.GuildRoleUpdate, ev.GuildID, ch[keys.GuildRoleUpdate])
-	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.GuildRoleUpdate,
-			GuildID: ev.GuildID,
-		}, err)
-		return
+	resp = &handler.Response{
+		ChannelID: ch[keys.GuildRoleUpdate],
+		GuildID:   ev.GuildID,
 	}
 
 	e := discord.Embed{
@@ -106,5 +98,6 @@ func (bot *Bot) guildRoleUpdate(ev *gateway.GuildRoleUpdateEvent) {
 		return
 	}
 
-	bot.Send(wh, keys.GuildRoleUpdate, e)
+	resp.Embeds = append(resp.Embeds, e)
+	return
 }

@@ -7,33 +7,25 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
-	"github.com/starshine-sys/catalogger/db"
+	"github.com/starshine-sys/catalogger/events/handler"
 )
 
-func (bot *Bot) channelCreate(ev *gateway.ChannelCreateEvent) {
+func (bot *Bot) channelCreate(ev *gateway.ChannelCreateEvent) (resp *handler.Response, err error) {
 	bot.ChannelsMu.Lock()
 	bot.Channels[ev.ID] = ev.Channel
 	bot.ChannelsMu.Unlock()
 
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.ChannelCreate,
-			GuildID: ev.GuildID,
-		}, err)
 		return
 	}
 	if !ch[keys.ChannelCreate].IsValid() {
 		return
 	}
 
-	wh, err := bot.webhookCache(keys.ChannelCreate, ev.GuildID, ch[keys.ChannelCreate])
-	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   keys.ChannelCreate,
-			GuildID: ev.GuildID,
-		}, err)
-		return
+	resp = &handler.Response{
+		ChannelID: ch[keys.ChannelCreate],
+		GuildID:   ev.GuildID,
 	}
 
 	e := discord.Embed{
@@ -97,5 +89,6 @@ func (bot *Bot) channelCreate(ev *gateway.ChannelCreateEvent) {
 		e.Fields = e.Fields[:24]
 	}
 
-	bot.Send(wh, keys.ChannelCreate, e)
+	resp.Embeds = append(resp.Embeds, e)
+	return
 }
