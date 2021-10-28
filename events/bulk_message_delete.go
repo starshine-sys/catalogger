@@ -91,7 +91,7 @@ func (bot *Bot) bulkMessageDelete(ev *gateway.MessageDeleteBulkEvent) (resp *han
 			MsgID:     id,
 			ChannelID: ev.ChannelID,
 			ServerID:  ev.GuildID,
-			Content:   "<message not in database>",
+			Content:   "*[message not in database]*",
 			Username:  "unknown#0000",
 		})
 		notFound++
@@ -184,11 +184,12 @@ func (bot *Bot) bulkHTML(guildID discord.GuildID, channelID discord.ChannelID, m
 	}
 
 	c := dischtml.Converter{
-		Guild:    g,
-		Channels: chans,
-		Roles:    rls,
-		Members:  members,
-		Users:    users,
+		Guild:         g,
+		Channels:      chans,
+		Roles:         rls,
+		Members:       members,
+		Users:         users,
+		ExtraUserInfo: make(map[discord.MessageID]string),
 	}
 
 	dm := make([]discord.Message, len(msgs))
@@ -208,18 +209,39 @@ func (bot *Bot) bulkHTML(guildID discord.GuildID, channelID discord.ChannelID, m
 			u = discord.User{
 				ID:            m.UserID,
 				Username:      m.Username,
-				Discriminator: "#0000",
+				Discriminator: "0000",
 				Avatar:        "",
 			}
 		}
 
-		dm[i] = discord.Message{
+		dmsg := discord.Message{
 			ID:        m.MsgID,
 			ChannelID: m.ChannelID,
 			GuildID:   m.ServerID,
 			Content:   m.Content,
 			Author:    u,
 		}
+
+		if m.Metadata != nil {
+			dmsg.Embeds = m.Metadata.Embeds
+
+			if len(dmsg.Embeds) > 0 && dmsg.Content == "None" {
+				dmsg.Content = ""
+			}
+
+			if m.Metadata.UserID != nil {
+				if found {
+					c.ExtraUserInfo[m.MsgID] = fmt.Sprintf("(%s)", u.Tag())
+				}
+
+				dmsg.Author.ID = *m.Metadata.UserID
+				dmsg.Author.Avatar = m.Metadata.Avatar
+				dmsg.Author.Username = m.Metadata.Username
+				dmsg.Author.Discriminator = "0000"
+			}
+		}
+
+		dm[i] = dmsg
 	}
 
 	s, err := c.ConvertHTML(dm)

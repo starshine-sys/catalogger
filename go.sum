@@ -609,8 +609,8 @@ github.com/spf13/viper v1.3.2/go.mod h1:ZiWeW+zYFKm7srdB9IoDzzZXaJaI5eL9QjNiN/DM
 github.com/spf13/viper v1.4.0/go.mod h1:PTJ7Z/lr49W6bUbkmS1V3by4uWynFiR9p7+dSq/yZzE=
 github.com/starshine-sys/bcr v0.21.1-0.20210929173146-1f0a766ade82 h1:B9fMhaAOODIPY1oL5iYXVRHjR03W2XK7bWhO813Kowk=
 github.com/starshine-sys/bcr v0.21.1-0.20210929173146-1f0a766ade82/go.mod h1:xMfgV3z55qY7dNWqR2bieQ0NKJFdqDUMDVa0JqhTFlI=
-github.com/starshine-sys/dischtml v0.1.0 h1:Y+b8gU9/edTQZIG/rKwS8Yp6lECVHeOUGjq5uavh2Ks=
-github.com/starshine-sys/dischtml v0.1.0/go.mod h1:8yIpm/ZlHDmYH0Fd+ynUc3y3HzpnDM1d6+ZsO5SFJ4w=
+github.com/starshine-sys/dischtml v0.1.1-0.20211028145618-7e1ef8c772bb h1:bSJct6ENxnoOtsJSBSdocHcr19kWLoILXL4kaAV2JAg=
+github.com/starshine-sys/dischtml v0.1.1-0.20211028145618-7e1ef8c772bb/go.mod h1:8yIpm/ZlHDmYH0Fd+ynUc3y3HzpnDM1d6+ZsO5SFJ4w=
 github.com/starshine-sys/pkgo v1.1.1 h1:E2xTfJsgnw4TOYYDF182yKh42W42XlzHb+O8rRODI4o=
 github.com/starshine-sys/pkgo v1.1.1/go.mod h1:w1ObBZa7/lOvCqOx9690uPM5uuaovH8nCZXpt84cAu4=
 github.com/starshine-sys/snowflake/v2 v2.0.0 h1:rVDUw1tXe1nDcGTMMAU5RzU+mX4O9IDEEs9lds7BYtI=

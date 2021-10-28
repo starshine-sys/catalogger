@@ -65,6 +65,18 @@ func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) (*handler.Response,
 		Content: content,
 	}
 
+	if len(m.Embeds) > 0 || m.WebhookID.IsValid() {
+		msg.Metadata = &db.Metadata{}
+
+		if m.WebhookID.IsValid() {
+			msg.Metadata.UserID = &m.Author.ID
+			msg.Metadata.Username = m.Author.Username
+			msg.Metadata.Avatar = m.Author.Avatar
+		} else {
+			msg.Metadata.Embeds = m.Embeds
+		}
+	}
+
 	err = bot.DB.InsertMessage(msg)
 	if err != nil {
 		return nil, err

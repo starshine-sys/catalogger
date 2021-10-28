@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"encoding/hex"
+	"encoding/json"
 
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/georgysavva/scany/pgxscan"
@@ -27,6 +28,17 @@ type Message struct {
 	// These are only filled if the message was proxied by PluralKit
 	Member *string
 	System *string
+
+	Metadata    *Metadata `db:"-"`
+	RawMetadata *[]byte   `db:"metadata"`
+}
+
+// Metadata is optional message metadata
+type Metadata struct {
+	UserID   *discord.UserID `json:"user_id,omitempty"`
+	Username string          `json:"username,omitempty"`
+	Avatar   string          `json:"avatar,omitempty"`
+	Embeds   []discord.Embed `json:"embeds,omitempty"`
 }
 
 // InsertMessage inserts a message
@@ -46,11 +58,25 @@ func (db *DB) InsertMessage(m Message) (err error) {
 	}
 	m.Username = hex.EncodeToString(out)
 
+	var metadata *[]byte
+	if m.Metadata != nil {
+		jsonb, err := json.Marshal(m.Metadata)
+		if err != nil {
+			return err
+		}
+
+		b, err := crypt.Encrypt(jsonb, db.AESKey)
+		if err != nil {
+			return err
+		}
+		metadata = &b
+	}
+
 	_, err = db.Exec(context.Background(), `insert into messages
-(msg_id, user_id, channel_id, server_id, content, username, member, system) values
-($1, $2, $3, $4, $5, $6, $7, $8)
+(msg_id, user_id, channel_id, server_id, content, username, member, system, metadata) values
+($1, $2, $3, $4, $5, $6, $7, $8, $9)
 on conflict (msg_id) do update
-set content = $5`, m.MsgID, m.UserID, m.ChannelID, m.ServerID, m.Content, m.Username, m.Member, m.System)
+set content = $5`, m.MsgID, m.UserID, m.ChannelID, m.ServerID, m.Content, m.Username, m.Member, m.System, metadata)
 	return err
 }
 
@@ -109,6 +135,18 @@ func (db *DB) GetMessage(id discord.MessageID) (m *Message, err error) {
 	}
 
 	m.Username = string(out)
+
+	if m.RawMetadata != nil {
+		b, err := crypt.Decrypt(*m.RawMetadata, db.AESKey)
+
+		var md Metadata
+		err = json.Unmarshal(b, &md)
+		if err != nil {
+			return m, err
+		}
+		m.Metadata = &md
+	}
+
 	return
 }
 
