@@ -1,8 +1,11 @@
 package events
 
 import (
+	"time"
+
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
+	"github.com/starshine-sys/catalogger/db"
 )
 
 type memberCacheKey struct {
@@ -23,10 +26,21 @@ func (bot *Bot) requestGuildMembers(g *gateway.GuildCreateEvent) {
 	}
 	bot.RolesMu.Unlock()
 
-	bot.State(g.ID).Gateway.RequestGuildMembers(gateway.RequestGuildMembersData{
+	err := bot.State(g.ID).Gateway.RequestGuildMembers(gateway.RequestGuildMembersData{
 		GuildIDs: []discord.GuildID{g.ID},
 		Limit:    0,
 	})
+	if err != nil {
+		bot.DB.Report(db.ErrorContext{
+			Event:   "GuildCreateEvent",
+			Command: "Request guild members",
+			GuildID: g.ID,
+		}, err)
+
+		time.AfterFunc(time.Minute, func() {
+			bot.requestGuildMembers(g)
+		})
+	}
 }
 
 func (bot *Bot) guildMemberChunk(g *gateway.GuildMembersChunkEvent) {
