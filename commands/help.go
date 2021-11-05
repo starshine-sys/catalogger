@@ -44,7 +44,7 @@ To get started, use `+"`%vsetchannel`"+` with one or more events.
 			},
 			{
 				Name:  "Author",
-				Value: "<@!694563574386786314> / starshine 🌠✨#0001",
+				Value: "<@!694563574386786314> / starshine#0001",
 			},
 			{
 				Name:  "Source code",
