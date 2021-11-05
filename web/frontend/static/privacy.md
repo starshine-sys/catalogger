@@ -11,8 +11,11 @@ This is the data Catalogger collects:
 - Messages, in servers where edited and/or deleted message logging is enabled.
 - Server-specific settings: which channels to log to, and which channels to ignore.
 
+You can opt out of your messages being collected by leaving servers the bot is in.  
+Because this data is stored for moderation purposes, you cannot opt out while still staying in those servers.
+
 Messages are stored encrypted in the database, and automatically deleted after fifteen days.  
-This retention time may change in the future; however, it will not be extended, only lowered.
+This retention time may be lowered in the future.
 
 This is the data Catalogger fetches from Discord, and is stored while the bot is running:
 
