@@ -231,7 +231,14 @@ func (bot *Bot) bulkHTML(guildID discord.GuildID, channelID discord.ChannelID, m
 
 			if m.Metadata.UserID != nil {
 				if found {
-					c.ExtraUserInfo[m.MsgID] = fmt.Sprintf("(%s)", u.Tag())
+					us := fmt.Sprintf("(%s", u.Tag())
+					if m.System != nil && m.Member != nil {
+						us += fmt.Sprintf(", system: %v, member: %v", *m.System, *m.Member)
+					}
+
+					c.ExtraUserInfo[m.MsgID] = us + ")"
+				} else if m.System != nil && m.Member != nil {
+					c.ExtraUserInfo[m.MsgID] = fmt.Sprintf("(system: %s, member: %s)", *m.System, *m.Member)
 				}
 
 				dmsg.Author.ID = *m.Metadata.UserID
