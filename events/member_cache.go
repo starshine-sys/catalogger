@@ -54,7 +54,7 @@ func (bot *Bot) guildMemberChunk(g *gateway.GuildMembersChunkEvent) {
 }
 
 func (bot *Bot) chunkGuilds() {
-	tick := time.NewTicker(600 * time.Millisecond)
+	tick := time.NewTicker(time.Second)
 	defer tick.Stop()
 
 	t := time.Now().UTC()
@@ -108,10 +108,6 @@ func (bot *Bot) chunkGuilds() {
 				inv, err := bot.State(inviteID).GuildInvites(inviteID)
 				if err != nil {
 					bot.Sugar.Errorf("Error getting invites for %v: %v", inviteID, err)
-
-					bot.chunkMu.Lock()
-					bot.guildsToFetchInvites[inviteID] = struct{}{}
-					bot.chunkMu.Unlock()
 				}
 
 				bot.InviteMu.Lock()
