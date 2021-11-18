@@ -66,6 +66,10 @@ type Bot struct {
 	EventHandler *handler.Handler
 
 	guildCount, memberCount, roleCount, channelCount, msgCount int64
+
+	guildsToChunk, guildsToFetchInvites map[discord.GuildID]struct{}
+	chunkMu                             sync.RWMutex
+	doneChunking                        bool
 }
 
 // Init ...
@@ -81,13 +85,15 @@ func Init(bot *bot.Bot, log *zap.SugaredLogger) (clearCacheFunc func(discord.Gui
 		ProxiedTriggers: make(map[discord.MessageID]struct{}),
 		HandledMessages: make(map[discord.MessageID]struct{}),
 
-		Invites:        make(map[discord.GuildID][]discord.Invite),
-		Members:        make(map[memberCacheKey]discord.Member),
-		Channels:       make(map[discord.ChannelID]discord.Channel),
-		Roles:          make(map[discord.RoleID]discord.Role),
-		Guilds:         make(map[discord.GuildID]discord.Guild),
-		Queues:         make(map[discord.WebhookID]*Queue),
-		WebhookClients: make(map[discord.WebhookID]*webhook.Client),
+		Invites:              make(map[discord.GuildID][]discord.Invite),
+		Members:              make(map[memberCacheKey]discord.Member),
+		Channels:             make(map[discord.ChannelID]discord.Channel),
+		Roles:                make(map[discord.RoleID]discord.Role),
+		Guilds:               make(map[discord.GuildID]discord.Guild),
+		Queues:               make(map[discord.WebhookID]*Queue),
+		WebhookClients:       make(map[discord.WebhookID]*webhook.Client),
+		guildsToChunk:        make(map[discord.GuildID]struct{}),
+		guildsToFetchInvites: make(map[discord.GuildID]struct{}),
 
 		BotJoinLeaveLog: discord.ChannelID(joinLeaveLog),
 	}
@@ -103,8 +109,8 @@ func Init(bot *bot.Bot, log *zap.SugaredLogger) (clearCacheFunc func(discord.Gui
 	// these don't actually log anything and just request/update info
 	b.Router.AddHandler(b.requestGuildMembers)
 	b.Router.AddHandler(b.guildMemberChunk)
+	b.Router.AddHandler(b.chunkGuildDelete)
 	b.Router.AddHandler(b.DB.CreateServerIfNotExists)
-	b.Router.AddHandler(b.invitesReady)
 	b.Router.AddHandler(b.inviteCreate)
 	b.Router.AddHandler(b.inviteDelete)
 	b.Router.AddHandler(b.webhooksUpdate)
@@ -206,6 +212,7 @@ func Init(bot *bot.Bot, log *zap.SugaredLogger) (clearCacheFunc func(discord.Gui
 		state.AddHandler(func(*gateway.ReadyEvent) {
 			o.Do(func() {
 				go b.updateStatusLoop(state)
+				go b.chunkGuilds()
 			})
 		})
 	})
@@ -304,6 +311,13 @@ func (bot *Bot) updateStatusLoop(s *state.State) {
 			guildCount += len(guilds)
 		})
 
+		status := discord.IdleStatus
+		if bot.doneChunking {
+			status = discord.OnlineStatus
+		} else {
+			bot.Sugar.Infof("Not done chunking, setting idle status")
+		}
+
 		shardNumber := 0
 		bot.Router.ShardManager.ForEach(func(s shard.Shard) {
 			state := s.(*state.State)
@@ -325,7 +339,7 @@ func (bot *Bot) updateStatusLoop(s *state.State) {
 				}
 
 				err := state.UpdateStatus(gateway.UpdateStatusData{
-					Status: discord.OnlineStatus,
+					Status: status,
 					Activities: []discord.Activity{{
 						Name: s,
 						Type: discord.GameActivity,

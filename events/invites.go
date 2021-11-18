@@ -7,18 +7,6 @@ import (
 	"github.com/diamondburned/arikawa/v3/gateway"
 )
 
-func (bot *Bot) invitesReady(g *gateway.GuildCreateEvent) {
-	inv, err := bot.State(g.ID).GuildInvites(g.ID)
-	if err != nil {
-		bot.Sugar.Errorf("Error getting invites for %v: %v", g.ID, err)
-		return
-	}
-
-	bot.InviteMu.Lock()
-	bot.Invites[g.ID] = inv
-	bot.InviteMu.Unlock()
-}
-
 func (bot *Bot) inviteCreate(g *gateway.InviteCreateEvent) {
 	inv, err := bot.State(g.GuildID).GuildInvites(g.GuildID)
 	if err != nil {

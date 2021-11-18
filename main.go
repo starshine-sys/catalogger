@@ -94,6 +94,14 @@ func main() {
 	cacheFunc, countFunc, guildPermFunc, joinedFunc := events.Init(b, sugar)
 	server.NewServer(r, db, cacheFunc, countFunc, guildPermFunc, joinedFunc)
 
+	// get current user
+	s, _ := r.StateFromGuildID(0)
+	botUser, err := s.Me()
+	if err != nil {
+		log.Fatalf("Error fetching bot user: %v", err)
+	}
+	r.Bot = botUser
+
 	// connect to discord
 	if err := r.ShardManager.Open(context.Background()); err != nil {
 		log.Fatal("Failed to connect:", err)
@@ -101,28 +109,25 @@ func main() {
 
 	// Defer this to make sure that things are always cleanly shutdown even in the event of a crash
 	defer func() {
-		db.Pool.Close()
-		log.Info("Closed database connection.")
-
 		// set a status message
 		// we're not actually properly closing the gateway so it'll stay for a few minutes
 		// who needs a clean disconnection anyway :~]
 		b.ForEach(func(s *state.State) {
 			s.UpdateStatus(gateway.UpdateStatusData{
-				Status: discord.IdleStatus,
+				Status: discord.DoNotDisturbStatus,
 				Activities: []discord.Activity{{
 					Name: "Restarting, please wait...",
 				}},
 			})
 		})
+
+		db.Pool.Close()
+		log.Info("Closed database connection.")
 	}()
 
 	log.Info("Connected to Discord. Press Ctrl-C or send an interrupt signal to stop.")
 
-	s, _ := r.StateFromGuildID(0)
-	botUser, _ := s.Me()
 	log.Infof("User: %v#%v (%v)", botUser.Username, botUser.Discriminator, botUser.ID)
-	r.Bot = botUser
 	// normally creating a Context would do this, but as we set the user above, that doesn't work
 	r.Prefixes = append(r.Prefixes, "<@"+r.Bot.ID.String()+">", "<@!"+r.Bot.ID.String()+">")
 
