@@ -68,20 +68,8 @@ var keys = struct {
 	MessageDeleteBulk:     "MESSAGE_DELETE_BULK",
 }
 
-func whKey(key string, id discord.GuildID) string {
-	return "wh:" + key + ":" + id.String()
-}
-
-func redirKey(channelID discord.ChannelID) string {
-	return "wh:redir:" + channelID.String()
-}
-
 // 10 minutes
 const webhookCacheExpiry = "600"
-
-func (bot *Bot) setRedirWebhook(chID discord.ChannelID, w *Webhook) error {
-	return bot.Redis.Do(context.Background(), radix.Cmd(nil, "SET", redirKey(chID), w.ID.String()+":"+w.Token, "EX", webhookCacheExpiry))
-}
 
 func (bot *Bot) fetchCachedKey(key string) (*Webhook, error) {
 	var s string
@@ -127,37 +115,6 @@ func (bot *Bot) getWebhook(channelID discord.ChannelID, name string) (*discord.W
 		Name: name,
 	})
 	return w, err
-}
-
-func (bot *Bot) getRedirect(guildID discord.GuildID, ch discord.ChannelID) (*discord.Webhook, error) {
-	// try getting the cached webhook
-	w, err := bot.fetchCachedKey(redirKey(ch))
-	if err == nil {
-		return &discord.Webhook{
-			ID:        w.ID,
-			Token:     w.Token,
-			ChannelID: ch,
-		}, nil
-	}
-
-	bot.Sugar.Debugf("Couldn't find webhook for %v in cache, falling back to fetching webhook", ch)
-
-	// else, create or fetch webhook
-	wh, err := bot.getWebhook(ch, bot.Router.Bot.Username)
-	if err != nil {
-		return nil, err
-	}
-
-	err = bot.setRedirWebhook(ch, &Webhook{
-		ID:    wh.ID,
-		Token: wh.Token,
-	})
-	if err != nil {
-		bot.Sugar.Errorf("Error setting redirect webhook for %v: %v", ch, err)
-	}
-
-	wh.GuildID = guildID
-	return wh, nil
 }
 
 func (bot *Bot) webhooksUpdate(ev *gateway.WebhooksUpdateEvent) {

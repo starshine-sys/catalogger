@@ -54,67 +54,63 @@ func (bot *Bot) guildMemberChunk(g *gateway.GuildMembersChunkEvent) {
 }
 
 func (bot *Bot) chunkGuilds() {
-	tick := time.NewTicker(time.Second)
+	tick := time.NewTicker(2 * time.Second)
 	defer tick.Stop()
 
 	t := time.Now().UTC()
 
-	for {
-		select {
-		case <-tick.C:
+	for range tick.C {
+		bot.chunkMu.Lock()
 
-			bot.chunkMu.Lock()
-
-			if len(bot.guildsToChunk) == 0 && len(bot.guildsToFetchInvites) == 0 {
-				if !bot.doneChunking {
-					bot.Sugar.Infof("Done chunking in %v!", time.Since(t).Round(time.Millisecond))
-					bot.doneChunking = true
-				}
-			} else if bot.doneChunking {
-				bot.Sugar.Infof("Chunking was finished, but joined new guilds, chunking those")
-				bot.doneChunking = false
-				t = time.Now().UTC()
+		if len(bot.guildsToChunk) == 0 && len(bot.guildsToFetchInvites) == 0 {
+			if !bot.doneChunking {
+				bot.Sugar.Infof("Done chunking in %v!", time.Since(t).Round(time.Millisecond))
+				bot.doneChunking = true
 			}
-
-			var chunkID, inviteID discord.GuildID
-			for k := range bot.guildsToChunk {
-				chunkID = k
-				delete(bot.guildsToChunk, k)
-				break
-			}
-			for k := range bot.guildsToFetchInvites {
-				inviteID = k
-				delete(bot.guildsToFetchInvites, k)
-				break
-			}
-
-			bot.chunkMu.Unlock()
-
-			if chunkID.IsValid() {
-				err := bot.State(chunkID).Gateway.RequestGuildMembers(gateway.RequestGuildMembersData{
-					GuildIDs: []discord.GuildID{chunkID},
-					Limit:    0,
-				})
-				if err != nil {
-					bot.Sugar.Debugf("Error chunking members for guild %v: %v", chunkID, err)
-
-					bot.chunkMu.Lock()
-					bot.guildsToChunk[chunkID] = struct{}{}
-					bot.chunkMu.Unlock()
-				}
-			}
-
-			if inviteID.IsValid() {
-				inv, err := bot.State(inviteID).GuildInvites(inviteID)
-				if err != nil {
-					bot.Sugar.Errorf("Error getting invites for %v: %v", inviteID, err)
-				}
-
-				bot.InviteMu.Lock()
-				bot.Invites[inviteID] = inv
-				bot.InviteMu.Unlock()
-			}
-
+		} else if bot.doneChunking {
+			bot.Sugar.Infof("Chunking was finished, but joined new guilds, chunking those")
+			bot.doneChunking = false
+			t = time.Now().UTC()
 		}
+
+		var chunkID, inviteID discord.GuildID
+		for k := range bot.guildsToChunk {
+			chunkID = k
+			delete(bot.guildsToChunk, k)
+			break
+		}
+		for k := range bot.guildsToFetchInvites {
+			inviteID = k
+			delete(bot.guildsToFetchInvites, k)
+			break
+		}
+
+		bot.chunkMu.Unlock()
+
+		if chunkID.IsValid() {
+			err := bot.State(chunkID).Gateway.RequestGuildMembers(gateway.RequestGuildMembersData{
+				GuildIDs: []discord.GuildID{chunkID},
+				Limit:    0,
+			})
+			if err != nil {
+				bot.Sugar.Debugf("Error chunking members for guild %v: %v", chunkID, err)
+
+				bot.chunkMu.Lock()
+				bot.guildsToChunk[chunkID] = struct{}{}
+				bot.chunkMu.Unlock()
+			}
+		}
+
+		if inviteID.IsValid() {
+			inv, err := bot.State(inviteID).GuildInvites(inviteID)
+			if err != nil {
+				bot.Sugar.Errorf("Error getting invites for %v: %v", inviteID, err)
+			}
+
+			bot.InviteMu.Lock()
+			bot.Invites[inviteID] = inv
+			bot.InviteMu.Unlock()
+		}
+
 	}
 }

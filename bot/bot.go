@@ -3,6 +3,7 @@ package bot
 import (
 	"context"
 
+	"emperror.dev/errors"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/diamondburned/arikawa/v3/gateway/shard"
@@ -13,6 +14,8 @@ import (
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/bcr/bot"
 	"github.com/starshine-sys/catalogger/db"
+	mstore "github.com/starshine-sys/catalogger/store"
+	"github.com/starshine-sys/catalogger/store/redisstore"
 	"go.uber.org/zap"
 )
 
@@ -20,9 +23,10 @@ import (
 type Bot struct {
 	*bot.Bot
 
-	DB    *db.DB
-	Redis radix.Client
-	Sugar *zap.SugaredLogger
+	DB          *db.DB
+	Redis       radix.Client
+	MemberStore mstore.Store
+	Sugar       *zap.SugaredLogger
 }
 
 // New ...
@@ -38,6 +42,12 @@ func New(redisURL string, r *bcr.Router, db *db.DB, log *zap.SugaredLogger) (b *
 		return nil, err
 	}
 	b.Sugar.Info("Connected to Redis")
+
+	mstore, err := redisstore.NewStore(redisURL)
+	if err != nil {
+		return nil, errors.Wrap(err, "creating member store")
+	}
+	b.MemberStore = mstore
 
 	b.Router.AddHandler(b.messageCreate)
 	b.Router.AddHandler(b.interactionCreate)

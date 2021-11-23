@@ -153,6 +153,7 @@ func (bot *Bot) keyroleRemove(ctx *bcr.Context) (err error) {
 
 	if !isKeyRole {
 		_, err = ctx.Reply("%v is not a key role.", r.Mention())
+		return
 	}
 
 	_, err = bot.DB.Pool.Exec(context.Background(), "update guilds set key_roles = array_remove(key_roles, $1) where id = $2", r.ID, ctx.Message.GuildID)
