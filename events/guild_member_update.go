@@ -11,28 +11,24 @@ import (
 )
 
 func (bot *Bot) guildMemberUpdate(ev *gateway.GuildMemberUpdateEvent) (resp *handler.Response, err error) {
-	bot.MembersMu.Lock()
-	m, ok := bot.Members[memberCacheKey{
-		GuildID: ev.GuildID,
-		UserID:  ev.User.ID,
-	}]
-	if !ok {
-		// something went wrong
-		bot.MembersMu.Unlock()
+	m, err := bot.Member(ev.GuildID, ev.User.ID)
+	if err != nil {
+		bot.Sugar.Errorf("Error getting member: %v", err)
 		return
 	}
 
 	// update cache
-	up := bot.Members[memberCacheKey{
-		GuildID: ev.GuildID,
-		UserID:  ev.User.ID,
-	}]
+	// copy member struct
+	up := m
+	up.RoleIDs = append([]discord.RoleID(nil), m.RoleIDs...)
 	ev.Update(&up)
-	bot.Members[memberCacheKey{
-		GuildID: ev.GuildID,
-		UserID:  ev.User.ID,
-	}] = up
-	bot.MembersMu.Unlock()
+
+	ctx, cancel := getctx()
+	defer cancel()
+
+	if err := bot.MemberStore.SetMember(ctx, ev.GuildID, up); err != nil {
+		bot.Sugar.Errorf("Error updating member in cache: %v", err)
+	}
 
 	if m.Nick != ev.Nick || m.User.Username+"#"+m.User.Discriminator != ev.User.Username+"#"+ev.User.Discriminator || m.User.Avatar != ev.User.Avatar {
 		// username or nickname changed, so run that handler

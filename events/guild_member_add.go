@@ -15,12 +15,13 @@ import (
 )
 
 func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) (resp *handler.Response, err error) {
-	bot.MembersMu.Lock()
-	bot.Members[memberCacheKey{
-		GuildID: m.GuildID,
-		UserID:  m.User.ID,
-	}] = m.Member
-	bot.MembersMu.Unlock()
+	ctx, cancel := getctx()
+	defer cancel()
+
+	err = bot.MemberStore.SetMember(ctx, m.GuildID, m.Member)
+	if err != nil {
+		bot.Sugar.Errorf("Error setting member %v in cache: %v", m.User.ID, err)
+	}
 
 	ch, err := bot.DB.Channels(m.GuildID)
 	if err != nil {
@@ -111,69 +112,87 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) (resp *handler.Re
 	if !m.User.Bot {
 		is, err := bot.State(m.GuildID).GuildInvites(m.GuildID)
 		if err == nil {
-			bot.InviteMu.Lock()
-			var (
-				found bool
-				inv   discord.Invite
-			)
+			allExisting, err := bot.MemberStore.Invites(ctx, m.GuildID)
+			if err == nil {
+				var (
+					found bool
+					inv   discord.Invite
+				)
 
-			for _, existing := range bot.Invites[m.GuildID] {
-				for _, i := range is {
-					if existing.Code == i.Code && existing.Uses < i.Uses {
-						found = true
-						inv = i
-						break
+				for _, existing := range allExisting {
+					for _, i := range is {
+						if existing.Code == i.Code && existing.Uses < i.Uses {
+							found = true
+							inv = i
+							break
+						}
 					}
 				}
-			}
 
-			if !found {
+				if !found {
+
+					if g.VanityURLCode != "" {
+						e.Fields = append(e.Fields, discord.EmbedField{
+							Name:  "Invite used",
+							Value: "Vanity invite (" + bcr.EscapeBackticks(g.VanityURLCode) + ")",
+						})
+					} else {
+						e.Fields = append(e.Fields, discord.EmbedField{
+							Name:  "Invite used",
+							Value: "Could not determine invite.",
+						})
+					}
+
+				} else {
+					name, err := bot.DB.GetInviteName(inv.Code)
+					if err != nil {
+						bot.Sugar.Errorf("Error getting invite name: %v", err)
+					}
+
+					e.Fields = append(e.Fields, []discord.EmbedField{
+						{
+							Name:  "​",
+							Value: "**Invite information**",
+						},
+						{
+							Name:   "Name",
+							Value:  name,
+							Inline: true,
+						},
+						{
+							Name:   "Code",
+							Value:  inv.Code,
+							Inline: true,
+						},
+						{
+							Name:   "Uses",
+							Value:  fmt.Sprint(inv.Uses),
+							Inline: true,
+						},
+						{
+							Name:   "Created at",
+							Value:  fmt.Sprintf("<t:%v>", inv.CreatedAt.Time().Unix()),
+							Inline: true,
+						},
+						{
+							Name:   "Created by",
+							Value:  fmt.Sprintf("%v#%v %v", inv.Inviter.Username, inv.Inviter.Discriminator, inv.Inviter.Mention()),
+							Inline: true,
+						},
+					}...)
+				}
+
+			} else {
 				e.Fields = append(e.Fields, discord.EmbedField{
 					Name:  "Invite used",
 					Value: "Could not determine invite.",
 				})
-			} else {
-				name, err := bot.DB.GetInviteName(inv.Code)
-				if err != nil {
-					bot.Sugar.Errorf("Error getting invite name: %v", err)
-				}
-
-				e.Fields = append(e.Fields, []discord.EmbedField{
-					{
-						Name:  "​",
-						Value: "**Invite information**",
-					},
-					{
-						Name:   "Name",
-						Value:  name,
-						Inline: true,
-					},
-					{
-						Name:   "Code",
-						Value:  inv.Code,
-						Inline: true,
-					},
-					{
-						Name:   "Uses",
-						Value:  fmt.Sprint(inv.Uses),
-						Inline: true,
-					},
-					{
-						Name:   "Created at",
-						Value:  fmt.Sprintf("<t:%v>", inv.CreatedAt.Time().Unix()),
-						Inline: true,
-					},
-					{
-						Name:   "Created by",
-						Value:  fmt.Sprintf("%v#%v %v", inv.Inviter.Username, inv.Inviter.Discriminator, inv.Inviter.Mention()),
-						Inline: true,
-					},
-				}...)
 			}
 
-			bot.Invites[m.GuildID] = is
-
-			bot.InviteMu.Unlock()
+			err = bot.MemberStore.SetInvites(ctx, m.GuildID, is)
+			if err != nil {
+				bot.Sugar.Errorf("Error updating invites for %v: %v", m.GuildID, err)
+			}
 		}
 	}
 

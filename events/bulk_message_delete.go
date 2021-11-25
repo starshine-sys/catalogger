@@ -177,7 +177,14 @@ func (bot *Bot) bulkHTML(guildID discord.GuildID, channelID discord.ChannelID, m
 		return "", err
 	}
 
-	members := bot.GuildMembers(g.ID)
+	ctx, cancel := getctx()
+	defer cancel()
+
+	members, err := bot.MemberStore.Members(ctx, g.ID)
+	if err != nil {
+		bot.Sugar.Errorf("Error getting members for guild %v: %v", g.ID, err)
+	}
+
 	users := make([]discord.User, len(members))
 	for i, m := range members {
 		users[i] = m.User
@@ -257,18 +264,4 @@ func (bot *Bot) bulkHTML(guildID discord.GuildID, channelID discord.ChannelID, m
 	}
 
 	return dischtml.Wrap(g, ch, s, len(dm))
-}
-
-// GuildMembers returns all cached members of the given guild.
-func (bot *Bot) GuildMembers(id discord.GuildID) (members []discord.Member) {
-	bot.MembersMu.RLock()
-	defer bot.MembersMu.RUnlock()
-
-	for k, m := range bot.Members {
-		if k.GuildID == id {
-			members = append(members, m)
-		}
-	}
-
-	return members
 }

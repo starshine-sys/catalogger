@@ -95,9 +95,8 @@ func (bot *Bot) ping(ctx bcr.Contexter) (err error) {
 				Name: "Numbers",
 				Value: fmt.Sprintf(
 					`%v messages from %v servers
-Cached %v members, %v channels, and %v roles`,
+Cached %v channels and %v roles`,
 					humanize.Comma(bot.msgCount), humanize.Comma(bot.guildCount),
-					humanize.Comma(bot.memberCount),
 					humanize.Comma(bot.channelCount),
 					humanize.Comma(bot.roleCount),
 				),
@@ -135,14 +134,10 @@ func (bot *Bot) countsLoop() {
 	}
 }
 
-func (bot *Bot) counts() (int64, int64, int64, int64, int64) {
+func (bot *Bot) counts() (guidlCount int64, channelCount int64, roleCount int64, msgCount int64) {
 	bot.GuildsMu.Lock()
 	bot.guildCount = int64(len(bot.Guilds))
 	bot.GuildsMu.Unlock()
-
-	bot.MembersMu.Lock()
-	bot.memberCount = int64(len(bot.Members))
-	bot.MembersMu.Unlock()
 
 	bot.ChannelsMu.Lock()
 	bot.channelCount = int64(len(bot.Channels))
@@ -156,5 +151,5 @@ func (bot *Bot) counts() (int64, int64, int64, int64, int64) {
 	if err != nil {
 		bot.Sugar.Errorf("Error getting message count: %v", err)
 	}
-	return bot.guildCount, bot.memberCount, bot.channelCount, bot.roleCount, bot.msgCount
+	return bot.guildCount, bot.channelCount, bot.roleCount, bot.msgCount
 }

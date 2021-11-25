@@ -48,7 +48,7 @@ func (s *Store) DeleteMember(ctx context.Context, guildID discord.GuildID, userI
 func (s *Store) Member(ctx context.Context, guildID discord.GuildID, userID discord.UserID) (m discord.Member, err error) {
 	var raw []byte
 
-	err = s.client.Do(ctx, radix.Cmd(&raw, "HGET", guildID.String(), userID.String()))
+	err = s.client.Do(ctx, radix.Cmd(&raw, "HGET", guildMemberKey(guildID), userID.String()))
 	if err != nil {
 		return m, err
 	}

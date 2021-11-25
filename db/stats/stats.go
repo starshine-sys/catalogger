@@ -31,15 +31,15 @@ type Client struct {
 	m  map[string]uint32
 	mu sync.Mutex
 
-	Counts func() (guilds, members, channels, roles, messages int64)
+	Counts func() (guilds, channels, roles, messages int64)
 }
 
 // New creates a new client
 func New(url, token, organization, database string) *Client {
 	c := &Client{
 		m: make(map[string]uint32),
-		Counts: func() (int64, int64, int64, int64, int64) {
-			return 0, 0, 0, 0, 0
+		Counts: func() (int64, int64, int64, int64) {
+			return 0, 0, 0, 0
 		},
 	}
 
@@ -174,11 +174,10 @@ func (c *Client) submitInner() {
 		}
 	}
 
-	guilds, members, channels, roles, messages := c.Counts()
+	guilds, channels, roles, messages := c.Counts()
 	// if the first one isn't 0, we actually got data
 	if guilds != 0 {
 		data["guilds"] = guilds
-		data["members"] = members
 		data["channels"] = channels
 		data["roles"] = roles
 		data["messages"] = messages

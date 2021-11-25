@@ -38,12 +38,6 @@ type Bot struct {
 	HandledMessages   map[discord.MessageID]struct{}
 	HandledMessagesMu sync.Mutex
 
-	Invites  map[discord.GuildID][]discord.Invite
-	InviteMu sync.Mutex
-
-	Members   map[memberCacheKey]discord.Member
-	MembersMu sync.RWMutex
-
 	Channels   map[discord.ChannelID]discord.Channel
 	ChannelsMu sync.RWMutex
 
@@ -65,7 +59,7 @@ type Bot struct {
 
 	EventHandler *handler.Handler
 
-	guildCount, memberCount, roleCount, channelCount, msgCount int64
+	guildCount, roleCount, channelCount, msgCount int64
 
 	guildsToChunk, guildsToFetchInvites map[discord.GuildID]struct{}
 	chunkMu                             sync.RWMutex
@@ -85,8 +79,6 @@ func Init(bot *bot.Bot, log *zap.SugaredLogger) (clearCacheFunc func(discord.Gui
 		ProxiedTriggers: make(map[discord.MessageID]struct{}),
 		HandledMessages: make(map[discord.MessageID]struct{}),
 
-		Invites:              make(map[discord.GuildID][]discord.Invite),
-		Members:              make(map[memberCacheKey]discord.Member),
 		Channels:             make(map[discord.ChannelID]discord.Channel),
 		Roles:                make(map[discord.RoleID]discord.Role),
 		Guilds:               make(map[discord.GuildID]discord.Guild),
@@ -219,10 +211,7 @@ func Init(bot *bot.Bot, log *zap.SugaredLogger) (clearCacheFunc func(discord.Gui
 
 	clearCacheFunc = b.ResetCache
 	memberFunc = func() int64 {
-		b.MembersMu.Lock()
-		n := int64(len(b.Members))
-		b.MembersMu.Unlock()
-		return n
+		return -1
 	}
 	guildPermFunc = b.guildPerms
 	joinedFunc = func(id discord.GuildID) bool {
@@ -273,10 +262,8 @@ func (bot *Bot) guildPerms(guildID discord.GuildID, userID discord.UserID) (g di
 		return g, 0, err
 	}
 
-	bot.MembersMu.Lock()
-	m, ok := bot.Members[memberCacheKey{guildID, userID}]
-	bot.MembersMu.Unlock()
-	if !ok {
+	m, err := bot.Member(guildID, userID)
+	if err != nil {
 		return g, 0, errors.New("member not found")
 	}
 
@@ -293,7 +280,7 @@ func (bot *Bot) guildPerms(guildID discord.GuildID, userID discord.UserID) (g di
 	}
 
 	if perms.Has(discord.PermissionAdministrator) {
-		perms.Add(discord.PermissionAll)
+		perms = perms.Add(discord.PermissionAll)
 	}
 
 	return g, perms, nil

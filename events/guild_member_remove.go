@@ -41,12 +41,11 @@ func (bot *Bot) guildMemberRemove(ev *gateway.GuildMemberRemoveEvent) (resp *han
 		Timestamp: discord.NowTimestamp(),
 	}
 
-	bot.MembersMu.Lock()
-	m, ok := bot.Members[memberCacheKey{
-		GuildID: ev.GuildID,
-		UserID:  ev.User.ID,
-	}]
-	if ok {
+	ctx, cancel := getctx()
+	defer cancel()
+
+	m, err := bot.MemberStore.Member(ctx, ev.GuildID, ev.User.ID)
+	if err == nil {
 		e.Fields = append(e.Fields, discord.EmbedField{
 			Name:  "Joined",
 			Value: fmt.Sprintf("<t:%v> (%v)", m.Joined.Time().Unix(), bcr.HumanizeTime(bcr.DurationPrecisionSeconds, m.Joined.Time())),
@@ -69,7 +68,6 @@ func (bot *Bot) guildMemberRemove(ev *gateway.GuildMemberRemoveEvent) (resp *han
 			})
 		}
 	}
-	bot.MembersMu.Unlock()
 
 	resp.Embeds = append(resp.Embeds, e)
 	return resp, err

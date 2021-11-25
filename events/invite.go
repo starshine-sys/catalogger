@@ -11,8 +11,6 @@ import (
 )
 
 func (bot *Bot) inviteCreateEvent(ev *gateway.InviteCreateEvent) (resp *handler.Response, err error) {
-	bot.Sugar.Info("received invite create event")
-
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {
 		return
@@ -72,15 +70,23 @@ func (bot *Bot) inviteDeleteEvent(ev *gateway.InviteDeleteEvent) (resp *handler.
 		found bool
 		inv   discord.Invite
 	)
-	bot.InviteMu.Lock()
-	for _, i := range bot.Invites[ev.GuildID] {
+
+	ctx, cancel := getctx()
+	defer cancel()
+
+	is, err := bot.MemberStore.Invites(ctx, ev.GuildID)
+	if err != nil {
+		bot.Sugar.Errorf("Error fetching invites for %v: %v", ev.GuildID, err)
+		return
+	}
+
+	for _, i := range is {
 		if i.Code == ev.Code {
 			found = true
 			inv = i
 			break
 		}
 	}
-	bot.InviteMu.Unlock()
 
 	if !found {
 		return

@@ -14,14 +14,18 @@ func (bot *Bot) inviteCreate(g *gateway.InviteCreateEvent) {
 		return
 	}
 
-	bot.InviteMu.Lock()
-	bot.Invites[g.GuildID] = inv
-	bot.InviteMu.Unlock()
+	ctx, cancel := getctx()
+	defer cancel()
+
+	err = bot.MemberStore.SetInvites(ctx, g.GuildID, inv)
+	if err != nil {
+		bot.Sugar.Errorf("Error updating invite cache for %v: %v", g.GuildID, err)
+	}
 }
 
 func (bot *Bot) inviteDelete(g *gateway.InviteDeleteEvent) {
-	// wait 0.5 seconds so we can log the event
-	time.Sleep(500 * time.Millisecond)
+	// wait 1 second so we can log the event
+	time.Sleep(time.Second)
 
 	_, err := bot.DB.Exec(context.Background(), "delete from invites where code = $1", g.Code)
 	if err != nil {
@@ -34,7 +38,11 @@ func (bot *Bot) inviteDelete(g *gateway.InviteDeleteEvent) {
 		return
 	}
 
-	bot.InviteMu.Lock()
-	bot.Invites[g.GuildID] = inv
-	bot.InviteMu.Unlock()
+	ctx, cancel := getctx()
+	defer cancel()
+
+	err = bot.MemberStore.SetInvites(ctx, g.GuildID, inv)
+	if err != nil {
+		bot.Sugar.Errorf("Error updating invite cache for %v: %v", g.GuildID, err)
+	}
 }

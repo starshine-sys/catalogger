@@ -1,6 +1,7 @@
 package events
 
 import (
+	"context"
 	"time"
 
 	"github.com/diamondburned/arikawa/v3/discord"
@@ -10,6 +11,10 @@ import (
 type memberCacheKey struct {
 	GuildID discord.GuildID
 	UserID  discord.UserID
+}
+
+func getctx() (context.Context, func()) {
+	return context.WithTimeout(context.Background(), 5*time.Second)
 }
 
 func (bot *Bot) requestGuildMembers(g *gateway.GuildCreateEvent) {
@@ -24,6 +29,18 @@ func (bot *Bot) requestGuildMembers(g *gateway.GuildCreateEvent) {
 		bot.Roles[r.ID] = r
 	}
 	bot.RolesMu.Unlock()
+
+	ctx, cancel := getctx()
+	defer cancel()
+
+	cached, err := bot.MemberStore.IsGuildCached(ctx, g.ID)
+	if err != nil {
+		bot.Sugar.Errorf("Error checking if guild %v is already cached: %v", err)
+	}
+
+	if cached {
+		return
+	}
 
 	bot.chunkMu.Lock()
 	bot.guildsToChunk[g.ID] = struct{}{}
@@ -43,13 +60,12 @@ func (bot *Bot) chunkGuildDelete(g *gateway.GuildDeleteEvent) {
 }
 
 func (bot *Bot) guildMemberChunk(g *gateway.GuildMembersChunkEvent) {
-	bot.MembersMu.Lock()
-	defer bot.MembersMu.Unlock()
-	for _, m := range g.Members {
-		bot.Members[memberCacheKey{
-			GuildID: g.GuildID,
-			UserID:  m.User.ID,
-		}] = m
+	ctx, cancel := getctx()
+	defer cancel()
+
+	err := bot.MemberStore.SetMembers(ctx, g.GuildID, g.Members)
+	if err != nil {
+		bot.Sugar.Errorf("Error setting members in cache: %v", err)
 	}
 }
 
@@ -93,11 +109,22 @@ func (bot *Bot) chunkGuilds() {
 				Limit:    0,
 			})
 			if err != nil {
-				bot.Sugar.Debugf("Error chunking members for guild %v: %v", chunkID, err)
+				bot.Sugar.Errorf("Error chunking members for guild %v: %v", chunkID, err)
 
 				bot.chunkMu.Lock()
 				bot.guildsToChunk[chunkID] = struct{}{}
 				bot.chunkMu.Unlock()
+			} else {
+				ctx, cancel := getctx()
+
+				err = bot.MemberStore.MarkGuildCached(ctx, chunkID)
+				if err != nil {
+					bot.Sugar.Errorf("Error marking guild as cached: %v", err)
+				}
+
+				// we can't defer this as it's an infinite loop
+				// so call cancel() manually at the end
+				cancel()
 			}
 		}
 
@@ -105,11 +132,18 @@ func (bot *Bot) chunkGuilds() {
 			inv, err := bot.State(inviteID).GuildInvites(inviteID)
 			if err != nil {
 				bot.Sugar.Errorf("Error getting invites for %v: %v", inviteID, err)
+				continue
 			}
 
-			bot.InviteMu.Lock()
-			bot.Invites[inviteID] = inv
-			bot.InviteMu.Unlock()
+			ctx, cancel := getctx()
+
+			err = bot.MemberStore.SetInvites(ctx, inviteID, inv)
+			if err != nil {
+				bot.Sugar.Errorf("Error setting invites in cache: %v", err)
+			}
+
+			// same as above, we can't defer this as it's an infinite loop
+			cancel()
 		}
 
 	}
