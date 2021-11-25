@@ -48,7 +48,7 @@ To get started, use `+"`%vsetchannel`"+` with one or more events.
 			},
 			{
 				Name:  "Source code",
-				Value: "https://github.com/starshine-sys/catalogger / [BSD 3-clause license](https://github.com/starshine-sys/catalogger/blob/main/LICENSE)",
+				Value: "https://github.com/starshine-sys/catalogger / Licensed under the [GNU AGPLv3](https://github.com/starshine-sys/catalogger/blob/main/LICENSE)",
 			},
 		},
 	}
