@@ -8,11 +8,6 @@ import (
 	"github.com/diamondburned/arikawa/v3/gateway"
 )
 
-type memberCacheKey struct {
-	GuildID discord.GuildID
-	UserID  discord.UserID
-}
-
 func getctx() (context.Context, func()) {
 	return context.WithTimeout(context.Background(), 5*time.Second)
 }
@@ -70,7 +65,8 @@ func (bot *Bot) guildMemberChunk(g *gateway.GuildMembersChunkEvent) {
 }
 
 func (bot *Bot) chunkGuilds() {
-	tick := time.NewTicker(2 * time.Second)
+	// tick every 3 seconds to avoid gateway rate limits
+	tick := time.NewTicker(3 * time.Second)
 	defer tick.Stop()
 
 	t := time.Now().UTC()
