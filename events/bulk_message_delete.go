@@ -1,7 +1,6 @@
 package events
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"sort"
@@ -25,7 +24,7 @@ func (bot *Bot) bulkMessageDelete(ev *gateway.MessageDeleteBulkEvent) (resp *han
 		return
 	}
 
-	channel, err := bot.State(ev.GuildID).Channel(ev.ChannelID)
+	channel, err := bot.RootChannel(ev.GuildID, ev.ChannelID)
 	if err != nil {
 		return nil, err
 	}
@@ -39,13 +38,8 @@ func (bot *Bot) bulkMessageDelete(ev *gateway.MessageDeleteBulkEvent) (resp *han
 		return
 	}
 
-	// if the channels is blacklisted, return
-	channelID := ev.ChannelID
-	if channel.Type == discord.GuildNewsThread || channel.Type == discord.GuildPrivateThread || channel.Type == discord.GuildPublicThread {
-		channelID = channel.ParentID
-	}
-	var blacklisted bool
-	if bot.DB.QueryRow(context.Background(), "select exists(select id from guilds where $1 = any(ignored_channels) and id = $2)", channelID, ev.GuildID).Scan(&blacklisted); blacklisted {
+	// if the channel is blacklisted, return
+	if bot.DB.IsBlacklisted(ev.GuildID, channel.ID) {
 		return
 	}
 
@@ -58,8 +52,8 @@ func (bot *Bot) bulkMessageDelete(ev *gateway.MessageDeleteBulkEvent) (resp *han
 		return
 	}
 
-	if redirects[channelID.String()].IsValid() {
-		resp.ChannelID = redirects[channelID.String()]
+	if redirects[channel.ID.String()].IsValid() {
+		resp.ChannelID = redirects[channel.ID.String()]
 	}
 
 	var msgs []*db.Message

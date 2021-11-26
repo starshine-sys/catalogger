@@ -153,3 +153,11 @@ func (db *DB) SetRedirects(id discord.GuildID, m RedirectMap) (err error) {
 	_, err = db.Exec(context.Background(), sql, args...)
 	return
 }
+
+func (db *DB) IsBlacklisted(guildID discord.GuildID, channelID discord.ChannelID) (blacklisted bool) {
+	err := db.QueryRow(context.Background(), "select exists(select id from guilds where $1 = any(ignored_channels) and id = $2)", channelID, guildID).Scan(&blacklisted)
+	if err != nil {
+		db.Sugar.Errorf("Error checking if channel is blacklisted: %v", err)
+	}
+	return blacklisted
+}

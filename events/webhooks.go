@@ -85,14 +85,14 @@ func (bot *Bot) fetchCachedKey(key string) (*Webhook, error) {
 
 	w := strings.SplitN(s, ":", 2)
 	if len(w) != 2 {
-		bot.Redis.Do(context.Background(), radix.Cmd(nil, "DEL", key))
-		return nil, ErrInvalid
+		err = bot.Redis.Do(context.Background(), radix.Cmd(nil, "DEL", key))
+		return nil, errors.Append(ErrInvalid, err)
 	}
 
 	whID, err := discord.ParseSnowflake(w[0])
 	if err != nil {
-		bot.Redis.Do(context.Background(), radix.Cmd(nil, "DEL", key))
-		return nil, ErrInvalid
+		err = bot.Redis.Do(context.Background(), radix.Cmd(nil, "DEL", key))
+		return nil, errors.Append(ErrInvalid, err)
 	}
 
 	return &Webhook{
@@ -170,10 +170,14 @@ func (bot *Bot) webhookCache(guildID discord.GuildID, ch discord.ChannelID) (*di
 			return nil, err
 		}
 
-		bot.SetWebhook(ch, &Webhook{
+		err = bot.SetWebhook(ch, &Webhook{
 			ID:    wh.ID,
 			Token: wh.Token,
 		})
+		if err != nil {
+			bot.Sugar.Errorf("Error setting webhook in redis: %v", err)
+		}
+
 	} else {
 		wh = &discord.Webhook{
 			ID:        w.ID,

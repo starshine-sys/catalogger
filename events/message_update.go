@@ -1,7 +1,6 @@
 package events
 
 import (
-	"context"
 	"fmt"
 
 	"emperror.dev/errors"
@@ -43,8 +42,8 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) (*handler.Response,
 	if channel.Type == discord.GuildNewsThread || channel.Type == discord.GuildPrivateThread || channel.Type == discord.GuildPublicThread {
 		channelID = channel.ParentID
 	}
-	var blacklisted bool
-	if bot.DB.QueryRow(context.Background(), "select exists(select id from guilds where $1 = any(ignored_channels) and id = $2)", channelID, m.GuildID).Scan(&blacklisted); blacklisted {
+
+	if bot.DB.IsBlacklisted(m.GuildID, channelID) {
 		return nil, nil
 	}
 

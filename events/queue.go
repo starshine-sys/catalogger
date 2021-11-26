@@ -71,7 +71,7 @@ type Queue struct {
 // NewQueue returns a new Queue
 func NewQueue(f func(v ...interface{})) *Queue {
 	if f == nil {
-		f = func(v ...interface{}) { return }
+		f = func(v ...interface{}) {}
 	}
 
 	return &Queue{

@@ -54,7 +54,12 @@ func (bot *Bot) ping(ctx bcr.Contexter) (err error) {
 
 	// database latency
 	t = time.Now()
-	bot.DB.Channels(ctx.GetChannel().GuildID)
+	_, err = bot.DB.Channels(ctx.GetChannel().GuildID)
+	if err != nil {
+		// we don't use the value here but good to log this *anyway* just in case
+		bot.Sugar.Errorf("Error fetching channels: %v", err)
+	}
+
 	dbLatency := time.Since(t).Round(time.Microsecond)
 
 	e := discord.Embed{

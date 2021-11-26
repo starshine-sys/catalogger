@@ -1,7 +1,6 @@
 package events
 
 import (
-	"context"
 	"regexp"
 	"time"
 
@@ -39,8 +38,12 @@ func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) (*handler.Response,
 	}
 
 	// if the channel is blacklisted, return
-	var blacklisted bool
-	if bot.DB.QueryRow(context.Background(), "select exists(select id from guilds where $1 = any(ignored_channels) and id = $2)", m.ChannelID, m.GuildID).Scan(&blacklisted); blacklisted {
+	channel, err := bot.RootChannel(m.GuildID, m.ChannelID)
+	if err != nil {
+		return nil, err
+	}
+
+	if bot.DB.IsBlacklisted(m.GuildID, channel.ID) {
 		return nil, nil
 	}
 

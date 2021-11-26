@@ -39,3 +39,28 @@ func (bot *Bot) SetInvites(guildID discord.GuildID, is []discord.Invite) error {
 
 	return bot.MemberStore.SetInvites(ctx, guildID, is)
 }
+
+// RootChannel returns the given channel's root channel--either the channel itself, or the parent channel if it's a thread.
+func (bot *Bot) RootChannel(guildID discord.GuildID, id discord.ChannelID) (*discord.Channel, error) {
+	s := bot.State(guildID)
+
+	ch, err := s.Channel(id)
+	if err != nil {
+		return nil, err
+	}
+
+	if IsThread(ch) {
+		return s.Channel(ch.ParentID)
+	}
+
+	return ch, nil
+}
+
+func IsThread(ch *discord.Channel) bool {
+	switch ch.Type {
+	case discord.GuildNewsThread, discord.GuildPrivateThread, discord.GuildPublicThread:
+		return true
+	default:
+		return false
+	}
+}

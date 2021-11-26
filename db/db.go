@@ -6,7 +6,6 @@ import (
 	"embed"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/getsentry/sentry-go"
 	"github.com/jackc/pgconn"
@@ -21,9 +20,6 @@ import (
 	"go.uber.org/zap"
 )
 
-// LongQueryThreshold is the threshold above which queries (not arguments) are logged.
-const LongQueryThreshold = 20 * time.Millisecond
-
 //go:embed migrations
 var fs embed.FS
 
@@ -36,8 +32,6 @@ type DB struct {
 
 	// Used for encryption
 	AESKey [32]byte
-
-	openConns int32
 
 	Stats *stats.Client
 }

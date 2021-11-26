@@ -1,7 +1,6 @@
 package events
 
 import (
-	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -39,8 +38,8 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) (*handler.Response,
 	if channel.Type == discord.GuildNewsThread || channel.Type == discord.GuildPrivateThread || channel.Type == discord.GuildPublicThread {
 		channelID = channel.ParentID
 	}
-	var blacklisted bool
-	if bot.DB.QueryRow(context.Background(), "select exists(select id from guilds where $1 = any(ignored_channels) and id = $2)", channelID, m.GuildID).Scan(&blacklisted); blacklisted {
+
+	if bot.DB.IsBlacklisted(m.GuildID, channelID) {
 		return nil, nil
 	}
 
@@ -62,10 +61,10 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) (*handler.Response,
 	// trigger messages should be ignored too
 	bot.ProxiedTriggersMu.Lock()
 	if _, ok := bot.ProxiedTriggers[m.ID]; ok {
-		bot.DB.DeleteMessage(m.ID)
+		err = bot.DB.DeleteMessage(m.ID)
 		delete(bot.ProxiedTriggers, m.ID)
 		bot.ProxiedTriggersMu.Unlock()
-		return nil, nil
+		return nil, err
 	}
 	bot.ProxiedTriggersMu.Unlock()
 
@@ -87,8 +86,8 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) (*handler.Response,
 
 	// ignore any pk;edit messages
 	if hasAnyPrefixLower(msg.Content, editPrefixes...) {
-		bot.DB.DeleteMessage(m.ID)
-		return nil, nil
+		err = bot.DB.DeleteMessage(m.ID)
+		return nil, err
 	}
 
 	mention := msg.UserID.Mention()

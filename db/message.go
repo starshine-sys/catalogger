@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 
+	"emperror.dev/errors"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/starshine-sys/catalogger/crypt"
@@ -108,9 +109,13 @@ func (db *DB) GetMessage(id discord.MessageID) (m *Message, err error) {
 
 	sql, args, err := sq.Select("*").From("messages").Where(squirrel.Eq{"msg_id": id}).ToSql()
 	if err != nil {
+		return nil, errors.Cause(err)
+	}
+
+	err = pgxscan.Get(context.Background(), db, m, sql, args...)
+	if err != nil {
 		return nil, err
 	}
-	err = pgxscan.Get(context.Background(), db, m, sql, args...)
 
 	b, err := hex.DecodeString(m.Content)
 	if err != nil {
@@ -138,11 +143,14 @@ func (db *DB) GetMessage(id discord.MessageID) (m *Message, err error) {
 
 	if m.RawMetadata != nil {
 		b, err := crypt.Decrypt(*m.RawMetadata, db.AESKey)
+		if err != nil {
+			db.Sugar.Errorf("Error decrypting metadata for %v: %v", m.MsgID, err)
+		}
 
 		var md Metadata
 		err = json.Unmarshal(b, &md)
 		if err != nil {
-			return m, err
+			return m, errors.Wrap(err, "decrypting metadata")
 		}
 		m.Metadata = &md
 	}
