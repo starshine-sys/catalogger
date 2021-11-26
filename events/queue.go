@@ -1,6 +1,7 @@
 package events
 
 import (
+	"fmt"
 	"reflect"
 	"sync"
 	"time"
@@ -9,6 +10,8 @@ import (
 	"github.com/diamondburned/arikawa/v3/api/webhook"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
+	"github.com/diamondburned/arikawa/v3/utils/httputil"
+	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/db"
 	"github.com/starshine-sys/catalogger/events/handler"
 )
@@ -186,10 +189,21 @@ func (bot *Bot) handleResponse(ev reflect.Value, resp *handler.Response) {
 
 	wh, err := bot.webhookCache(resp.GuildID, resp.ChannelID)
 	if err != nil {
-		bot.DB.Report(db.ErrorContext{
-			Event:   evName,
-			GuildID: resp.GuildID,
-		}, err)
+		switch v := err.(type) {
+		case *httputil.HTTPError:
+			bot.Sugar.Infof("HTTP error sending log in %v: %v", resp.ChannelID, err)
+
+			if v.Status == 403 {
+				bot.sendUnauthorizedError(resp)
+				return
+			}
+		default:
+			bot.DB.Report(db.ErrorContext{
+				Event:   evName,
+				GuildID: resp.GuildID,
+			}, err)
+		}
+
 		return
 	}
 
@@ -216,4 +230,31 @@ func (bot *Bot) handleResponse(ev reflect.Value, resp *handler.Response) {
 	}
 
 	bot.Send(wh, evName, resp.Embeds...)
+}
+
+func (bot *Bot) shouldSendError(ch discord.ChannelID) bool {
+	bot.UnauthorizedErrorsMu.Lock()
+	defer bot.UnauthorizedErrorsMu.Unlock()
+
+	if bot.UnauthorizedErrorsSent[ch].Before(time.Now().Add(-10 * time.Minute)) {
+		bot.UnauthorizedErrorsSent[ch] = time.Now()
+
+		return true
+	}
+
+	return false
+}
+
+func (bot *Bot) sendUnauthorizedError(resp *handler.Response) {
+	if !bot.shouldSendError(resp.ChannelID) {
+		return
+	}
+
+	_, err := bot.State(resp.GuildID).SendEmbeds(resp.ChannelID, discord.Embed{
+		Color:       bcr.ColourRed,
+		Description: fmt.Sprintf("%v does not have the **Manage Webhooks** permission in this channel, and thus cannot send log messages.\nCheck this server's permissions with `/permcheck`.", bot.Router.Bot.Username),
+	})
+	if err != nil {
+		bot.Sugar.Errorf("Error sending unauthorized message to %v: %v", resp.ChannelID, err)
+	}
 }

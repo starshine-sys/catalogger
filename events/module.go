@@ -38,6 +38,9 @@ type Bot struct {
 	HandledMessages   map[discord.MessageID]struct{}
 	HandledMessagesMu sync.Mutex
 
+	UnauthorizedErrorsSent map[discord.ChannelID]time.Time
+	UnauthorizedErrorsMu   sync.Mutex
+
 	Channels   map[discord.ChannelID]discord.Channel
 	ChannelsMu sync.RWMutex
 
@@ -76,8 +79,9 @@ func Init(bot *bot.Bot, log *zap.SugaredLogger) (clearCacheFunc func(discord.Gui
 		Start:          time.Now().UTC(),
 		SentryEnricher: eventcollector.New(),
 
-		ProxiedTriggers: make(map[discord.MessageID]struct{}),
-		HandledMessages: make(map[discord.MessageID]struct{}),
+		ProxiedTriggers:        make(map[discord.MessageID]struct{}),
+		HandledMessages:        make(map[discord.MessageID]struct{}),
+		UnauthorizedErrorsSent: make(map[discord.ChannelID]time.Time),
 
 		Channels:             make(map[discord.ChannelID]discord.Channel),
 		Roles:                make(map[discord.RoleID]discord.Role),
