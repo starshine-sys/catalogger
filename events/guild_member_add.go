@@ -288,7 +288,7 @@ func checkInvites(old, new []discord.Invite) (inv discord.Invite, found bool) {
 	for _, o := range old {
 		for _, n := range new {
 			if o.Code == n.Code && o.Uses < n.Uses {
-				return inv, true
+				return n, true
 			}
 		}
 	}
