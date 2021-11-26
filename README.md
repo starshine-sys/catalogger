@@ -4,11 +4,11 @@ A logger bot that integrates with PluralKit's message proxying.
 
 For a usage guide, check out docs/USAGE.md
 
-To invite the bot to your server, use [this link](https://discord.com/api/oauth2/authorize?client_id=830819903371739166&permissions=537259249&scope=bot%20applications.commands).
+To invite Catalogger to your server, use [this link](https://discord.com/api/oauth2/authorize?client_id=830819903371739166&permissions=537259249&scope=bot%20applications.commands).
 
-## Hosting the bot yourself
+## Hosting Catalogger yourself
 
-A logging bot, by its nature, collects a *lot* of potentially sensitive data. All message content is stored encrypted, but even then, you might not be comfortable adding a third-party bot for logging. For that reason, we provide an easy way of self-hosting the bot using Docker.
+A logging bot, by its nature, collects a *lot* of potentially sensitive data. All message content is stored encrypted, but even then, you might not be comfortable adding a third-party bot for logging. For that reason, we provide an easy way of self-hosting Catalogger using Docker.
 
 (We're not sure if the Docker image will run on Windows--it's only been tested on Linux. For best results, use a Linux system!)
 

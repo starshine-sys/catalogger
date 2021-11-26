@@ -23,20 +23,20 @@ func (bot *Bot) help(ctx bcr.Contexter) (err error) {
 	e := discord.Embed{
 		Title: "Help",
 		Description: fmt.Sprintf(`A logging bot that integrates with PluralKit's message proxying.
-The bot's prefixes are %v.
+%v's prefixes are %v.
 To get started, use `+"`%vsetchannel`"+` with one or more events.
 
-[Basic usage guide](https://catalogger.starshines.xyz/docs) / [Privacy](https://catalogger.starshines.xyz/privacy)`, english.OxfordWordSeries(bot.Router.Prefixes[:len(bot.Router.Prefixes)-1], "and"), bot.Router.Prefixes[0]),
+[Basic usage guide](https://catalogger.starshines.xyz/docs) / [Privacy](https://catalogger.starshines.xyz/privacy)`, bot.Router.Bot.Username, english.OxfordWordSeries(bot.Router.Prefixes[:len(bot.Router.Prefixes)-1], "and"), bot.Router.Prefixes[0]),
 		Color: bcr.ColourPurple,
 
 		Fields: []discord.EmbedField{
 			{
 				Name:  "Info commands",
-				Value: "`help`: show this help\n`help permissions`: show a list of required permissions\n`help commands`: show a list of commands\n`stats`: show the bot's latency and other stats\n`invite`: get an invite link for the bot\n`events`: show all events",
+				Value: fmt.Sprintf("`help`: show this help\n`help permissions`: show a list of required permissions\n`help commands`: show a list of commands\n`stats`: show %v's latency and other stats\n`invite`: get an invite link for %v\n`events`: show all events", bot.Router.Bot.Username, bot.Router.Bot.Username),
 			},
 			{
 				Name:  "Configuration",
-				Value: "`channels`: show which events are logging to which channels\n`setchannel`: log the given event(s) to the current channel\n**For example: `setchannel MESSAGE_DELETE, MESSAGE_UPDATE`**\n`ignorechannel`: ignore the current channel\n`redirect`: redirect a channel's logs to a different log channel\n`invites`: list this server's invites\n`invites name`: give an invite a name\n`watchlist`: show or configure this server's user watchlist.\n`cleardata`: clear this server's data (including messages)\n`clearcache`: clear the bot's internal cache, in case logging is not working\n`permcheck`: check for permission errors in log channels",
+				Value: fmt.Sprintf("`channels`: show which events are logging to which channels\n`setchannel`: log the given event(s) to the current channel\n**For example: `setchannel MESSAGE_DELETE, MESSAGE_UPDATE`**\n`ignorechannel`: ignore the current channel\n`redirect`: redirect a channel's logs to a different log channel\n`invites`: list this server's invites\n`invites name`: give an invite a name\n`watchlist`: show or configure this server's user watchlist.\n`cleardata`: clear this server's data (including messages)\n`clearcache`: clear %v's internal cache, in case logging is not working\n`permcheck`: check for permission errors in log channels", bot.Router.Bot.Username),
 			},
 			{
 				Name:  "Events",
@@ -62,7 +62,7 @@ To get started, use `+"`%vsetchannel`"+` with one or more events.
 
 	dashboard := os.Getenv("DASHBOARD_BASE")
 	if dashboard != "" {
-		e.Description += fmt.Sprintf("\n\nYou can also use the [dashboard](%v/servers) to configure the bot!", dashboard)
+		e.Description += fmt.Sprintf("\n\nYou can also use the [dashboard](%v/servers) to configure %v!", dashboard, bot.Router.Bot.Username)
 	}
 
 	return ctx.SendX("", e)
@@ -85,7 +85,7 @@ func (bot *Bot) invite(ctx bcr.Contexter) (err error) {
 
 	link := fmt.Sprintf("https://discord.com/api/oauth2/authorize?client_id=%v&permissions=%v&scope=bot%%20applications.commands", bot.Router.Bot.ID, perms)
 
-	return ctx.SendEphemeral(fmt.Sprintf("Use the following link to invite me to your server: <%v>", link))
+	return ctx.SendEphemeral(fmt.Sprintf("Use the following link to invite %v to your server: <%v>", bot.Router.Bot.Username, link))
 }
 
 func (bot *Bot) perms(ctx bcr.Contexter) (err error) {
@@ -142,7 +142,7 @@ func (bot *Bot) dashboard(ctx bcr.Contexter) (err error) {
 	}
 
 	if !perms.Has(discord.PermissionManageGuild) || ctx.GetGuild() == nil {
-		return ctx.SendEphemeral(fmt.Sprintf("The bot dashboard is available here: <%v/servers>", dashboard))
+		return ctx.SendEphemeral(fmt.Sprintf("%v's dashboard is available here: <%v/servers>", bot.Router.Bot.Username, dashboard))
 	}
 
 	return ctx.SendEphemeral(fmt.Sprintf("The dashboard for this server is available here: <%v/servers/%v>", dashboard, ctx.GetGuild().ID))

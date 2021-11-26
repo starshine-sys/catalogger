@@ -60,7 +60,7 @@ func (bot *Bot) permcheck(ctx bcr.Contexter) (err error) {
 
 				e.Fields = append(e.Fields, discord.EmbedField{
 					Name:  "Permission error",
-					Value: "⚠️ The bot is missing one or more required permissions.\nIt may not work correctly or at all.",
+					Value: fmt.Sprintf("⚠️ %v is missing one or more required permissions.\nIt may not work correctly or at all.", bot.Router.Bot.Username),
 				})
 			}
 			e.Fields[0].Value += fmt.Sprintf(" %v\n", p.Name)
@@ -86,15 +86,15 @@ func (bot *Bot) permcheck(ctx bcr.Contexter) (err error) {
 		e.Fields = append(e.Fields, discord.EmbedField{
 			Name: "Channel permissions",
 			Value: fmt.Sprintf(`No issues found! :)
-If the bot still isn't logging, try `+"`%vclearcache`"+`.
-If that doesn't work, contact the developer.`, bot.Router.Prefixes[0]),
+If %v still isn't logging, try `+"`/clear-cache`"+`.
+If that doesn't work, contact the developer.`, bot.Router.Bot.Username),
 		})
 	} else {
 		e.Color = bcr.ColourRed
 
 		e.Fields = append(e.Fields, discord.EmbedField{
 			Name:  "Channel permissions",
-			Value: "⚠️ The bot is missing required permissions in one or more channels.\nLogging may not work correctly or at all.",
+			Value: fmt.Sprintf("⚠️ %v is missing required permissions in one or more channels.\nLogging may not work correctly or at all.", bot.Router.Bot.Username),
 		})
 
 		if len(missingPerms["webhooks"]) > 0 {
