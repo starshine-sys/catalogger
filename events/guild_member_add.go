@@ -114,20 +114,7 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) (resp *handler.Re
 		if err == nil {
 			allExisting, err := bot.MemberStore.Invites(ctx, m.GuildID)
 			if err == nil {
-				var (
-					found bool
-					inv   discord.Invite
-				)
-
-				for _, existing := range allExisting {
-					for _, i := range is {
-						if existing.Code == i.Code && existing.Uses < i.Uses {
-							found = true
-							inv = i
-							break
-						}
-					}
-				}
+				inv, found := checkInvites(allExisting, is)
 
 				if !found {
 
@@ -183,6 +170,8 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) (resp *handler.Re
 				}
 
 			} else {
+				bot.Sugar.Errorf("Error fetching previous invites for %v: %v", m.GuildID, err)
+
 				e.Fields = append(e.Fields, discord.EmbedField{
 					Name:  "Invite used",
 					Value: "Could not determine invite.",
@@ -201,7 +190,7 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) (resp *handler.Re
 	if m.User.CreatedAt().After(time.Now().UTC().Add(-168 * time.Hour)) {
 		resp.Embeds = append(resp.Embeds, discord.Embed{
 			Title:       "New account",
-			Description: fmt.Sprintf("⚠️ This account was created only **%v** (<t:%v>)", bcr.HumanizeTime(bcr.DurationPrecisionSeconds, m.User.CreatedAt()), m.User.CreatedAt().Unix()),
+			Description: fmt.Sprintf("⚠️ This account was only created **%v** (<t:%v>)", bcr.HumanizeTime(bcr.DurationPrecisionSeconds, m.User.CreatedAt()), m.User.CreatedAt().Unix()),
 			Color:       bcr.ColourOrange,
 		})
 	}
@@ -283,4 +272,43 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) (resp *handler.Re
 	resp.Embeds = append(resp.Embeds, e)
 
 	return resp, nil
+}
+
+func checkInvites(old, new []discord.Invite) (inv discord.Invite, found bool) {
+	// check invites in both slices
+	for _, o := range old {
+		for _, n := range new {
+			if o.Code == n.Code && o.Uses < n.Uses {
+				return inv, true
+			}
+		}
+	}
+
+	// check only new invites with 1 use
+	for _, n := range new {
+		if !invExists(old, n) && n.Uses == 1 {
+			return n, true
+		}
+	}
+
+	// check only old invites with 1 use less than max
+	for _, o := range old {
+		if !invExists(new, o) && o.MaxUses != 0 && o.MaxUses == o.Uses+1 {
+			// this is an *old* invite so we should update the count before returning
+			o.Uses = o.Uses + 1
+			return o, true
+		}
+	}
+
+	return inv, false
+}
+
+func invExists(invs []discord.Invite, i discord.Invite) bool {
+	for _, o := range invs {
+		if i.Code == o.Code {
+			return true
+		}
+	}
+
+	return false
 }
