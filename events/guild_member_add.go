@@ -161,12 +161,21 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) (resp *handler.Re
 							Value:  fmt.Sprintf("<t:%v>", inv.CreatedAt.Time().Unix()),
 							Inline: true,
 						},
-						{
+					}...)
+
+					if inv.Inviter != nil {
+						e.Fields = append(e.Fields, discord.EmbedField{
 							Name:   "Created by",
 							Value:  fmt.Sprintf("%v#%v %v", inv.Inviter.Username, inv.Inviter.Discriminator, inv.Inviter.Mention()),
 							Inline: true,
-						},
-					}...)
+						})
+					} else {
+						e.Fields = append(e.Fields, discord.EmbedField{
+							Name:   "Created by",
+							Value:  "Unknown",
+							Inline: true,
+						})
+					}
 				}
 
 			} else {
