@@ -30,6 +30,7 @@ var shouldQueue = map[string]bool{
 	reflect.ValueOf(&gateway.GuildBanRemoveEvent{}).Elem().Type().Name():    true,
 	reflect.ValueOf(&gateway.InviteCreateEvent{}).Elem().Type().Name():      true,
 	reflect.ValueOf(&gateway.InviteDeleteEvent{}).Elem().Type().Name():      true,
+	reflect.ValueOf(&MemberKickEvent{}).Elem().Type().Name():                true,
 }
 
 // Send either sends a slice of embeds immediately, or queues a single embed

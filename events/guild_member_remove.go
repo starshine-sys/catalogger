@@ -3,7 +3,9 @@ package events
 import (
 	"fmt"
 	"strings"
+	"time"
 
+	"github.com/diamondburned/arikawa/v3/api"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
@@ -68,6 +70,36 @@ func (bot *Bot) guildMemberRemove(ev *gateway.GuildMemberRemoveEvent) (resp *han
 			})
 		}
 	}
+
+	go func() {
+		// wait a second to give the audit log time to catch up
+		time.Sleep(time.Second)
+
+		log, err := bot.State(ev.GuildID).AuditLog(ev.GuildID, api.AuditLogData{
+			ActionType: discord.MemberKick,
+		})
+		if err == nil {
+			for _, e := range log.Entries {
+				if time.Since(e.ID.Time()) < 1*time.Minute &&
+					e.TargetID == discord.Snowflake(m.User.ID) {
+
+					mod, err := bot.State(ev.GuildID).User(e.UserID)
+					if err != nil {
+						bot.Sugar.Infof("Error fetching user: %v", err)
+					}
+
+					bot.EventHandler.Call(&MemberKickEvent{
+						ChannelID: ch[keys.GuildMemberKick],
+						User:      ev.User,
+						Entry:     e,
+						Moderator: mod,
+					})
+				}
+			}
+		} else {
+			bot.Sugar.Errorf("Error fetching audit logs for %v: %v", ev.GuildID, err)
+		}
+	}()
 
 	resp.Embeds = append(resp.Embeds, e)
 	return resp, err

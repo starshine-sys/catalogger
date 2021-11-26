@@ -38,6 +38,7 @@ var keys = struct {
 	GuildKeyRoleUpdate    string
 	GuildMemberNickUpdate string
 	GuildMemberRemove     string
+	GuildMemberKick       string
 	GuildBanAdd           string
 	GuildBanRemove        string
 	InviteCreate          string
@@ -59,6 +60,7 @@ var keys = struct {
 	GuildKeyRoleUpdate:    "GUILD_KEY_ROLE_UPDATE",
 	GuildMemberNickUpdate: "GUILD_MEMBER_NICK_UPDATE",
 	GuildMemberRemove:     "GUILD_MEMBER_REMOVE",
+	GuildMemberKick:       "GUILD_MEMBER_KICK",
 	GuildBanAdd:           "GUILD_BAN_ADD",
 	GuildBanRemove:        "GUILD_BAN_REMOVE",
 	InviteCreate:          "INVITE_CREATE",

@@ -178,6 +178,16 @@
 
                         <div class="channel-entry">
                             <div class="form-floating">
+                                <select id="GUILD_MEMBER_KICK" name="GUILD_MEMBER_KICK" class="form-select"
+                                    aria-label="Members leaving">
+                                    {{selectOptions .Guild.Channels $.CurrentChannels.GUILD_MEMBER_KICK}}
+                                </select>
+                                <label for="GUILD_MEMBER_KICK">Members being kicked</label>
+                            </div>
+                        </div>
+
+                        <div class="channel-entry">
+                            <div class="form-floating">
                                 <select id="GUILD_BAN_ADD" name="GUILD_BAN_ADD" class="form-select" aria-label="Bans"
                                     aria-describedby="banHelp">
                                     {{selectOptions .Guild.Channels $.CurrentChannels.GUILD_BAN_ADD}}

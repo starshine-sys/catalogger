@@ -141,6 +141,7 @@ func Init(bot *bot.Bot, log *zap.SugaredLogger) (clearCacheFunc func(discord.Gui
 	// add ban handlers
 	evh.AddHandler(b.guildBanAdd)
 	evh.AddHandler(b.guildBanRemove)
+	evh.AddHandler(b.memberKick)
 
 	// add channel handlers
 	evh.AddHandler(b.channelCreate)

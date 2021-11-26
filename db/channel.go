@@ -28,6 +28,7 @@ var Events []string = []string{
 
 	"GUILD_BAN_ADD",
 	"GUILD_BAN_REMOVE",
+	"GUILD_MEMBER_KICK",
 
 	"INVITE_CREATE",
 	"INVITE_DELETE",
@@ -55,6 +56,7 @@ var EventDescs map[string]string = map[string]string{
 	"GUILD_MEMBER_NICK_UPDATE": "Guild Member Nick Update: avatar and nickname changes",
 	"GUILD_KEY_ROLE_UPDATE":    "Key Role Update: key roles added/removed to users",
 	"GUILD_MEMBER_REMOVE":      "Guild Member Remove: members leaving",
+	"GUILD_MEMBER_KICK":        "Guild Member Kick: members being kicked",
 
 	"GUILD_BAN_ADD":    "Guild Ban Add: members being banned",
 	"GUILD_BAN_REMOVE": "Guild Ban Remove: members being unbanned",
@@ -89,8 +91,9 @@ var DefaultEventMap EventMap = EventMap{
 	"GUILD_KEY_ROLE_UPDATE":    0,
 	"GUILD_MEMBER_REMOVE":      0,
 
-	"GUILD_BAN_ADD":    0,
-	"GUILD_BAN_REMOVE": 0,
+	"GUILD_BAN_ADD":     0,
+	"GUILD_BAN_REMOVE":  0,
+	"GUILD_MEMBER_KICK": 0,
 
 	"INVITE_CREATE": 0,
 	"INVITE_DELETE": 0,
