@@ -31,13 +31,17 @@ type Client struct {
 	m  map[string]uint32
 	mu sync.Mutex
 
+	reqs   map[string]uint32
+	reqsMu sync.Mutex
+
 	Counts func() (guilds, channels, roles, messages int64)
 }
 
 // New creates a new client
 func New(url, token, organization, database string) *Client {
 	c := &Client{
-		m: make(map[string]uint32),
+		m:    make(map[string]uint32),
+		reqs: make(map[string]uint32),
 		Counts: func() (int64, int64, int64, int64) {
 			return 0, 0, 0, 0
 		},
@@ -65,6 +69,16 @@ func (c *Client) RegisterEvent(name string) {
 	c.mu.Lock()
 	c.m[name]++
 	c.mu.Unlock()
+}
+
+func (c *Client) IncRequests(method, path string, status int) {
+	if c == nil {
+		return
+	}
+
+	c.reqsMu.Lock()
+	c.reqs[EndpointMetricsName(method, path)]++
+	c.reqsMu.Unlock()
 }
 
 // IncQuery increments the query count by one
@@ -143,6 +157,19 @@ func (c *Client) submitInner() {
 
 	p := influxdb2.NewPoint("events", nil, im, time.Now())
 	c.Client.WritePoint(p)
+
+	// requests
+	c.reqsMu.Lock()
+	rm := make(map[string]interface{}, len(c.reqs))
+	for k, v := range c.reqs {
+		rm[k] = v
+		c.reqs[k] = 0
+	}
+	c.reqsMu.Unlock()
+
+	c.Client.WritePoint(
+		influxdb2.NewPoint("requests", nil, rm, time.Now()),
+	)
 
 	stats := runtime.MemStats{}
 	runtime.ReadMemStats(&stats)

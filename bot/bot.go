@@ -9,11 +9,13 @@ import (
 	"github.com/diamondburned/arikawa/v3/gateway/shard"
 	"github.com/diamondburned/arikawa/v3/state"
 	"github.com/diamondburned/arikawa/v3/state/store"
+	"github.com/diamondburned/arikawa/v3/utils/httputil/httpdriver"
 	"github.com/getsentry/sentry-go"
 	"github.com/mediocregopher/radix/v4"
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/bcr/bot"
 	"github.com/starshine-sys/catalogger/db"
+	"github.com/starshine-sys/catalogger/db/stats"
 	mstore "github.com/starshine-sys/catalogger/store"
 	"github.com/starshine-sys/catalogger/store/redisstore"
 	"go.uber.org/zap"
@@ -52,12 +54,15 @@ func New(redisURL string, r *bcr.Router, db *db.DB, log *zap.SugaredLogger) (b *
 	b.Router.AddHandler(b.messageCreate)
 	b.Router.AddHandler(b.interactionCreate)
 
-	// these are never referenced in code and otherwise take up memory (not a whole lot, but hey)
-	// for now, bcr.Context still uses GuildStore, ChannelStore, and RoleStore
-	// TODO: replace r.NewContext with a custom method that uses the bot's own cache, will require a major refactor (as it's currently in events.Bot)
 	r.ShardManager.ForEach(func(s shard.Shard) {
 		state := s.(*state.State)
 
+		// log requests and their response codes
+		state.Client.Client.OnResponse = append(state.Client.Client.OnResponse, b.onResponse)
+
+		// these are never referenced in code and otherwise take up memory (not a whole lot, but hey)
+		// for now, bcr.Context still uses GuildStore, ChannelStore, and RoleStore
+		// TODO: replace r.NewContext with a custom method that uses the bot's own cache, will require a major refactor (as it's currently in events.Bot)
 		state.Cabinet.MessageStore = store.Noop
 		state.Cabinet.EmojiStore = store.Noop
 		state.Cabinet.MemberStore = store.Noop
@@ -66,6 +71,24 @@ func New(redisURL string, r *bcr.Router, db *db.DB, log *zap.SugaredLogger) (b *
 	})
 
 	return b, nil
+}
+
+func (bot *Bot) onResponse(req httpdriver.Request, resp httpdriver.Response) error {
+	method := ""
+
+	v, ok := req.(*httpdriver.DefaultRequest)
+	if ok {
+		method = v.Method
+		if method == "" {
+			method = "GET"
+		}
+	}
+
+	bot.Sugar.Debugf("%v %v => %v", method, stats.LoggingName(req.GetPath()), resp.GetStatus())
+
+	go bot.DB.Stats.IncRequests(method, req.GetPath(), resp.GetStatus())
+
+	return nil
 }
 
 // ForEach runs the given function on each shard
