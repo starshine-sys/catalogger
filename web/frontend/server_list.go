@@ -9,7 +9,6 @@ import (
 	"net/http"
 
 	"github.com/diamondburned/arikawa/v3/discord"
-	"github.com/julienschmidt/httprouter"
 	"github.com/mediocregopher/radix/v4"
 	"github.com/starshine-sys/catalogger/common"
 	"github.com/starshine-sys/catalogger/web/proto"
@@ -43,7 +42,7 @@ func (s *server) guilds(ctx context.Context, client *userCache) (guilds []discor
 	return guilds, err
 }
 
-func (s *server) serverList(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (s *server) serverList(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	client := discordAPIFromSession(r.Context())

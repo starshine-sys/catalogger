@@ -10,11 +10,11 @@ import (
 	"github.com/ReneKroon/ttlcache/v2"
 	"github.com/diamondburned/arikawa/v3/api"
 	"github.com/diamondburned/arikawa/v3/discord"
+	"github.com/go-chi/chi/v5"
 	"github.com/mediocregopher/radix/v4"
 	"google.golang.org/grpc"
 
 	_ "github.com/joho/godotenv/autoload"
-	"github.com/julienschmidt/httprouter"
 	"github.com/starshine-sys/catalogger/common"
 	basedb "github.com/starshine-sys/catalogger/db"
 	"github.com/starshine-sys/catalogger/web/frontend/db"
@@ -35,7 +35,7 @@ type server struct {
 
 	DB    *db.DB
 	Redis radix.Client
-	Mux   *httprouter.Router
+	Mux   chi.Router
 
 	UserCache *ttlcache.Cache
 

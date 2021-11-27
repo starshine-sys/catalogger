@@ -5,13 +5,13 @@ import (
 	"strconv"
 
 	"github.com/diamondburned/arikawa/v3/discord"
+	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
-	"github.com/julienschmidt/httprouter"
 	"github.com/starshine-sys/catalogger/common"
 	"github.com/starshine-sys/catalogger/web/proto"
 )
 
-func (s *server) addRedirect(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+func (s *server) addRedirect(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	client := discordAPIFromSession(ctx)
@@ -21,7 +21,7 @@ func (s *server) addRedirect(w http.ResponseWriter, r *http.Request, params http
 		return
 	}
 
-	guildID, err := discord.ParseSnowflake(params.ByName("id"))
+	guildID, err := discord.ParseSnowflake(chi.URLParam(r, "id"))
 	if err != nil {
 		http.Error(w, "Not a server", http.StatusNotFound)
 		return

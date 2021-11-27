@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/diamondburned/arikawa/v3/discord"
-	"github.com/julienschmidt/httprouter"
+	"github.com/go-chi/chi/v5"
 	"github.com/russross/blackfriday/v2"
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/common"
@@ -77,7 +77,7 @@ func (s *server) rpcGuild(ctx context.Context, guildID discord.GuildID, client *
 
 const guildNotFound = "You've taken a wrong turn! Either this isn't a server, or you're not in it, or you don't have permission to change its settings."
 
-func (s *server) serverPage(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+func (s *server) serverPage(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	client := discordAPIFromSession(ctx)
@@ -87,9 +87,9 @@ func (s *server) serverPage(w http.ResponseWriter, r *http.Request, params httpr
 		return
 	}
 
-	guildID, err := discord.ParseSnowflake(params.ByName("id"))
+	guildID, err := discord.ParseSnowflake(chi.URLParam(r, "id"))
 	if err != nil {
-		common.Log.Infof("Couldn't parse guild ID \"%v\"", params.ByName("id"))
+		common.Log.Infof("Couldn't parse guild ID \"%v\"", chi.URLParam(r, "id"))
 		s.error(w, http.StatusNotFound, false, guildNotFound)
 		return
 	}

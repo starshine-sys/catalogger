@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/diamondburned/arikawa/v3/api"
-	"github.com/julienschmidt/httprouter"
 	"github.com/mediocregopher/radix/v4"
 	"github.com/starshine-sys/catalogger/common"
 	"golang.org/x/oauth2"
@@ -72,7 +71,7 @@ func (s *server) checkCSRFToken(ctx context.Context, token string) (matched bool
 	return num > 0, nil
 }
 
-func (s *server) handleLogin(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (s *server) handleLogin(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	csrf, err := s.createCSRFToken(ctx)
@@ -100,7 +99,7 @@ func (s *server) handleLogin(w http.ResponseWriter, r *http.Request, _ httproute
 	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 }
 
-func (s *server) handleAuthorize(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (s *server) handleAuthorize(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	state := r.FormValue("state")
@@ -178,8 +177,8 @@ func RandBase64(size int) string {
 
 var errTokenExpired = errors.New("token is expired")
 
-func (s *server) RequireSession(inner httprouter.Handle) httprouter.Handle {
-	mw := func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+func (s *server) RequireSession(inner http.Handler) http.Handler {
+	mw := func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
 		cookie, err := r.Cookie(sessionCookieName)
@@ -223,9 +222,9 @@ func (s *server) RequireSession(inner httprouter.Handle) httprouter.Handle {
 
 		ctx = context.WithValue(ctx, contextKeyDiscord, cache)
 
-		inner(w, r.Clone(ctx), params)
+		inner.ServeHTTP(w, r.Clone(ctx))
 	}
-	return httprouter.Handle(mw)
+	return http.HandlerFunc(mw)
 }
 
 func loginRedirect(w http.ResponseWriter, r *http.Request) {

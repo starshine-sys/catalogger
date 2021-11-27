@@ -6,7 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/render"
 	"github.com/russross/blackfriday/v2"
 	"github.com/starshine-sys/catalogger/common"
 )
@@ -20,21 +21,27 @@ var privacyMD []byte
 //go:embed static/docs.md
 var docsMD []byte
 
-func newRouter(s *server) *httprouter.Router {
-	r := httprouter.New()
+func newRouter(s *server) chi.Router {
+	r := chi.NewMux()
 
-	r.GET("/", s.index)
-	r.GET("/login", s.handleLogin)
-	r.GET("/authorize", s.handleAuthorize)
-	r.GET("/servers", s.RequireSession(s.serverList))
-	r.GET("/servers/:id", s.RequireSession(s.serverPage))
+	r.Get("/", s.index)
+	r.Get("/login", s.handleLogin)
+	r.Get("/authorize", s.handleAuthorize)
 
-	r.POST("/servers/:id/save-channels", s.RequireSession(s.saveChannels))
-	r.POST("/servers/:id/save-ignored", s.RequireSession(s.saveIgnored))
-	r.POST("/servers/:id/add-redirect", s.RequireSession(s.addRedirect))
-	r.POST("/servers/:id/delete-redirect/:channel", s.RequireSession(s.delRedirect))
+	r.Route("/servers", func(r chi.Router) {
+		r.Use(s.RequireSession)
 
-	r.GET("/logout", func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+		r.Get("/", s.serverList)
+		r.Get(`/{id:\d+}`, s.serverPage)
+
+		r.Post(`/{id:\d+}/save-channels`, s.saveChannels)
+		r.Post(`/{id:\d+}/save-ignored`, s.saveIgnored)
+
+		r.Post(`/{id:\d+}/add-redirect`, s.addRedirect)
+		r.Post(`/{id:\d+}/delete-redirect/{channel:\d+}`, s.delRedirect)
+	})
+
+	r.Get("/logout", func(w http.ResponseWriter, r *http.Request) {
 		c := &http.Cookie{
 			Name:    sessionCookieName,
 			Value:   "",
@@ -47,7 +54,7 @@ func newRouter(s *server) *httprouter.Router {
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 	})
 
-	r.GET("/privacy", func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	r.Get("/privacy", func(w http.ResponseWriter, r *http.Request) {
 		data := struct {
 			Privacy template.HTML
 		}{}
@@ -61,7 +68,7 @@ func newRouter(s *server) *httprouter.Router {
 		}
 	})
 
-	r.GET("/docs", func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	r.Get("/docs", func(w http.ResponseWriter, r *http.Request) {
 		data := struct {
 			Docs template.HTML
 		}{}
@@ -75,18 +82,18 @@ func newRouter(s *server) *httprouter.Router {
 		}
 	})
 
-	r.GET("/robots.txt", func(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
-		w.Write([]byte(`User-agent: *
+	r.Get("/robots.txt", func(w http.ResponseWriter, r *http.Request) {
+		render.PlainText(w, r, `User-agent: *
 Disallow: /servers/
 Disallow: /login
-Disallow: /authorize`))
+Disallow: /authorize`)
 	})
 
-	r.NotFound = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+	r.NotFound(func(w http.ResponseWriter, _ *http.Request) {
 		s.error(w, http.StatusNotFound, false, "You've taken a wrong turn! No page exists at this address. Try again from the home page, maybe?")
 	})
 
-	r.ServeFiles("/static/*filepath", http.FS(static))
+	r.Mount("/static", http.FileServer(http.FS(static)))
 
 	return r
 }

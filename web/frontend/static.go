@@ -7,14 +7,13 @@ import (
 
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/dustin/go-humanize"
-	"github.com/julienschmidt/httprouter"
 	"github.com/starshine-sys/catalogger/common"
 	"github.com/starshine-sys/catalogger/web/proto"
 )
 
 const newsRefresh = time.Hour
 
-func (s *server) index(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+func (s *server) index(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var guildCount, userCount int64
