@@ -77,7 +77,10 @@ func main() {
 		s.newsFetchTime = time.Now()
 	}
 
-	s.UserCache.SetTTL(30 * time.Minute)
+	if err := s.UserCache.SetTTL(30 * time.Minute); err != nil {
+		common.Log.Panic(err)
+	}
+
 	s.UserCache.SetCacheSizeLimit(10000)
 
 	database, err := basedb.New(databaseURL, nil)

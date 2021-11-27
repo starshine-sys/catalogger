@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/diamondburned/arikawa/v3/api"
 	"github.com/diamondburned/arikawa/v3/discord"
+	"github.com/starshine-sys/catalogger/common"
 )
 
 // userCache is a cached user's Client and User objects
@@ -26,5 +27,8 @@ func (s *server) getUser(cookie string) (*userCache, bool) {
 
 // setUser sets the user's client and user object in the cache
 func (s *server) setUser(cookie string, c *userCache) {
-	s.UserCache.Set(cookie[:80], c)
+	err := s.UserCache.Set(cookie[:80], c)
+	if err != nil {
+		common.Log.Errorf("Error setting client in user cache: %v", err)
+	}
 }

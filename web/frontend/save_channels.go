@@ -1,12 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/render"
 	"github.com/starshine-sys/catalogger/common"
 	"github.com/starshine-sys/catalogger/db"
 	"github.com/starshine-sys/catalogger/web/proto"
@@ -77,6 +77,5 @@ func (s *server) saveChannels(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error setting channels.", http.StatusInternalServerError)
 	}
 
-	fmt.Fprint(w, "Success!")
-	return
+	render.NoContent(w, r)
 }

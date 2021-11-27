@@ -225,7 +225,7 @@ func (s *server) serverPage(w http.ResponseWriter, r *http.Request) {
 
 const emojiBaseURL = "https://cdn.discordapp.com/emojis/"
 
-var emojiMatch = regexp.MustCompile("<(?P<animated>a)?:(?P<name>\\w+):(?P<emoteID>\\d{15,})>")
+var emojiMatch = regexp.MustCompile(`<(?P<animated>a)?:(?P<name>\w+):(?P<emoteID>\d{15,})>`)
 
 var funcs template.FuncMap = map[string]interface{}{
 	"selectOptions": func(channels []channel, selected discord.ChannelID) template.HTML {

@@ -5,7 +5,6 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"net/http"
 	"net/url"
 	"os"
@@ -133,7 +132,10 @@ func (s *server) handleAuthorize(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		redir = "/servers"
 	} else {
-		s.Redis.Do(ctx, radix.Cmd(nil, "DEL", "csrf-redir:"+state))
+		err = s.Redis.Do(ctx, radix.Cmd(nil, "DEL", "csrf-redir:"+state))
+		if err != nil {
+			common.Log.Errorf("Error deleting redirect key: %v", err)
+		}
 	}
 
 	http.Redirect(w, r, redir, http.StatusTemporaryRedirect)
@@ -174,8 +176,6 @@ func RandBase64(size int) string {
 
 	return base64.URLEncoding.EncodeToString(b)
 }
-
-var errTokenExpired = errors.New("token is expired")
 
 func (s *server) RequireSession(inner http.Handler) http.Handler {
 	mw := func(w http.ResponseWriter, r *http.Request) {

@@ -8,7 +8,6 @@ type contextKey int
 
 var (
 	contextKeyDiscord contextKey = 1
-	contextKeyUser    contextKey = 2
 )
 
 // discordAPIFromSession ...

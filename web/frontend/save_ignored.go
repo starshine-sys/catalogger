@@ -7,6 +7,7 @@ import (
 
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/render"
 	"github.com/starshine-sys/catalogger/common"
 )
 
@@ -73,6 +74,5 @@ func (s *server) saveIgnored(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprint(w, "Success!")
-	return
+	render.NoContent(w, r)
 }
