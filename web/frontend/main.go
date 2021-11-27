@@ -16,8 +16,7 @@ import (
 
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/starshine-sys/catalogger/common"
-	basedb "github.com/starshine-sys/catalogger/db"
-	"github.com/starshine-sys/catalogger/web/frontend/db"
+	"github.com/starshine-sys/catalogger/db"
 	"github.com/starshine-sys/catalogger/web/proto"
 )
 
@@ -46,6 +45,8 @@ type server struct {
 }
 
 func main() {
+	var err error
+
 	if rpcHost == "" {
 		rpcHost = "localhost:50051"
 	}
@@ -77,18 +78,16 @@ func main() {
 		s.newsFetchTime = time.Now()
 	}
 
-	if err := s.UserCache.SetTTL(30 * time.Minute); err != nil {
+	if err = s.UserCache.SetTTL(30 * time.Minute); err != nil {
 		common.Log.Panic(err)
 	}
 
 	s.UserCache.SetCacheSizeLimit(10000)
 
-	database, err := basedb.New(databaseURL, nil)
+	s.DB, err = db.New(databaseURL, nil)
 	if err != nil {
 		common.Log.Fatalf("Error connecting to database: %v", err)
 	}
-	common.Log.Infof("Database connected")
-	s.DB = &db.DB{DB: database}
 
 	s.Redis, err = (radix.PoolConfig{}).New(context.Background(), "tcp", redisHost)
 	if err != nil {
