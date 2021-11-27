@@ -4,7 +4,9 @@ import (
 	"fmt"
 
 	"github.com/diamondburned/arikawa/v3/discord"
+	"github.com/diamondburned/arikawa/v3/utils/httputil"
 	"github.com/starshine-sys/bcr"
+	"github.com/starshine-sys/catalogger/common"
 	"github.com/starshine-sys/catalogger/db"
 )
 
@@ -36,7 +38,12 @@ func (bot *Bot) resetChannel(ctx bcr.Contexter) (err error) {
 	}
 
 	// won't respond 'cause the interaction has already been replied to, but hey, we only care about the cache stuff
-	bot.Router.GetCommand("clearcache").SlashCommand(ctx)
+	err = bot.Router.GetCommand("clearcache").SlashCommand(ctx)
+	if err != nil {
+		if _, ok := err.(*httputil.HTTPError); !ok {
+			common.Log.Errorf("Error clearing cache: %v", err)
+		}
+	}
 
 	return
 }
@@ -81,7 +88,12 @@ func (bot *Bot) setChannelSlash(ctx bcr.Contexter) (err error) {
 	}
 
 	// won't respond 'cause the interaction has already been replied to, but hey, we only care about the cache stuff
-	bot.Router.GetCommand("clearcache").SlashCommand(ctx)
+	err = bot.Router.GetCommand("clearcache").SlashCommand(ctx)
+	if err != nil {
+		if _, ok := err.(*httputil.HTTPError); !ok {
+			common.Log.Errorf("Error clearing cache: %v", err)
+		}
+	}
 
 	return
 }
