@@ -7,6 +7,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
+	"github.com/starshine-sys/catalogger/common"
 	"github.com/starshine-sys/catalogger/events/handler"
 )
 
@@ -76,7 +77,7 @@ func (bot *Bot) inviteDeleteEvent(ev *gateway.InviteDeleteEvent) (resp *handler.
 
 	is, err := bot.MemberStore.Invites(ctx, ev.GuildID)
 	if err != nil {
-		bot.Sugar.Errorf("Error fetching invites for %v: %v", ev.GuildID, err)
+		common.Log.Errorf("Error fetching invites for %v: %v", ev.GuildID, err)
 		return
 	}
 

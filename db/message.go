@@ -8,6 +8,7 @@ import (
 	"emperror.dev/errors"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/georgysavva/scany/pgxscan"
+	"github.com/starshine-sys/catalogger/common"
 	"github.com/starshine-sys/catalogger/crypt"
 	"github.com/starshine-sys/pkgo"
 
@@ -144,7 +145,7 @@ func (db *DB) GetMessage(id discord.MessageID) (m *Message, err error) {
 	if m.RawMetadata != nil {
 		b, err := crypt.Decrypt(*m.RawMetadata, db.AESKey)
 		if err != nil {
-			db.Sugar.Errorf("Error decrypting metadata for %v: %v", m.MsgID, err)
+			common.Log.Errorf("Error decrypting metadata for %v: %v", m.MsgID, err)
 		}
 
 		var md Metadata

@@ -13,30 +13,23 @@ import (
 	"github.com/diamondburned/arikawa/v3/state"
 	"github.com/diamondburned/arikawa/v3/utils/wsutil"
 	"github.com/getsentry/sentry-go"
-	_ "github.com/joho/godotenv/autoload"
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/bot"
 	"github.com/starshine-sys/catalogger/commands"
+	"github.com/starshine-sys/catalogger/common"
 	"github.com/starshine-sys/catalogger/db"
 	"github.com/starshine-sys/catalogger/events"
-	"github.com/starshine-sys/catalogger/logsetup"
 	"github.com/starshine-sys/catalogger/web/server"
 )
 
 func main() {
-	zap, err := logsetup.SetupLogging()
-	if err != nil {
-		panic(err)
-	}
-	sugar := zap.Sugar()
-
-	wsutil.WSDebug = sugar.Named("ws").Debug
+	wsutil.WSDebug = common.Log.Named("ws").Debug
 	wsutil.WSError = func(err error) {
-		sugar.Named("ws").Error(err)
+		common.Log.Named("ws").Error(err)
 	}
 
 	// set up logger for this section
-	log := sugar.Named("init")
+	log := common.Log.Named("init")
 
 	intents := gateway.IntentGuilds | gateway.IntentGuildMembers |
 		gateway.IntentGuildBans | gateway.IntentGuildEmojis |
@@ -72,7 +65,7 @@ func main() {
 	}
 
 	// create a database connection
-	db, err := db.New(os.Getenv("DATABASE_URL"), sugar, hub)
+	db, err := db.New(os.Getenv("DATABASE_URL"), hub)
 	if err != nil {
 		log.Fatalf("Error opening database connection: %v", err)
 	}
@@ -83,15 +76,15 @@ func main() {
 	}
 
 	// add message create + interaction create handler
-	b, err := bot.New(os.Getenv("REDIS"), r, db, sugar)
+	b, err := bot.New(os.Getenv("REDIS"), r, db)
 	if err != nil {
 		log.Fatal("Error connecting to Redis: %v", err)
 	}
 
 	// actually load events + commands
-	commands.Init(b, sugar)
+	commands.Init(b)
 
-	cacheFunc, countFunc, guildPermFunc, joinedFunc := events.Init(b, sugar)
+	cacheFunc, countFunc, guildPermFunc, joinedFunc := events.Init(b)
 	server.NewServer(r, db, cacheFunc, countFunc, guildPermFunc, joinedFunc)
 
 	// get current user

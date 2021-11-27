@@ -6,6 +6,7 @@ import (
 
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
+	"github.com/starshine-sys/catalogger/common"
 	"github.com/starshine-sys/catalogger/db"
 	"github.com/starshine-sys/catalogger/events/handler"
 	"github.com/starshine-sys/pkgo"
@@ -100,7 +101,7 @@ func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) (*handler.Response,
 	if m.Content == "" && len(m.Embeds) > 0 && len(m.Attachments) == 0 {
 		for _, name := range ignoreBotNames {
 			if m.Author.Username == name {
-				bot.Sugar.Debugf("Ignoring webhook message by %v", m.Author.Tag())
+				common.Log.Debugf("Ignoring webhook message by %v", m.Author.Tag())
 				return nil, nil
 			}
 		}
@@ -118,7 +119,7 @@ func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) (*handler.Response,
 	}
 	bot.HandledMessagesMu.Unlock()
 
-	bot.Sugar.Debugf("No PK info for webhook message %v, falling back to API", m.ID)
+	common.Log.Debugf("No PK info for webhook message %v, falling back to API", m.ID)
 
 	pkm, err := pk.Message(pkgo.Snowflake(m.ID))
 	if err != nil {
@@ -126,7 +127,7 @@ func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) (*handler.Response,
 			return nil, nil
 		}
 
-		bot.Sugar.Errorf("Error getting message info from the PK API: %v", err)
+		common.Log.Errorf("Error getting message info from the PK API: %v", err)
 		return nil, err
 	}
 

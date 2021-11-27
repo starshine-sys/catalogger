@@ -6,6 +6,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
+	"github.com/starshine-sys/catalogger/common"
 	"github.com/starshine-sys/catalogger/events/handler"
 )
 
@@ -15,7 +16,7 @@ func (bot *Bot) guildUpdate(ev *gateway.GuildUpdateEvent) (resp *handler.Respons
 	if !ok {
 		bot.Guilds[ev.ID] = ev.Guild
 		bot.GuildsMu.Unlock()
-		bot.Sugar.Errorf("Error getting info for guild %v", ev.ID)
+		common.Log.Errorf("Error getting info for guild %v", ev.ID)
 		return
 	}
 	bot.Guilds[ev.ID] = ev.Guild

@@ -13,6 +13,7 @@ import (
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/dischtml"
 
+	"github.com/starshine-sys/catalogger/common"
 	"github.com/starshine-sys/catalogger/db"
 	"github.com/starshine-sys/catalogger/events/handler"
 )
@@ -96,7 +97,7 @@ func (bot *Bot) bulkMessageDelete(ev *gateway.MessageDeleteBulkEvent) (resp *han
 
 	html, err := bot.bulkHTML(ev.GuildID, ev.ChannelID, msgs)
 	if err != nil {
-		bot.Sugar.Errorf("Error creating HTML output: %v", err)
+		common.Log.Errorf("Error creating HTML output: %v", err)
 	} else {
 		resp.Files = append(resp.Files, sendpart.File{
 			Name:   fmt.Sprintf("bulk-delete-%v-%v.html", ev.ChannelID, time.Now().UTC().Format("2006-01-02T15-04-05")),
@@ -176,7 +177,7 @@ func (bot *Bot) bulkHTML(guildID discord.GuildID, channelID discord.ChannelID, m
 
 	members, err := bot.MemberStore.Members(ctx, g.ID)
 	if err != nil {
-		bot.Sugar.Errorf("Error getting members for guild %v: %v", g.ID, err)
+		common.Log.Errorf("Error getting members for guild %v: %v", g.ID, err)
 	}
 
 	users := make([]discord.User, len(members))

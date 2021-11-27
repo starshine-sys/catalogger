@@ -6,7 +6,7 @@ WORKDIR /build
 COPY . ./
 RUN go mod download
 ENV CGO_ENABLED 0
-RUN go build -v -ldflags="-X github.com/starshine-sys/catalogger/events.GitVer=`git rev-parse --short HEAD`"
+RUN go build -v -ldflags="-X github.com/starshine-sys/catalogger/common.Version=`git rev-parse --short HEAD`"
 
 FROM alpine:latest
 

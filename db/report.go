@@ -9,6 +9,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/getsentry/sentry-go"
 	"github.com/starshine-sys/bcr"
+	"github.com/starshine-sys/catalogger/common"
 )
 
 // ErrorContext is the context for an error
@@ -26,7 +27,7 @@ func (db *DB) Report(ctx ErrorContext, err error) *sentry.EventID {
 	if cs == "" {
 		cs = ctx.Command
 	}
-	db.Sugar.Errorf("Error in %v: %v", cs, err)
+	common.Log.Errorf("Error in %v: %v", cs, err)
 
 	if db.Hub == nil {
 		return nil

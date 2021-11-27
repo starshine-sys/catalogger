@@ -14,11 +14,11 @@ import (
 	"github.com/mediocregopher/radix/v4"
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/bcr/bot"
+	"github.com/starshine-sys/catalogger/common"
 	"github.com/starshine-sys/catalogger/db"
 	"github.com/starshine-sys/catalogger/db/stats"
 	mstore "github.com/starshine-sys/catalogger/store"
 	"github.com/starshine-sys/catalogger/store/redisstore"
-	"go.uber.org/zap"
 )
 
 // Bot ...
@@ -28,22 +28,20 @@ type Bot struct {
 	DB          *db.DB
 	Redis       radix.Client
 	MemberStore mstore.Store
-	Sugar       *zap.SugaredLogger
 }
 
 // New ...
-func New(redisURL string, r *bcr.Router, db *db.DB, log *zap.SugaredLogger) (b *Bot, err error) {
+func New(redisURL string, r *bcr.Router, db *db.DB) (b *Bot, err error) {
 	b = &Bot{
-		Bot:   bot.NewWithRouter(r),
-		DB:    db,
-		Sugar: log.Named("bot"),
+		Bot: bot.NewWithRouter(r),
+		DB:  db,
 	}
 
 	b.Redis, err = (&radix.PoolConfig{}).New(context.Background(), "tcp", redisURL)
 	if err != nil {
 		return nil, err
 	}
-	b.Sugar.Info("Connected to Redis")
+	common.Log.Info("Connected to Redis")
 
 	mstore, err := redisstore.NewStore(redisURL)
 	if err != nil {
@@ -84,7 +82,7 @@ func (bot *Bot) onResponse(req httpdriver.Request, resp httpdriver.Response) err
 		}
 	}
 
-	bot.Sugar.Debugf("%v %v => %v", method, stats.LoggingName(req.GetPath()), resp.GetStatus())
+	common.Log.Debugf("%v %v => %v", method, stats.LoggingName(req.GetPath()), resp.GetStatus())
 
 	go bot.DB.Stats.IncRequests(method, req.GetPath(), resp.GetStatus())
 
@@ -124,15 +122,15 @@ func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) {
 	// get the context
 	ctx, err := bot.Router.NewContext(m)
 	if err != nil {
-		bot.Sugar.Errorf("Error getting context: %v", err)
+		common.Log.Errorf("Error getting context: %v", err)
 		return
 	}
 
 	defer func() {
 		r := recover()
 		if r != nil {
-			bot.Sugar.Errorf("Caught panic in channel ID %v (user %v, guild %v): %v", m.ChannelID, m.Author.ID, m.GuildID, r)
-			bot.Sugar.Infof("Panic message content:\n```\n%v\n```", m.Content)
+			common.Log.Errorf("Caught panic in channel ID %v (user %v, guild %v): %v", m.ChannelID, m.Author.ID, m.GuildID, r)
+			common.Log.Infof("Panic message content:\n```\n%v\n```", m.Content)
 
 			if ctx == nil {
 				sentry.CurrentHub().Recover(r)
@@ -140,14 +138,16 @@ func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) {
 			}
 
 			id := sentry.CurrentHub().Recover(r)
-			bot.DB.ReportEmbed(ctx, id)
+			if err = bot.DB.ReportEmbed(ctx, id); err != nil {
+				common.Log.Errorf("Error sending error message: %v", err)
+			}
 			return
 		}
 	}()
 
 	err = bot.Router.Execute(ctx)
 	if err != nil {
-		bot.Sugar.Errorf("Error executing command: %v", err)
+		common.Log.Errorf("Error executing command: %v", err)
 		return
 	}
 
@@ -161,15 +161,15 @@ func (bot *Bot) interactionCreate(ic *gateway.InteractionCreateEvent) {
 
 	ctx, err := bot.Router.NewSlashContext(ic)
 	if err != nil {
-		bot.Sugar.Errorf("Couldn't create slash context: %v", err)
+		common.Log.Errorf("Couldn't create slash context: %v", err)
 		return
 	}
 
 	defer func() {
 		r := recover()
 		if r != nil {
-			bot.Sugar.Errorf("Caught panic in channel ID %v (user %v, guild %v): %v", ic.ChannelID, ctx.Author.ID, ctx.Channel.GuildID, r)
-			bot.Sugar.Infof("Command: %v", ctx.CommandName)
+			common.Log.Errorf("Caught panic in channel ID %v (user %v, guild %v): %v", ic.ChannelID, ctx.Author.ID, ctx.Channel.GuildID, r)
+			common.Log.Infof("Command: %v", ctx.CommandName)
 
 			if ctx == nil {
 				sentry.CurrentHub().Recover(r)
@@ -177,14 +177,16 @@ func (bot *Bot) interactionCreate(ic *gateway.InteractionCreateEvent) {
 			}
 
 			id := sentry.CurrentHub().Recover(r)
-			bot.DB.ReportEmbed(ctx, id)
+			if err = bot.DB.ReportEmbed(ctx, id); err != nil {
+				common.Log.Errorf("Error sending error message: %v", err)
+			}
 			return
 		}
 	}()
 
 	err = bot.Router.ExecuteSlash(ctx)
 	if err != nil {
-		bot.Sugar.Errorf("Couldn't create slash context: %v", err)
+		common.Log.Errorf("Error executing slash command: %v", err)
 	}
 
 	bot.DB.Stats.IncCommand()

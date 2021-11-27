@@ -10,6 +10,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/mediocregopher/radix/v4"
+	"github.com/starshine-sys/catalogger/common"
 )
 
 // Errors for the webhook cache
@@ -145,11 +146,11 @@ func (bot *Bot) ResetCache(id discord.GuildID, channels ...discord.ChannelID) {
 		keys = append(keys, whKeyNew(ch))
 	}
 
-	bot.Sugar.Debugf("Deleting cache entries for %v", id)
+	common.Log.Debugf("Deleting cache entries for %v", id)
 
 	err := bot.Redis.Do(context.Background(), radix.Cmd(nil, "DEL", keys...))
 	if err != nil {
-		bot.Sugar.Errorf("Error resetting webhook cache: %v", err)
+		common.Log.Errorf("Error resetting webhook cache: %v", err)
 	}
 }
 
@@ -159,10 +160,10 @@ func (bot *Bot) webhookCache(guildID discord.GuildID, ch discord.ChannelID) (*di
 
 	w, err := bot.GetWebhook(ch)
 	if err != nil {
-		bot.Sugar.Debugf("Couldn't find webhook for %v in cache, falling back to fetching webhook", ch)
+		common.Log.Debugf("Couldn't find webhook for %v in cache, falling back to fetching webhook", ch)
 
 		if err != ErrNotExists && err != ErrInvalid {
-			bot.Sugar.Errorf("Error fetching webhook: %v", err)
+			common.Log.Errorf("Error fetching webhook: %v", err)
 		}
 
 		wh, err = bot.getWebhook(ch, bot.Router.Bot.Username)
@@ -175,7 +176,7 @@ func (bot *Bot) webhookCache(guildID discord.GuildID, ch discord.ChannelID) (*di
 			Token: wh.Token,
 		})
 		if err != nil {
-			bot.Sugar.Errorf("Error setting webhook in redis: %v", err)
+			common.Log.Errorf("Error setting webhook in redis: %v", err)
 		}
 
 	} else {

@@ -9,6 +9,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
+	"github.com/starshine-sys/catalogger/common"
 	"github.com/starshine-sys/catalogger/events/handler"
 )
 
@@ -85,7 +86,7 @@ func (bot *Bot) guildMemberRemove(ev *gateway.GuildMemberRemoveEvent) (resp *han
 
 					mod, err := bot.State(ev.GuildID).User(e.UserID)
 					if err != nil {
-						bot.Sugar.Infof("Error fetching user: %v", err)
+						common.Log.Infof("Error fetching user: %v", err)
 					}
 
 					bot.EventHandler.Call(&MemberKickEvent{
@@ -97,7 +98,7 @@ func (bot *Bot) guildMemberRemove(ev *gateway.GuildMemberRemoveEvent) (resp *han
 				}
 			}
 		} else {
-			bot.Sugar.Errorf("Error fetching audit logs for %v: %v", ev.GuildID, err)
+			common.Log.Errorf("Error fetching audit logs for %v: %v", ev.GuildID, err)
 		}
 	}()
 

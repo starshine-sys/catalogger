@@ -17,9 +17,9 @@ import (
 	"github.com/diamondburned/arikawa/v3/state"
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/bot"
+	"github.com/starshine-sys/catalogger/common"
 	"github.com/starshine-sys/catalogger/events/eventcollector"
 	"github.com/starshine-sys/catalogger/events/handler"
-	"go.uber.org/zap"
 )
 
 // delete messages after this many days have passed
@@ -28,7 +28,6 @@ const deleteAfterDays = 15
 // Bot ...
 type Bot struct {
 	*bot.Bot
-	Sugar *zap.SugaredLogger
 
 	SentryEnricher *handler.SentryHandler
 
@@ -70,12 +69,11 @@ type Bot struct {
 }
 
 // Init ...
-func Init(bot *bot.Bot, log *zap.SugaredLogger) (clearCacheFunc func(discord.GuildID, ...discord.ChannelID), memberFunc func() int64, guildPermFunc func(discord.GuildID, discord.UserID) (discord.Guild, discord.Permissions, error), joinedFunc func(discord.GuildID) bool) {
+func Init(bot *bot.Bot) (clearCacheFunc func(discord.GuildID, ...discord.ChannelID), memberFunc func() int64, guildPermFunc func(discord.GuildID, discord.UserID) (discord.Guild, discord.Permissions, error), joinedFunc func(discord.GuildID) bool) {
 	joinLeaveLog, _ := discord.ParseSnowflake(os.Getenv("JOIN_LEAVE_LOG"))
 
 	b := &Bot{
 		Bot:            bot,
-		Sugar:          log.Named("event"),
 		Start:          time.Now().UTC(),
 		SentryEnricher: eventcollector.New(),
 
@@ -244,9 +242,9 @@ func (bot *Bot) cleanMessages() {
 		}
 
 		if ct.RowsAffected() == 0 {
-			bot.Sugar.Debugf("Deleted 0 messages older than %v days.", deleteAfterDays)
+			common.Log.Debugf("Deleted 0 messages older than %v days.", deleteAfterDays)
 		} else {
-			bot.Sugar.Infof("Deleted %v messages older than %v days.", ct.RowsAffected(), deleteAfterDays)
+			common.Log.Infof("Deleted %v messages older than %v days.", ct.RowsAffected(), deleteAfterDays)
 		}
 
 		time.Sleep(1 * time.Minute)
@@ -307,7 +305,7 @@ func (bot *Bot) updateStatusLoop(s *state.State) {
 		if bot.doneChunking {
 			status = discord.OnlineStatus
 		} else {
-			bot.Sugar.Infof("Not done chunking, setting idle status")
+			common.Log.Infof("Not done chunking, setting idle status")
 		}
 
 		shardNumber := 0
@@ -324,7 +322,7 @@ func (bot *Bot) updateStatusLoop(s *state.State) {
 
 			go func() {
 				i := i
-				bot.Sugar.Infof("Setting status for shard #%v", i)
+				common.Log.Infof("Setting status for shard #%v", i)
 				s := str
 				if bot.Router.ShardManager.NumShards() > 1 {
 					s = fmt.Sprintf("%v | shard #%v", s, i)
@@ -338,7 +336,7 @@ func (bot *Bot) updateStatusLoop(s *state.State) {
 					}},
 				})
 				if err != nil {
-					bot.Sugar.Errorf("Error setting status for shard #%v: %v", i, err)
+					common.Log.Errorf("Error setting status for shard #%v: %v", i, err)
 				}
 			}()
 		})
@@ -351,7 +349,7 @@ func (bot *Bot) updateStatusLoop(s *state.State) {
 func (bot *Bot) handleError(ev reflect.Value, err error) {
 	evName := ev.Elem().Type().Name()
 
-	bot.Sugar.Errorf("Error in %v: %v", evName, err)
+	common.Log.Errorf("Error in %v: %v", evName, err)
 
 	if bot.DB.Hub == nil {
 		return

@@ -11,6 +11,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/julienschmidt/httprouter"
 	"github.com/mediocregopher/radix/v4"
+	"github.com/starshine-sys/catalogger/common"
 	"github.com/starshine-sys/catalogger/web/proto"
 )
 
@@ -47,7 +48,7 @@ func (s *server) serverList(w http.ResponseWriter, r *http.Request, _ httprouter
 
 	client := discordAPIFromSession(r.Context())
 	if client == nil {
-		s.Sugar.Infof("Couldn't get a token from the request")
+		common.Log.Infof("Couldn't get a token from the request")
 		loginRedirect(w, r)
 		return
 	}
@@ -55,14 +56,14 @@ func (s *server) serverList(w http.ResponseWriter, r *http.Request, _ httprouter
 	guilds, err := s.guilds(ctx, client)
 	if err != nil {
 		id := s.error(w, http.StatusInternalServerError, true, "Couldn't get your servers.")
-		s.Sugar.Errorf("[%s] Error getting guilds: %v", id, err)
+		common.Log.Errorf("[%s] Error getting guilds: %v", id, err)
 		return
 	}
 
 	filtered, joined, unjoined, err := s.filterGuilds(ctx, guilds)
 	if err != nil {
 		id := s.error(w, http.StatusInternalServerError, true, "Couldn't get your servers.")
-		s.Sugar.Errorf("[%s] Error filtering guilds: %v", id, err)
+		common.Log.Errorf("[%s] Error filtering guilds: %v", id, err)
 		return
 	}
 
@@ -81,7 +82,7 @@ func (s *server) serverList(w http.ResponseWriter, r *http.Request, _ httprouter
 
 	err = tmpl.ExecuteTemplate(w, "server_list.html", data)
 	if err != nil {
-		s.Sugar.Errorf("Error executing template: %v", err)
+		common.Log.Errorf("Error executing template: %v", err)
 		return
 	}
 }

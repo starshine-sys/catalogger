@@ -12,6 +12,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/diamondburned/arikawa/v3/utils/httputil"
 	"github.com/starshine-sys/bcr"
+	"github.com/starshine-sys/catalogger/common"
 	"github.com/starshine-sys/catalogger/db"
 	"github.com/starshine-sys/catalogger/events/handler"
 )
@@ -44,7 +45,7 @@ func (bot *Bot) Send(wh *discord.Webhook, event string, embeds ...discord.Embed)
 		return
 	}
 
-	bot.Sugar.Debugf("Event for webhook %v should not be queued, sending embed", wh.ID)
+	common.Log.Debugf("Event for webhook %v should not be queued, sending embed", wh.ID)
 
 	client := bot.WebhookClient(wh)
 
@@ -62,21 +63,14 @@ func (bot *Bot) Send(wh *discord.Webhook, event string, embeds ...discord.Embed)
 
 // Queue is a webhook embed queue.
 type Queue struct {
-	mu      sync.Mutex
-	queue   []discord.Embed
-	timer   *time.Timer
-	errFunc func(v ...interface{})
+	mu    sync.Mutex
+	queue []discord.Embed
+	timer *time.Timer
 }
 
 // NewQueue returns a new Queue
-func NewQueue(f func(v ...interface{})) *Queue {
-	if f == nil {
-		f = func(v ...interface{}) {}
-	}
-
-	return &Queue{
-		errFunc: f,
-	}
+func NewQueue() *Queue {
+	return &Queue{}
 }
 
 // WebhookClient gets a client for the given webhook.
@@ -86,7 +80,7 @@ func (bot *Bot) WebhookClient(wh *discord.Webhook) *webhook.Client {
 
 	client, ok := bot.WebhookClients[wh.ID]
 	if !ok {
-		bot.Sugar.Debugf("Creating new webhook client for %v", wh.ID)
+		common.Log.Debugf("Creating new webhook client for %v", wh.ID)
 
 		// always get the first state
 		s, _ := bot.Router.StateFromGuildID(0)
@@ -110,16 +104,16 @@ func (bot *Bot) Queue(wh *discord.Webhook, event string, embed discord.Embed) {
 	bot.QueueMu.Lock()
 	q, ok := bot.Queues[wh.ID]
 	if !ok {
-		bot.Sugar.Debugf("Creating new embed queue for %v", wh.ID)
+		common.Log.Debugf("Creating new embed queue for %v", wh.ID)
 
-		q = NewQueue(bot.Sugar.Error)
+		q = NewQueue()
 		bot.Queues[wh.ID] = q
 	}
 	bot.QueueMu.Unlock()
 
 	client := bot.WebhookClient(wh)
 
-	bot.Sugar.Debugf("Adding embed to queue for %v", wh.ID)
+	common.Log.Debugf("Adding embed to queue for %v", wh.ID)
 
 	q.mu.Lock()
 	defer q.mu.Unlock()
@@ -156,7 +150,7 @@ func (bot *Bot) Queue(wh *discord.Webhook, event string, embed discord.Embed) {
 			}
 
 			if err := bot.queueInner(client, embeds); err != nil {
-				q.errFunc("Error executing queue:", err)
+				common.Log.Error("Error executing queue:", err)
 				bot.DB.Report(db.ErrorContext{
 					Event:   event,
 					GuildID: wh.GuildID,
@@ -168,7 +162,7 @@ func (bot *Bot) Queue(wh *discord.Webhook, event string, embed discord.Embed) {
 }
 
 func (bot *Bot) queueInner(client *webhook.Client, embeds []discord.Embed) (err error) {
-	bot.Sugar.Debugf("Executing webhook %v, with %v embed(s)", client.ID, len(embeds))
+	common.Log.Debugf("Executing webhook %v, with %v embed(s)", client.ID, len(embeds))
 
 	_, err = client.ExecuteAndWait(webhook.ExecuteData{
 		AvatarURL: bot.Router.Bot.AvatarURL(),
@@ -192,7 +186,7 @@ func (bot *Bot) handleResponse(ev reflect.Value, resp *handler.Response) {
 	if err != nil {
 		switch v := err.(type) {
 		case *httputil.HTTPError:
-			bot.Sugar.Infof("HTTP error sending log in %v: %v", resp.ChannelID, err)
+			common.Log.Infof("HTTP error sending log in %v: %v", resp.ChannelID, err)
 
 			if v.Status == 403 {
 				bot.sendUnauthorizedError(resp)
@@ -227,7 +221,7 @@ func (bot *Bot) handleResponse(ev reflect.Value, resp *handler.Response) {
 	}
 
 	if len(resp.Embeds) == 0 {
-		bot.Sugar.Infof("Response for event %v was not nil, but has no embeds", evName)
+		common.Log.Infof("Response for event %v was not nil, but has no embeds", evName)
 	}
 
 	bot.Send(wh, evName, resp.Embeds...)
@@ -256,6 +250,6 @@ func (bot *Bot) sendUnauthorizedError(resp *handler.Response) {
 		Description: fmt.Sprintf("%v does not have the **Manage Webhooks** permission in this channel, and thus cannot send log messages.\nCheck this server's permissions with `/permcheck`.", bot.Router.Bot.Username),
 	})
 	if err != nil {
-		bot.Sugar.Errorf("Error sending unauthorized message to %v: %v", resp.ChannelID, err)
+		common.Log.Errorf("Error sending unauthorized message to %v: %v", resp.ChannelID, err)
 	}
 }

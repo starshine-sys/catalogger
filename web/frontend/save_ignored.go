@@ -7,6 +7,7 @@ import (
 
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/julienschmidt/httprouter"
+	"github.com/starshine-sys/catalogger/common"
 )
 
 func (s *server) saveIgnored(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
@@ -14,7 +15,7 @@ func (s *server) saveIgnored(w http.ResponseWriter, r *http.Request, params http
 
 	client := discordAPIFromSession(ctx)
 	if client == nil {
-		s.Sugar.Infof("Couldn't get a token from the request")
+		common.Log.Infof("Couldn't get a token from the request")
 		http.Error(w, "Invalid session", http.StatusUnauthorized)
 		return
 	}
@@ -33,7 +34,7 @@ func (s *server) saveIgnored(w http.ResponseWriter, r *http.Request, params http
 
 	err = r.ParseForm()
 	if err != nil {
-		s.Sugar.Errorf("Error parsing form: %v", err)
+		common.Log.Errorf("Error parsing form: %v", err)
 		http.Error(w, "Error parsing form", http.StatusInternalServerError)
 	}
 
@@ -45,7 +46,7 @@ func (s *server) saveIgnored(w http.ResponseWriter, r *http.Request, params http
 	for _, entry := range r.Form["ignored-channels"] {
 		id, err := strconv.ParseUint(entry, 10, 64)
 		if err != nil {
-			s.Sugar.Infof("Invalid channel id `%v`", entry)
+			common.Log.Infof("Invalid channel id `%v`", entry)
 			id = 0
 		}
 
@@ -67,7 +68,7 @@ func (s *server) saveIgnored(w http.ResponseWriter, r *http.Request, params http
 
 	_, err = s.DB.Exec(ctx, "update guilds set ignored_channels = $1 where id = $2", channels, resp.GetId())
 	if err != nil {
-		s.Sugar.Errorf("Error setting ignored channels: %v", err)
+		common.Log.Errorf("Error setting ignored channels: %v", err)
 		http.Error(w, "Error setting channels.", http.StatusInternalServerError)
 		return
 	}

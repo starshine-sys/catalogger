@@ -10,6 +10,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/dustin/go-humanize/english"
 	"github.com/starshine-sys/bcr"
+	"github.com/starshine-sys/catalogger/common"
 )
 
 func (bot *Bot) help(ctx bcr.Contexter) (err error) {
@@ -138,7 +139,7 @@ func (bot *Bot) dashboard(ctx bcr.Contexter) (err error) {
 
 	perms, err := ctx.Session().Permissions(ctx.GetChannel().ID, ctx.User().ID)
 	if err != nil {
-		bot.Sugar.Errorf("Error fetching permissions for user: %v", err)
+		common.Log.Errorf("Error fetching permissions for user: %v", err)
 	}
 
 	if !perms.Has(discord.PermissionManageGuild) || ctx.GetGuild() == nil {

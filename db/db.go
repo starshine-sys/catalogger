@@ -12,12 +12,11 @@ import (
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	migrate "github.com/rubenv/sql-migrate"
+	"github.com/starshine-sys/catalogger/common"
 	"github.com/starshine-sys/catalogger/db/stats"
 
 	// pgx driver for migrations
 	_ "github.com/jackc/pgx/v4/stdlib"
-
-	"go.uber.org/zap"
 )
 
 //go:embed migrations
@@ -25,8 +24,7 @@ var fs embed.FS
 
 // DB ...
 type DB struct {
-	Pool  *pgxpool.Pool
-	Sugar *zap.SugaredLogger
+	Pool *pgxpool.Pool
 
 	Hub *sentry.Hub
 
@@ -37,10 +35,9 @@ type DB struct {
 }
 
 // New ...
-func New(url string, sugar *zap.SugaredLogger, hub *sentry.Hub) (*DB, error) {
-	log := sugar.Named("db")
+func New(url string, hub *sentry.Hub) (*DB, error) {
 
-	err := runMigrations(url, log)
+	err := runMigrations(url)
 	if err != nil {
 		return nil, err
 	}
@@ -51,9 +48,8 @@ func New(url string, sugar *zap.SugaredLogger, hub *sentry.Hub) (*DB, error) {
 	}
 
 	db := &DB{
-		Pool:  pool,
-		Sugar: log,
-		Hub:   hub,
+		Pool: pool,
+		Hub:  hub,
 	}
 
 	influxURL := os.Getenv("INFLUX_URL")
@@ -69,7 +65,7 @@ func New(url string, sugar *zap.SugaredLogger, hub *sentry.Hub) (*DB, error) {
 	return db, nil
 }
 
-func runMigrations(url string, sugar *zap.SugaredLogger) (err error) {
+func runMigrations(url string) (err error) {
 	db, err := sql.Open("pgx", url)
 	if err != nil {
 		return err
@@ -91,7 +87,7 @@ func runMigrations(url string, sugar *zap.SugaredLogger) (err error) {
 	}
 
 	if n != 0 {
-		sugar.Infof("Performed %v migrations!", n)
+		common.Log.Infof("Performed %v migrations!", n)
 	}
 
 	err = db.Close()

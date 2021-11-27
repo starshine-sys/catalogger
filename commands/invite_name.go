@@ -7,12 +7,13 @@ import (
 
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/starshine-sys/bcr"
+	"github.com/starshine-sys/catalogger/common"
 )
 
 func (bot *Bot) renameInvite(ctx *bcr.Context) (err error) {
 	is, err := ctx.State.GuildInvites(ctx.Message.GuildID)
 	if err != nil {
-		bot.Sugar.Errorf("Error getting guild invites: %v", err)
+		common.Log.Errorf("Error getting guild invites: %v", err)
 		_, err = ctx.Sendf("Could not get this server's invites. Are you sure I have the **Manage Server** permission?")
 		return
 	}
@@ -58,7 +59,7 @@ func (bot *Bot) renameInviteSlash(ctx bcr.Contexter) (err error) {
 
 	is, err := ctx.Session().GuildInvites(ctx.GetGuild().ID)
 	if err != nil {
-		bot.Sugar.Errorf("Error getting guild invites: %v", err)
+		common.Log.Errorf("Error getting guild invites: %v", err)
 		return ctx.SendfX("Could not get this server's invites. Are you sure I have the **Manage Server** permission?")
 	}
 

@@ -7,13 +7,14 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
+	"github.com/starshine-sys/catalogger/common"
 	"github.com/starshine-sys/catalogger/events/handler"
 )
 
 func (bot *Bot) guildMemberUpdate(ev *gateway.GuildMemberUpdateEvent) (resp *handler.Response, err error) {
 	m, err := bot.Member(ev.GuildID, ev.User.ID)
 	if err != nil {
-		bot.Sugar.Errorf("Error getting member: %v", err)
+		common.Log.Errorf("Error getting member: %v", err)
 		return
 	}
 
@@ -27,7 +28,7 @@ func (bot *Bot) guildMemberUpdate(ev *gateway.GuildMemberUpdateEvent) (resp *han
 	defer cancel()
 
 	if err := bot.MemberStore.SetMember(ctx, ev.GuildID, up); err != nil {
-		bot.Sugar.Errorf("Error updating member in cache: %v", err)
+		common.Log.Errorf("Error updating member in cache: %v", err)
 	}
 
 	if m.Nick != ev.Nick || m.User.Username+"#"+m.User.Discriminator != ev.User.Username+"#"+ev.User.Discriminator || m.User.Avatar != ev.User.Avatar {

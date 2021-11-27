@@ -8,6 +8,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
+	"github.com/starshine-sys/catalogger/common"
 	"github.com/starshine-sys/catalogger/events/handler"
 	"github.com/starshine-sys/pkgo"
 )
@@ -95,8 +96,8 @@ func (bot *Bot) guildBanRemove(ev *gateway.GuildBanRemoveEvent) (resp *handler.R
 
 		banned, err := bot.DB.IsSystemBanned(ev.GuildID, sys.ID)
 		if err != nil {
-			bot.Sugar.Errorf("Error getting banned systems for %v: %v", ev.GuildID, err)
-			bot.Sugar.Infof("Trying to unban %v anyway.", sys.ID)
+			common.Log.Errorf("Error getting banned systems for %v: %v", ev.GuildID, err)
+			common.Log.Infof("Trying to unban %v anyway.", sys.ID)
 
 			err = bot.DB.UnbanSystem(ev.GuildID, sys.ID)
 			if err == nil {

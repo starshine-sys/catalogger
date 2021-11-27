@@ -6,6 +6,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
+	"github.com/starshine-sys/catalogger/common"
 	"github.com/starshine-sys/catalogger/events/handler"
 )
 
@@ -46,7 +47,7 @@ func (bot *Bot) guildDelete(ev *gateway.GuildDeleteEvent) (resp *handler.Respons
 // this is run if the left guild isn't found in the state
 // which gives us almost no info, only the ID
 func (bot *Bot) guildDeleteNoState(g *gateway.GuildDeleteEvent) (resp *handler.Response, err error) {
-	bot.Sugar.Infof("Left server %v.", g.ID)
+	common.Log.Infof("Left server %v.", g.ID)
 
 	if !bot.BotJoinLeaveLog.IsValid() {
 		return

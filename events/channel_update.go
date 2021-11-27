@@ -7,6 +7,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
+	"github.com/starshine-sys/catalogger/common"
 	"github.com/starshine-sys/catalogger/events/handler"
 )
 
@@ -14,7 +15,7 @@ func (bot *Bot) channelUpdate(ev *gateway.ChannelUpdateEvent) (resp *handler.Res
 	bot.ChannelsMu.Lock()
 	old, ok := bot.Channels[ev.ID]
 	if !ok {
-		bot.Sugar.Errorf("Couldn't find channel %v in the cache", ev.ID)
+		common.Log.Errorf("Couldn't find channel %v in the cache", ev.ID)
 		bot.Channels[ev.ID] = ev.Channel
 		bot.ChannelsMu.Unlock()
 		return

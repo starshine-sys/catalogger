@@ -8,6 +8,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
+	"github.com/starshine-sys/catalogger/common"
 	"github.com/starshine-sys/catalogger/events/handler"
 	"github.com/starshine-sys/pkgo"
 )
@@ -95,7 +96,7 @@ func (bot *Bot) guildBanAdd(ev *gateway.GuildBanAddEvent) (resp *handler.Respons
 
 		banned, err := bot.DB.IsSystemBanned(ev.GuildID, sys.ID)
 		if err != nil {
-			bot.Sugar.Errorf("Error getting banned systems for %v: %v", ev.GuildID, err)
+			common.Log.Errorf("Error getting banned systems for %v: %v", ev.GuildID, err)
 		}
 
 		if banned {
@@ -106,7 +107,7 @@ func (bot *Bot) guildBanAdd(ev *gateway.GuildBanAddEvent) (resp *handler.Respons
 		} else {
 			err = bot.DB.BanSystem(ev.GuildID, sys.ID)
 			if err != nil {
-				bot.Sugar.Errorf("Erorr banning system: %v", err)
+				common.Log.Errorf("Erorr banning system: %v", err)
 				resp.Embeds[0].Fields = append(resp.Embeds[0].Fields, discord.EmbedField{
 					Name:  "System not banned",
 					Value: "There was an error trying to ban the linked system.\nYou will **not** be warned when an account linked to this system joins.",

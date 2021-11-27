@@ -7,6 +7,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway/shard"
 	"github.com/diamondburned/arikawa/v3/state"
+	"github.com/starshine-sys/catalogger/common"
 	"github.com/starshine-sys/catalogger/web/proto"
 )
 
@@ -81,7 +82,7 @@ func (s *RPCServer) Guild(ctx context.Context, req *proto.GuildRequest) (resp *p
 
 	_, perms, err := s.guildPerms(g.ID, discord.UserID(req.GetUserId()))
 	if err != nil {
-		s.DB.Sugar.Errorf("Error getting permissions for user %v: %v", req.GetUserId(), err)
+		common.Log.Errorf("Error getting permissions for user %v: %v", req.GetUserId(), err)
 		return resp, err
 	}
 	resp.Permissions = uint64(perms)
@@ -109,7 +110,7 @@ func (s *RPCServer) GuildUserCount(ctx context.Context, req *proto.GuildUserCoun
 
 // ClearCache ...
 func (s *RPCServer) ClearCache(_ context.Context, req *proto.ClearCacheRequest) (*proto.ClearCacheResponse, error) {
-	s.DB.Sugar.Infof("Clearing cache for %v and channels %v", req.GetGuildId(), req.GetChannelIds())
+	common.Log.Infof("Clearing cache for %v and channels %v", req.GetGuildId(), req.GetChannelIds())
 
 	guildID := discord.GuildID(req.GetGuildId())
 	channelIDs := []discord.ChannelID{}

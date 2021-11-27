@@ -13,6 +13,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"github.com/russross/blackfriday/v2"
 	"github.com/starshine-sys/bcr"
+	"github.com/starshine-sys/catalogger/common"
 	"github.com/starshine-sys/catalogger/db"
 	"github.com/starshine-sys/catalogger/web/proto"
 )
@@ -81,14 +82,14 @@ func (s *server) serverPage(w http.ResponseWriter, r *http.Request, params httpr
 
 	client := discordAPIFromSession(ctx)
 	if client == nil {
-		s.Sugar.Infof("Couldn't get a token from the request")
+		common.Log.Infof("Couldn't get a token from the request")
 		loginRedirect(w, r)
 		return
 	}
 
 	guildID, err := discord.ParseSnowflake(params.ByName("id"))
 	if err != nil {
-		s.Sugar.Infof("Couldn't parse guild ID \"%v\"", params.ByName("id"))
+		common.Log.Infof("Couldn't parse guild ID \"%v\"", params.ByName("id"))
 		s.error(w, http.StatusNotFound, false, guildNotFound)
 		return
 	}
@@ -96,9 +97,9 @@ func (s *server) serverPage(w http.ResponseWriter, r *http.Request, params httpr
 	resp, err := s.rpcGuild(ctx, discord.GuildID(guildID), client)
 	if err != nil || !discord.Permissions(resp.GetPermissions()).Has(discord.PermissionManageGuild) {
 		if err == nil {
-			s.Sugar.Infof("User %v has permissions %v, does not have permission to manage server.", client.User.Tag(), bcr.PermStrings(discord.Permissions(resp.GetPermissions())))
+			common.Log.Infof("User %v has permissions %v, does not have permission to manage server.", client.User.Tag(), bcr.PermStrings(discord.Permissions(resp.GetPermissions())))
 		} else {
-			s.Sugar.Errorf("Error fetching guild: %v", err)
+			common.Log.Errorf("Error fetching guild: %v", err)
 		}
 		s.error(w, http.StatusNotFound, false, guildNotFound)
 		return
@@ -116,7 +117,7 @@ func (s *server) serverPage(w http.ResponseWriter, r *http.Request, params httpr
 	data.CurrentChannels, err = s.DB.Channels(discord.GuildID(resp.GetId()))
 	if err != nil {
 		id := s.error(w, http.StatusInternalServerError, true, "Couldn't get this server's channels.")
-		s.Sugar.Errorf("[%s] Error getting event channels: %v", id, err)
+		common.Log.Errorf("[%s] Error getting event channels: %v", id, err)
 		return
 	}
 
@@ -134,7 +135,7 @@ func (s *server) serverPage(w http.ResponseWriter, r *http.Request, params httpr
 	err = s.DB.QueryRow(ctx, "select ignored_channels from guilds where id = $1", resp.GetId()).Scan(&data.IgnoredChannels)
 	if err != nil {
 		id := s.error(w, http.StatusInternalServerError, true, "Couldn't get this server's channels.")
-		s.Sugar.Errorf("[%s] Error getting ignored channels: %v", id, err)
+		common.Log.Errorf("[%s] Error getting ignored channels: %v", id, err)
 		return
 	}
 
@@ -172,7 +173,7 @@ func (s *server) serverPage(w http.ResponseWriter, r *http.Request, params httpr
 	redirMap, err := s.DB.Redirects(discord.GuildID(resp.GetId()))
 	if err != nil {
 		id := s.error(w, http.StatusInternalServerError, true, "Couldn't get this server's channels.")
-		s.Sugar.Errorf("[%s] Error getting redirected channels: %v", id, err)
+		common.Log.Errorf("[%s] Error getting redirected channels: %v", id, err)
 		return
 	}
 
@@ -201,14 +202,14 @@ func (s *server) serverPage(w http.ResponseWriter, r *http.Request, params httpr
 	guilds, err := s.guilds(ctx, client)
 	if err != nil {
 		id := s.error(w, http.StatusInternalServerError, true, "Couldn't get your servers.")
-		s.Sugar.Errorf("[%s] Error getting guilds: %v", id, err)
+		common.Log.Errorf("[%s] Error getting guilds: %v", id, err)
 		return
 	}
 
 	_, joined, unjoined, err := s.filterGuilds(ctx, guilds)
 	if err != nil {
 		id := s.error(w, http.StatusInternalServerError, true, "Couldn't get your servers.")
-		s.Sugar.Errorf("[%s] Error filtering guilds: %v", id, err)
+		common.Log.Errorf("[%s] Error filtering guilds: %v", id, err)
 		return
 	}
 
@@ -217,7 +218,7 @@ func (s *server) serverPage(w http.ResponseWriter, r *http.Request, params httpr
 
 	err = tmpl.ExecuteTemplate(w, "server.html", data)
 	if err != nil {
-		s.Sugar.Errorf("Error executing template: %v", err)
+		common.Log.Errorf("Error executing template: %v", err)
 		return
 	}
 }

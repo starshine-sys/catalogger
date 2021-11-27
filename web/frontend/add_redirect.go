@@ -1,12 +1,13 @@
 package main
 
 import (
-	"encoding/json"
 	"net/http"
 	"strconv"
 
 	"github.com/diamondburned/arikawa/v3/discord"
+	"github.com/go-chi/render"
 	"github.com/julienschmidt/httprouter"
+	"github.com/starshine-sys/catalogger/common"
 	"github.com/starshine-sys/catalogger/web/proto"
 )
 
@@ -15,7 +16,7 @@ func (s *server) addRedirect(w http.ResponseWriter, r *http.Request, params http
 
 	client := discordAPIFromSession(ctx)
 	if client == nil {
-		s.Sugar.Infof("Couldn't get a token from the request")
+		common.Log.Infof("Couldn't get a token from the request")
 		http.Error(w, "Invalid session", http.StatusUnauthorized)
 		return
 	}
@@ -71,7 +72,7 @@ func (s *server) addRedirect(w http.ResponseWriter, r *http.Request, params http
 
 	m, err := s.DB.Redirects(discord.GuildID(resp.GetId()))
 	if err != nil {
-		s.Sugar.Errorf("Couldn't get current redirects: %v", err)
+		common.Log.Errorf("Couldn't get current redirects: %v", err)
 		http.Error(w, "Internal server error.", http.StatusInternalServerError)
 		return
 	}
@@ -80,14 +81,14 @@ func (s *server) addRedirect(w http.ResponseWriter, r *http.Request, params http
 
 	err = s.DB.SetRedirects(discord.GuildID(resp.GetId()), m)
 	if err != nil {
-		s.Sugar.Errorf("Couldn't set redirects: %v", err)
+		common.Log.Errorf("Couldn't set redirects: %v", err)
 		http.Error(w, "Internal server error.", http.StatusInternalServerError)
 		return
 	}
 
 	_, err = s.RPC.ClearCache(ctx, &proto.ClearCacheRequest{GuildId: resp.GetId(), ChannelIds: []uint64{fromID, toID}})
 	if err != nil {
-		s.Sugar.Errorf("Error clearing cache for %v: %v", resp.GetId(), err)
+		common.Log.Errorf("Error clearing cache for %v: %v", resp.GetId(), err)
 	}
 
 	type ch struct {
@@ -111,14 +112,5 @@ func (s *server) addRedirect(w http.ResponseWriter, r *http.Request, params http
 		},
 	}
 
-	b, err := json.Marshal(&data)
-	if err != nil {
-		s.Sugar.Errorf("Error marshaling JSON: %v", err)
-		http.Error(w, "Error marshaling JSON", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(b)
-	return
+	render.JSON(w, r, data)
 }

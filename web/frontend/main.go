@@ -15,11 +15,10 @@ import (
 
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/julienschmidt/httprouter"
+	"github.com/starshine-sys/catalogger/common"
 	basedb "github.com/starshine-sys/catalogger/db"
-	"github.com/starshine-sys/catalogger/logsetup"
 	"github.com/starshine-sys/catalogger/web/frontend/db"
 	"github.com/starshine-sys/catalogger/web/proto"
-	"go.uber.org/zap"
 )
 
 var (
@@ -37,7 +36,6 @@ type server struct {
 	DB    *db.DB
 	Redis radix.Client
 	Mux   *httprouter.Router
-	Sugar *zap.SugaredLogger
 
 	UserCache *ttlcache.Cache
 
@@ -57,14 +55,7 @@ func main() {
 		return
 	}
 
-	zap, err := logsetup.SetupLogging()
-	if err != nil {
-		panic(err)
-	}
-	sugar := zap.Sugar()
-
 	s := &server{
-		Sugar:     sugar,
 		UserCache: ttlcache.NewCache(),
 	}
 	s.Mux = newRouter(s)
@@ -73,51 +64,51 @@ func main() {
 		s.newsClient = api.NewClient("Bot " + os.Getenv("TOKEN"))
 		id, err := discord.ParseSnowflake(os.Getenv("ANNOUNCEMENTS"))
 		if err != nil {
-			sugar.Fatalf("Couldn't parse \"%v\" as a snowflake!", os.Getenv("ANNOUNCEMENTS"))
+			common.Log.Fatalf("Couldn't parse \"%v\" as a snowflake!", os.Getenv("ANNOUNCEMENTS"))
 		}
 		s.newsChannel = discord.ChannelID(id)
 
 		news, err := s.newsClient.Messages(s.newsChannel, 5)
 		if err != nil {
-			sugar.Fatalf("Couldn't fetch news messages: %v", err)
+			common.Log.Fatalf("Couldn't fetch news messages: %v", err)
 		}
 		s.news = news
-		sugar.Infof("Fetched %v news messages", len(s.news))
+		common.Log.Infof("Fetched %v news messages", len(s.news))
 		s.newsFetchTime = time.Now()
 	}
 
 	s.UserCache.SetTTL(30 * time.Minute)
 	s.UserCache.SetCacheSizeLimit(10000)
 
-	database, err := basedb.New(databaseURL, sugar, nil)
+	database, err := basedb.New(databaseURL, nil)
 	if err != nil {
-		sugar.Fatalf("Error connecting to database: %v", err)
+		common.Log.Fatalf("Error connecting to database: %v", err)
 	}
-	sugar.Infof("Database connected")
+	common.Log.Infof("Database connected")
 	s.DB = &db.DB{DB: database}
 
 	s.Redis, err = (radix.PoolConfig{}).New(context.Background(), "tcp", redisHost)
 	if err != nil {
-		sugar.Fatalf("Error connecting to Redis: %v", err)
+		common.Log.Fatalf("Error connecting to Redis: %v", err)
 	}
-	sugar.Infof("Redis connected")
+	common.Log.Infof("Redis connected")
 
 	// connect to RPC server
 	conn, err := grpc.Dial(rpcHost, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
-		sugar.Fatalf("Could not connect to RPC server: %v", err)
+		common.Log.Fatalf("Could not connect to RPC server: %v", err)
 	}
 
-	sugar.Infof("RPC connected")
+	common.Log.Infof("RPC connected")
 
 	defer func() {
-		sugar.Infof("Closing database connection...")
+		common.Log.Infof("Closing database connection...")
 		s.DB.Pool.Close()
-		sugar.Infof("Closing RPC connection...")
+		common.Log.Infof("Closing RPC connection...")
 		conn.Close()
 	}()
 
 	s.RPC = proto.NewGuildInfoServiceClient(conn)
 
-	sugar.Fatal(http.ListenAndServe(port, s.Mux))
+	common.Log.Fatal(http.ListenAndServe(port, s.Mux))
 }

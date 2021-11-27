@@ -7,6 +7,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
+	"github.com/starshine-sys/catalogger/common"
 	"github.com/starshine-sys/catalogger/events/handler"
 )
 
@@ -16,7 +17,7 @@ func (bot *Bot) guildRoleDelete(ev *gateway.GuildRoleDeleteEvent) (resp *handler
 	delete(bot.Roles, ev.RoleID)
 	if !ok {
 		bot.RolesMu.Unlock()
-		bot.Sugar.Errorf("Error getting info for role %v", ev.RoleID)
+		common.Log.Errorf("Error getting info for role %v", ev.RoleID)
 		return
 	}
 	bot.RolesMu.Unlock()

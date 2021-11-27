@@ -8,6 +8,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
+	"github.com/starshine-sys/catalogger/common"
 	"github.com/starshine-sys/catalogger/events/handler"
 )
 
@@ -21,14 +22,14 @@ func (bot *Bot) guildCreate(g *gateway.GuildCreateEvent) (resp *handler.Response
 		var exists bool
 		if err = bot.DB.QueryRow(context.Background(), "select exists(select id from guilds where id = $1)", g.ID).Scan(&exists); exists {
 			if err != nil {
-				bot.Sugar.Errorf("Error checking if guild exists in db: %v", err)
+				common.Log.Errorf("Error checking if guild exists in db: %v", err)
 			}
 
 			return
 		}
 	}
 
-	bot.Sugar.Infof("Joined server %v (%v).", g.Name, g.ID)
+	common.Log.Infof("Joined server %v (%v).", g.Name, g.ID)
 
 	if !bot.BotJoinLeaveLog.IsValid() {
 		return

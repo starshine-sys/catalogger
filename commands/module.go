@@ -6,20 +6,17 @@ import (
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/bot"
 	"github.com/starshine-sys/catalogger/db"
-	"go.uber.org/zap"
 )
 
 // Bot ...
 type Bot struct {
 	*bot.Bot
-	Sugar *zap.SugaredLogger
 }
 
 // Init ...
-func Init(bot *bot.Bot, log *zap.SugaredLogger) {
+func Init(bot *bot.Bot) {
 	b := &Bot{
-		Bot:   bot,
-		Sugar: log.Named("cmds"),
+		Bot: bot,
 	}
 
 	b.Router.AddCommand(&bcr.Command{

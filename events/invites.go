@@ -5,12 +5,13 @@ import (
 	"time"
 
 	"github.com/diamondburned/arikawa/v3/gateway"
+	"github.com/starshine-sys/catalogger/common"
 )
 
 func (bot *Bot) inviteCreate(g *gateway.InviteCreateEvent) {
 	inv, err := bot.State(g.GuildID).GuildInvites(g.GuildID)
 	if err != nil {
-		bot.Sugar.Errorf("Error getting invites for %v: %v", g.GuildID, err)
+		common.Log.Errorf("Error getting invites for %v: %v", g.GuildID, err)
 		return
 	}
 
@@ -19,7 +20,7 @@ func (bot *Bot) inviteCreate(g *gateway.InviteCreateEvent) {
 
 	err = bot.MemberStore.SetInvites(ctx, g.GuildID, inv)
 	if err != nil {
-		bot.Sugar.Errorf("Error updating invite cache for %v: %v", g.GuildID, err)
+		common.Log.Errorf("Error updating invite cache for %v: %v", g.GuildID, err)
 	}
 }
 
@@ -29,12 +30,12 @@ func (bot *Bot) inviteDelete(g *gateway.InviteDeleteEvent) {
 
 	_, err := bot.DB.Exec(context.Background(), "delete from invites where code = $1", g.Code)
 	if err != nil {
-		bot.Sugar.Errorf("Error deleting invite name: %v", err)
+		common.Log.Errorf("Error deleting invite name: %v", err)
 	}
 
 	inv, err := bot.State(g.GuildID).GuildInvites(g.GuildID)
 	if err != nil {
-		bot.Sugar.Errorf("Error getting invites for %v: %v", g.GuildID, err)
+		common.Log.Errorf("Error getting invites for %v: %v", g.GuildID, err)
 		return
 	}
 
@@ -43,6 +44,6 @@ func (bot *Bot) inviteDelete(g *gateway.InviteDeleteEvent) {
 
 	err = bot.MemberStore.SetInvites(ctx, g.GuildID, inv)
 	if err != nil {
-		bot.Sugar.Errorf("Error updating invite cache for %v: %v", g.GuildID, err)
+		common.Log.Errorf("Error updating invite cache for %v: %v", g.GuildID, err)
 	}
 }

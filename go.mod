@@ -10,6 +10,7 @@ require (
 	github.com/dustin/go-humanize v1.0.0
 	github.com/georgysavva/scany v0.2.8
 	github.com/getsentry/sentry-go v0.11.0
+	github.com/go-chi/render v1.0.1
 	github.com/google/uuid v1.1.2
 	github.com/influxdata/influxdb-client-go/v2 v2.5.1
 	github.com/jackc/pgconn v1.8.1

@@ -8,6 +8,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/dustin/go-humanize"
 	"github.com/julienschmidt/httprouter"
+	"github.com/starshine-sys/catalogger/common"
 	"github.com/starshine-sys/catalogger/web/proto"
 )
 
@@ -48,7 +49,7 @@ func (s *server) index(w http.ResponseWriter, r *http.Request, params httprouter
 
 	err = tmpl.ExecuteTemplate(w, "index.html", data)
 	if err != nil {
-		s.Sugar.Errorf("Error executing template: %v", err)
+		common.Log.Errorf("Error executing template: %v", err)
 		return
 	}
 }
@@ -60,7 +61,7 @@ func (s *server) fetchNews() {
 
 	news, err := s.newsClient.Messages(s.newsChannel, 5)
 	if err != nil {
-		s.Sugar.Errorf("Couldn't fetch news messages: %v", err)
+		common.Log.Errorf("Couldn't fetch news messages: %v", err)
 	} else {
 		s.news = news
 	}

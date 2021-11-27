@@ -7,6 +7,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
+	"github.com/starshine-sys/catalogger/common"
 	"github.com/starshine-sys/catalogger/events/handler"
 )
 
@@ -16,7 +17,7 @@ func (bot *Bot) guildRoleUpdate(ev *gateway.GuildRoleUpdateEvent) (resp *handler
 	if !ok {
 		bot.Roles[ev.Role.ID] = ev.Role
 		bot.RolesMu.Unlock()
-		bot.Sugar.Errorf("Error getting info for role %v", ev.Role.ID)
+		common.Log.Errorf("Error getting info for role %v", ev.Role.ID)
 		return
 	}
 	bot.Roles[ev.Role.ID] = ev.Role

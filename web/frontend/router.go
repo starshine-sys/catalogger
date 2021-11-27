@@ -8,6 +8,7 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/russross/blackfriday/v2"
+	"github.com/starshine-sys/catalogger/common"
 )
 
 //go:embed static/*
@@ -55,7 +56,7 @@ func newRouter(s *server) *httprouter.Router {
 
 		err := tmpl.ExecuteTemplate(w, "privacy.html", data)
 		if err != nil {
-			s.Sugar.Errorf("Error executing template: %v", err)
+			common.Log.Errorf("Error executing template: %v", err)
 			return
 		}
 	})
@@ -69,7 +70,7 @@ func newRouter(s *server) *httprouter.Router {
 
 		err := tmpl.ExecuteTemplate(w, "docs.html", data)
 		if err != nil {
-			s.Sugar.Errorf("Error executing template: %v", err)
+			common.Log.Errorf("Error executing template: %v", err)
 			return
 		}
 	})

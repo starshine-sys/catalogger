@@ -6,6 +6,7 @@ import (
 
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
+	"github.com/starshine-sys/catalogger/common"
 )
 
 func getctx() (context.Context, func()) {
@@ -30,7 +31,7 @@ func (bot *Bot) requestGuildMembers(g *gateway.GuildCreateEvent) {
 
 	cached, err := bot.MemberStore.IsGuildCached(ctx, g.ID)
 	if err != nil {
-		bot.Sugar.Errorf("Error checking if guild %v is already cached: %v", err)
+		common.Log.Errorf("Error checking if guild %v is already cached: %v", err)
 	}
 
 	if cached {
@@ -60,7 +61,7 @@ func (bot *Bot) guildMemberChunk(g *gateway.GuildMembersChunkEvent) {
 
 	err := bot.MemberStore.SetMembers(ctx, g.GuildID, g.Members)
 	if err != nil {
-		bot.Sugar.Errorf("Error setting members in cache: %v", err)
+		common.Log.Errorf("Error setting members in cache: %v", err)
 	}
 }
 
@@ -76,11 +77,11 @@ func (bot *Bot) chunkGuilds() {
 
 		if len(bot.guildsToChunk) == 0 && len(bot.guildsToFetchInvites) == 0 {
 			if !bot.doneChunking {
-				bot.Sugar.Infof("Done chunking in %v!", time.Since(t).Round(time.Millisecond))
+				common.Log.Infof("Done chunking in %v!", time.Since(t).Round(time.Millisecond))
 				bot.doneChunking = true
 			}
 		} else if bot.doneChunking {
-			bot.Sugar.Infof("Chunking was finished, but joined new guilds, chunking those")
+			common.Log.Infof("Chunking was finished, but joined new guilds, chunking those")
 			bot.doneChunking = false
 			t = time.Now().UTC()
 		}
@@ -105,7 +106,7 @@ func (bot *Bot) chunkGuilds() {
 				Limit:    0,
 			})
 			if err != nil {
-				bot.Sugar.Errorf("Error chunking members for guild %v: %v", chunkID, err)
+				common.Log.Errorf("Error chunking members for guild %v: %v", chunkID, err)
 
 				bot.chunkMu.Lock()
 				bot.guildsToChunk[chunkID] = struct{}{}
@@ -115,7 +116,7 @@ func (bot *Bot) chunkGuilds() {
 
 				err = bot.MemberStore.MarkGuildCached(ctx, chunkID)
 				if err != nil {
-					bot.Sugar.Errorf("Error marking guild as cached: %v", err)
+					common.Log.Errorf("Error marking guild as cached: %v", err)
 				}
 
 				// we can't defer this as it's an infinite loop
@@ -127,7 +128,7 @@ func (bot *Bot) chunkGuilds() {
 		if inviteID.IsValid() {
 			inv, err := bot.State(inviteID).GuildInvites(inviteID)
 			if err != nil {
-				bot.Sugar.Errorf("Error getting invites for %v: %v", inviteID, err)
+				common.Log.Errorf("Error getting invites for %v: %v", inviteID, err)
 				continue
 			}
 
@@ -135,7 +136,7 @@ func (bot *Bot) chunkGuilds() {
 
 			err = bot.MemberStore.SetInvites(ctx, inviteID, inv)
 			if err != nil {
-				bot.Sugar.Errorf("Error setting invites in cache: %v", err)
+				common.Log.Errorf("Error setting invites in cache: %v", err)
 			}
 
 			// same as above, we can't defer this as it's an infinite loop

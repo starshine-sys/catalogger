@@ -4,10 +4,8 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/exec"
 	"os/signal"
 	"runtime"
-	"strings"
 	"syscall"
 	"time"
 
@@ -16,24 +14,8 @@ import (
 	"github.com/diamondburned/arikawa/v3/utils/json/option"
 	"github.com/dustin/go-humanize"
 	"github.com/starshine-sys/bcr"
+	"github.com/starshine-sys/catalogger/common"
 )
-
-// GitVer is the git version (commit hash)
-var GitVer = "[unknown]"
-
-func init() {
-	if GitVer != "[unknown]" {
-		return
-	}
-
-	git := exec.Command("git", "rev-parse", "--short", "HEAD")
-	// ignoring errors *should* be fine? if there's no output we just fall back to "unknown"
-	b, _ := git.Output()
-	GitVer = strings.TrimSpace(string(b))
-	if GitVer == "" {
-		GitVer = "[unknown]"
-	}
-}
 
 func (bot *Bot) ping(ctx bcr.Contexter) (err error) {
 	stats := runtime.MemStats{}
@@ -57,14 +39,14 @@ func (bot *Bot) ping(ctx bcr.Contexter) (err error) {
 	_, err = bot.DB.Channels(ctx.GetChannel().GuildID)
 	if err != nil {
 		// we don't use the value here but good to log this *anyway* just in case
-		bot.Sugar.Errorf("Error fetching channels: %v", err)
+		common.Log.Errorf("Error fetching channels: %v", err)
 	}
 
 	dbLatency := time.Since(t).Round(time.Microsecond)
 
 	e := discord.Embed{
 		Color:     bcr.ColourPurple,
-		Footer:    &discord.EmbedFooter{Text: fmt.Sprintf("Version %v", GitVer)},
+		Footer:    &discord.EmbedFooter{Text: fmt.Sprintf("Version %v", common.Version)},
 		Timestamp: discord.NowTimestamp(),
 		Fields: []discord.EmbedField{
 			{
@@ -154,7 +136,7 @@ func (bot *Bot) counts() (guidlCount int64, channelCount int64, roleCount int64,
 
 	err := bot.DB.QueryRow(context.Background(), "select count(*) from messages").Scan(&bot.msgCount)
 	if err != nil {
-		bot.Sugar.Errorf("Error getting message count: %v", err)
+		common.Log.Errorf("Error getting message count: %v", err)
 	}
 	return bot.guildCount, bot.channelCount, bot.roleCount, bot.msgCount
 }

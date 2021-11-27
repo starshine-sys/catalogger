@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/starshine-sys/catalogger/common"
 )
 
 type errData struct {
@@ -29,7 +30,7 @@ func (s *server) error(w http.ResponseWriter, code int, genID bool, str string) 
 
 	err := tmpl.ExecuteTemplate(w, "error.html", data)
 	if err != nil {
-		s.Sugar.Errorf("Error executing template: %v", err)
+		common.Log.Errorf("Error executing template: %v", err)
 		return id
 	}
 	return id

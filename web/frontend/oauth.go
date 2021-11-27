@@ -15,6 +15,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/api"
 	"github.com/julienschmidt/httprouter"
 	"github.com/mediocregopher/radix/v4"
+	"github.com/starshine-sys/catalogger/common"
 	"golang.org/x/oauth2"
 )
 
@@ -76,7 +77,7 @@ func (s *server) handleLogin(w http.ResponseWriter, r *http.Request, _ httproute
 
 	csrf, err := s.createCSRFToken(ctx)
 	if err != nil {
-		s.Sugar.Errorf("Error setting CSRF token: %v", err)
+		common.Log.Errorf("Error setting CSRF token: %v", err)
 		return
 	}
 
@@ -87,7 +88,7 @@ func (s *server) handleLogin(w http.ResponseWriter, r *http.Request, _ httproute
 
 	err = s.Redis.Do(ctx, radix.Cmd(nil, "SET", "csrf-redir:"+csrf, redir, "EX", "600"))
 	if err != nil {
-		s.Sugar.Errorf("Error setting redirect: %v", err)
+		common.Log.Errorf("Error setting redirect: %v", err)
 	}
 
 	url := oauthConfig.AuthCodeURL(csrf, oauth2.AccessTypeOnline) + "&prompt=none"
@@ -106,9 +107,9 @@ func (s *server) handleAuthorize(w http.ResponseWriter, r *http.Request, _ httpr
 
 	if ok, err := s.checkCSRFToken(ctx, state); !ok {
 		if err != nil {
-			s.Sugar.Errorf("Error validating state: %v", err)
+			common.Log.Errorf("Error validating state: %v", err)
 		} else {
-			s.Sugar.Infof("Invalid state %v", state)
+			common.Log.Infof("Invalid state %v", state)
 		}
 		http.Redirect(w, r, "/?error=bad-csrf", http.StatusTemporaryRedirect)
 		return
@@ -117,13 +118,13 @@ func (s *server) handleAuthorize(w http.ResponseWriter, r *http.Request, _ httpr
 	code := r.FormValue("code")
 	token, err := oauthConfig.Exchange(ctx, code)
 	if err != nil {
-		s.Sugar.Errorf("Error exchanging code for token: %v", err)
+		common.Log.Errorf("Error exchanging code for token: %v", err)
 		return
 	}
 
 	cookie, err := CookieFromToken(token)
 	if err != nil {
-		s.Sugar.Errorf("Error storing auth token: %v", err)
+		common.Log.Errorf("Error storing auth token: %v", err)
 		return
 	}
 	http.SetCookie(w, cookie)
@@ -189,7 +190,7 @@ func (s *server) RequireSession(inner httprouter.Handle) httprouter.Handle {
 
 		b, err := base64.URLEncoding.DecodeString(cookie.Value)
 		if err != nil {
-			s.Sugar.Errorf("Error decoding cookie: %v", err)
+			common.Log.Errorf("Error decoding cookie: %v", err)
 			loginRedirect(w, r)
 			return
 		}
@@ -198,7 +199,7 @@ func (s *server) RequireSession(inner httprouter.Handle) httprouter.Handle {
 
 		err = json.Unmarshal(b, t)
 		if err != nil {
-			s.Sugar.Errorf("Error unmarshaling cookie: %v", err)
+			common.Log.Errorf("Error unmarshaling cookie: %v", err)
 			loginRedirect(w, r)
 			return
 		}
@@ -208,7 +209,7 @@ func (s *server) RequireSession(inner httprouter.Handle) httprouter.Handle {
 			client := api.NewClient(t.Type() + " " + t.AccessToken)
 			u, err := client.Me()
 			if err != nil {
-				s.Sugar.Errorf("Error getting Discord user: %v", err)
+				common.Log.Errorf("Error getting Discord user: %v", err)
 				loginRedirect(w, r)
 				return
 			}

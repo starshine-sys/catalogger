@@ -10,6 +10,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/jackc/pgx/v4"
 	"github.com/starshine-sys/bcr"
+	"github.com/starshine-sys/catalogger/common"
 	"github.com/starshine-sys/catalogger/events/handler"
 	"github.com/starshine-sys/pkgo"
 )
@@ -20,7 +21,7 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) (resp *handler.Re
 
 	err = bot.MemberStore.SetMember(ctx, m.GuildID, m.Member)
 	if err != nil {
-		bot.Sugar.Errorf("Error setting member %v in cache: %v", m.User.ID, err)
+		common.Log.Errorf("Error setting member %v in cache: %v", m.User.ID, err)
 	}
 
 	ch, err := bot.DB.Channels(m.GuildID)
@@ -133,7 +134,7 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) (resp *handler.Re
 				} else {
 					name, err := bot.DB.GetInviteName(inv.Code)
 					if err != nil {
-						bot.Sugar.Errorf("Error getting invite name: %v", err)
+						common.Log.Errorf("Error getting invite name: %v", err)
 					}
 
 					e.Fields = append(e.Fields, []discord.EmbedField{
@@ -179,7 +180,7 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) (resp *handler.Re
 				}
 
 			} else {
-				bot.Sugar.Errorf("Error fetching previous invites for %v: %v", m.GuildID, err)
+				common.Log.Errorf("Error fetching previous invites for %v: %v", m.GuildID, err)
 
 				e.Fields = append(e.Fields, discord.EmbedField{
 					Name:  "Invite used",
@@ -189,7 +190,7 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) (resp *handler.Re
 
 			err = bot.MemberStore.SetInvites(ctx, m.GuildID, is)
 			if err != nil {
-				bot.Sugar.Errorf("Error updating invites for %v: %v", m.GuildID, err)
+				common.Log.Errorf("Error updating invites for %v: %v", m.GuildID, err)
 			}
 		}
 	}

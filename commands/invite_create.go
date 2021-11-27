@@ -7,6 +7,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/utils/json/option"
 	"github.com/starshine-sys/bcr"
+	"github.com/starshine-sys/catalogger/common"
 )
 
 func (bot *Bot) createInvite(ctx bcr.Contexter) (err error) {
@@ -36,7 +37,7 @@ func (bot *Bot) createInvite(ctx bcr.Contexter) (err error) {
 		AuditLogReason: api.AuditLogReason(fmt.Sprintf("%v (%v): create unique invite", ctx.User().Tag(), ctx.User().ID)),
 	})
 	if err != nil {
-		bot.Sugar.Errorf("Couldn't create invite in %v: %v", ch.ID, err)
+		common.Log.Errorf("Couldn't create invite in %v: %v", ch.ID, err)
 		return ctx.SendEphemeral(fmt.Sprintf("Couldn't create an invite in %v. Are you sure %v has permission to create invites?", ch.Mention(), bot.Router.Bot.Username))
 	}
 

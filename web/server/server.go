@@ -9,6 +9,7 @@ import (
 
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/starshine-sys/bcr"
+	"github.com/starshine-sys/catalogger/common"
 	"github.com/starshine-sys/catalogger/db"
 	"github.com/starshine-sys/catalogger/web/proto"
 	"google.golang.org/grpc"
@@ -53,13 +54,13 @@ func NewServer(bot *bcr.Router, db *db.DB, clearCacheFunc func(discord.GuildID, 
 	rpcs := grpc.NewServer()
 	proto.RegisterGuildInfoServiceServer(rpcs, s)
 
-	db.Sugar.Infof("RPC server listening at %v", lis.Addr())
+	common.Log.Infof("RPC server listening at %v", lis.Addr())
 
 	go func() {
 		for {
 			err := rpcs.Serve(lis)
 			if err != nil {
-				s.DB.Sugar.Errorf("Failed to serve RPC: %v", err)
+				common.Log.Errorf("Failed to serve RPC: %v", err)
 			}
 			time.Sleep(30 * time.Second)
 		}
