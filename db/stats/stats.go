@@ -9,6 +9,7 @@ import (
 	"reflect"
 	"runtime"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -34,6 +35,9 @@ type Client struct {
 	reqs   map[string]uint32
 	reqsMu sync.Mutex
 
+	httpMode bool
+	httpReqs *uint32
+
 	Counts func() (guilds, channels, roles, messages int64)
 }
 
@@ -45,6 +49,7 @@ func New(url, token, organization, database string) *Client {
 		Counts: func() (int64, int64, int64, int64) {
 			return 0, 0, 0, 0
 		},
+		httpReqs: new(uint32),
 	}
 
 	c.Client = influxdb2.NewClientWithOptions(url, token,
@@ -103,6 +108,23 @@ func (c *Client) IncCommand() {
 	c.cmdsMu.Unlock()
 }
 
+func (c *Client) IncHTTPRequest(req string) {
+	if c == nil {
+		return
+	}
+
+	atomic.AddUint32(c.httpReqs, 1)
+}
+
+// True: only send http request counts
+func (c *Client) SetMode(http bool) {
+	if c == nil {
+		return
+	}
+
+	c.httpMode = http
+}
+
 func (c *Client) submit() {
 	if c == nil {
 		return
@@ -133,6 +155,14 @@ func (c *Client) submitInner() {
 	}
 
 	log.Println("Submitting metrics to InfluxDB")
+
+	if c.httpMode {
+		count := atomic.LoadUint32(c.httpReqs)
+		atomic.StoreUint32(c.httpReqs, 0)
+
+		c.Client.WritePoint(influxdb2.NewPoint("http", nil, map[string]interface{}{"http_requests": count}, time.Now()))
+		return
+	}
 
 	var cmds, queries, totalEvents uint32
 

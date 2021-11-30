@@ -1,4 +1,4 @@
-package main
+package bot
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"strings"
 	"syscall"
 
+	"emperror.dev/errors"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/diamondburned/arikawa/v3/state"
@@ -20,9 +21,16 @@ import (
 	"github.com/starshine-sys/catalogger/db"
 	"github.com/starshine-sys/catalogger/events"
 	"github.com/starshine-sys/catalogger/web/server"
+	"github.com/urfave/cli/v2"
 )
 
-func main() {
+var Command = &cli.Command{
+	Name:   "bot",
+	Usage:  "Run the bot",
+	Action: run,
+}
+
+func run(c *cli.Context) (err error) {
 	wsutil.WSDebug = common.Log.Named("ws").Debug
 	wsutil.WSError = func(err error) {
 		common.Log.Named("ws").Error(err)
@@ -48,7 +56,7 @@ func main() {
 		intents,
 	)
 	if err != nil {
-		log.Fatalf("Error creating bot: %v", err)
+		return errors.Wrap(err, "creating router")
 	}
 	r.EmbedColor = bcr.ColourPurple
 
@@ -59,7 +67,7 @@ func main() {
 			Dsn: os.Getenv("SENTRY_URL"),
 		})
 		if err != nil {
-			log.Fatalf("Error initialising Sentry: %v", err)
+			return errors.Wrap(err, "initing Sentry")
 		}
 		hub = sentry.CurrentHub()
 	}
@@ -67,7 +75,7 @@ func main() {
 	// create a database connection
 	db, err := db.New(os.Getenv("DATABASE_URL"), hub)
 	if err != nil {
-		log.Fatalf("Error opening database connection: %v", err)
+		return errors.Wrap(err, "opening database connection")
 	}
 	log.Infof("Opened database connection.")
 
@@ -78,7 +86,7 @@ func main() {
 	// add message create + interaction create handler
 	b, err := bot.New(os.Getenv("REDIS"), r, db)
 	if err != nil {
-		log.Fatal("Error connecting to Redis: %v", err)
+		return errors.Wrap(err, "connecting to Redis")
 	}
 
 	// actually load events + commands
@@ -91,13 +99,13 @@ func main() {
 	s, _ := r.StateFromGuildID(0)
 	botUser, err := s.Me()
 	if err != nil {
-		log.Fatalf("Error fetching bot user: %v", err)
+		return errors.Wrap(err, "fetching bot user")
 	}
 	r.Bot = botUser
 
 	// connect to discord
 	if err := r.ShardManager.Open(context.Background()); err != nil {
-		log.Fatal("Failed to connect:", err)
+		return errors.Wrap(err, "connect to Discord")
 	}
 
 	// Defer this to make sure that things are always cleanly shutdown even in the event of a crash
@@ -106,7 +114,7 @@ func main() {
 		// we're not actually properly closing the gateway so it'll stay for a few minutes
 		// who needs a clean disconnection anyway :~]
 		b.ForEach(func(s *state.State) {
-			s.UpdateStatus(gateway.UpdateStatusData{
+			_ = s.UpdateStatus(gateway.UpdateStatusData{
 				Status: discord.DoNotDisturbStatus,
 				Activities: []discord.Activity{{
 					Name: "Restarting, please wait...",
@@ -147,8 +155,9 @@ func main() {
 	}
 
 	sc := make(chan os.Signal, 1)
-	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
+	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
 
 	log.Infof("Interrupt signal received. Shutting down...")
+	return nil
 }

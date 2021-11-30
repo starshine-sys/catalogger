@@ -1,4 +1,4 @@
-package main
+package frontend
 
 import (
 	"embed"
@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
 	"github.com/russross/blackfriday/v2"
 	"github.com/starshine-sys/catalogger/common"
@@ -23,6 +24,9 @@ var docsMD []byte
 
 func newRouter(s *server) chi.Router {
 	r := chi.NewMux()
+
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
 
 	r.Get("/", s.index)
 	r.Get("/login", s.handleLogin)

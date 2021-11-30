@@ -41,6 +41,9 @@ If for whatever reason you can't or don't want to use Docker, it's still possibl
 
 #### Installation
 
+Note that Catalogger is built as a *single* executable for both the bot and dashboard.  
+To run the bot, use `./catalogger bot`.
+
 1. Create a Postgres database
 2. Copy `.env.example` to `.env` and fill it in
 3. Build the bot with `build.sh`
@@ -76,9 +79,22 @@ Catalogger is configured through a `.env` file. The following keys are available
 
 The dashboard really isn't made with self-hosting in mind; the entire bot can be configured through commands and *securely* setting up the dashboard is too complicated to go into detail here. That being said, it's still possible to run it yourself--but prepare to look through the source code for anything that isn't documented!
 
-To run the dashboard, copy `web/frontend/.env.example` to `web/frontend/.env`, fill it in, build that directory, and run the executable.
+To run the dashboard, run the `catalogger` executable with the `web` subcommand.
 
-You'll also want to set `DASHBOARD_BASE` in the bot's `.env` file. (Optional, but highly recommended, so the `cl!dashboard` command works)
+You'll also want to set `DASHBOARD_BASE` in your `.env` file. (Optional, but highly recommended, so the `cl!dashboard` command works)
+
+#### Configuration
+
+The dashboard requires some additional environment variables:
+
+- `CLIENT_ID`: your bot's client ID
+- `CLIENT_SECRET`: your bot's client secret
+- `RPC_HOST`: the host + port your bot process is listening on for RPC
+- `HTTPS`: whether to use HTTPS
+- `PORT`: the port to listen on
+- `HOST`: the hostname without `http://`/`https://` prefix
+- `ANNOUNCEMENTS_TOKEN`: token to use to fetch bot announcements (optional)
+- `ANNOUNCEMENTS`: announcements channel to fetch (optional)
 
 ## License
 

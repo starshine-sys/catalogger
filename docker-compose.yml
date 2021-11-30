@@ -3,6 +3,7 @@ version: "3"
 services:
   catalogger:
     build: .
+    command: ["/app/catalogger", "bot"]
     environment:
       - "DATABASE_URL=postgresql://postgres:postgres@postgres/postgres"
       - "REDIS=redis:6379"

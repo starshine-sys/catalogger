@@ -1,11 +1,13 @@
-package main
+package frontend
 
 import (
 	"context"
-	"log"
+	"fmt"
 	"net/http"
 	"os"
 	"time"
+
+	"emperror.dev/errors"
 
 	"github.com/ReneKroon/ttlcache/v2"
 	"github.com/diamondburned/arikawa/v3/api"
@@ -14,7 +16,6 @@ import (
 	"github.com/mediocregopher/radix/v4"
 	"google.golang.org/grpc"
 
-	_ "github.com/joho/godotenv/autoload"
 	"github.com/starshine-sys/catalogger/common"
 	"github.com/starshine-sys/catalogger/db"
 	"github.com/starshine-sys/catalogger/web/proto"
@@ -44,28 +45,24 @@ type server struct {
 	newsFetchTime time.Time
 }
 
-func main() {
-	var err error
-
+func Main() (err error) {
 	if rpcHost == "" {
 		rpcHost = "localhost:50051"
 	}
 
 	if clientID == "" || clientSecret == "" || databaseURL == "" || rpcHost == "" || port == "" || redisHost == "" {
-		log.Println("One or more required env variables was empty")
-		return
+		return errors.New("one or more required env variables was empty")
 	}
 
 	s := &server{
 		UserCache: ttlcache.NewCache(),
 	}
-	s.Mux = newRouter(s)
 
-	if os.Getenv("ANNOUNCEMENTS") != "" && os.Getenv("TOKEN") != "" {
-		s.newsClient = api.NewClient("Bot " + os.Getenv("TOKEN"))
+	if os.Getenv("ANNOUNCEMENTS") != "" && os.Getenv("ANNOUNCEMENTS_TOKEN") != "" {
+		s.newsClient = api.NewClient("Bot " + os.Getenv("ANNOUNCEMENTS_TOKEN"))
 		id, err := discord.ParseSnowflake(os.Getenv("ANNOUNCEMENTS"))
 		if err != nil {
-			common.Log.Fatalf("Couldn't parse \"%v\" as a snowflake!", os.Getenv("ANNOUNCEMENTS"))
+			return fmt.Errorf("couldn't parse \"%v\" as a snowflake", os.Getenv("ANNOUNCEMENTS"))
 		}
 		s.newsChannel = discord.ChannelID(id)
 
@@ -86,19 +83,20 @@ func main() {
 
 	s.DB, err = db.New(databaseURL, nil)
 	if err != nil {
-		common.Log.Fatalf("Error connecting to database: %v", err)
+		return errors.Wrap(err, "connecting to database")
 	}
+	s.DB.Stats.SetMode(true)
 
 	s.Redis, err = (radix.PoolConfig{}).New(context.Background(), "tcp", redisHost)
 	if err != nil {
-		common.Log.Fatalf("Error connecting to Redis: %v", err)
+		return errors.Wrap(err, "connecting to Redis")
 	}
 	common.Log.Infof("Redis connected")
 
 	// connect to RPC server
 	conn, err := grpc.Dial(rpcHost, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
-		common.Log.Fatalf("Could not connect to RPC server: %v", err)
+		return errors.Wrap(err, "connecting to RPC server")
 	}
 
 	common.Log.Infof("RPC connected")
@@ -112,5 +110,7 @@ func main() {
 
 	s.RPC = proto.NewGuildInfoServiceClient(conn)
 
-	common.Log.Fatal(http.ListenAndServe(port, s.Mux))
+	s.Mux = newRouter(s)
+
+	return http.ListenAndServe(port, s.Mux)
 }

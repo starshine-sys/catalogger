@@ -1,4 +1,4 @@
-package main
+package frontend
 
 import (
 	"github.com/diamondburned/arikawa/v3/api"
