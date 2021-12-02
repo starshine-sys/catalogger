@@ -82,6 +82,14 @@ func (bot *Bot) onResponse(req httpdriver.Request, resp httpdriver.Response) err
 		}
 	}
 
+	if resp == nil {
+		return nil
+	}
+
+	if _, ok := resp.(*httpdriver.DefaultResponse); !ok {
+		return nil
+	}
+
 	common.Log.Debugf("%v %v => %v", method, stats.LoggingName(req.GetPath()), resp.GetStatus())
 
 	go bot.DB.Stats.IncRequests(method, req.GetPath(), resp.GetStatus())
