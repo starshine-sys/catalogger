@@ -49,7 +49,7 @@ func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) (*handler.Response,
 	}
 
 	for _, id := range pkBotsToCheck {
-		if m.Author.ID == id {
+		if m.Author.ID == id && len(m.Embeds) > 0 && m.Content != "" {
 			return bot.pkMessageCreate(m)
 		}
 	}
