@@ -50,7 +50,12 @@ func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) (*handler.Response,
 
 	for _, id := range pkBotsToCheck {
 		if m.Author.ID == id && len(m.Embeds) > 0 && m.Content != "" {
-			return bot.pkMessageCreate(m)
+			go func() {
+				_, err := bot.pkMessageCreate(m)
+				if err != nil {
+					common.Log.Errorf("Error parsing possible PluralKit proxy log: %v", err)
+				}
+			}()
 		}
 	}
 
