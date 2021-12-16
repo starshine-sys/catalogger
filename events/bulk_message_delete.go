@@ -19,8 +19,6 @@ import (
 )
 
 func (bot *Bot) bulkMessageDelete(ev *gateway.MessageDeleteBulkEvent) (resp *handler.Response, err error) {
-	s, _ := bot.Router.StateFromGuildID(ev.GuildID)
-
 	if !ev.GuildID.IsValid() {
 		return
 	}
@@ -68,7 +66,7 @@ func (bot *Bot) bulkMessageDelete(ev *gateway.MessageDeleteBulkEvent) (resp *han
 			if u, ok := users[m.UserID]; ok {
 				m.Username = u.Username + "#" + u.Discriminator
 			} else {
-				u, err := s.User(m.UserID)
+				u, err := bot.User(m.UserID)
 				if err == nil {
 					m.Username = u.Username + "#" + u.Discriminator
 					users[u.ID] = u

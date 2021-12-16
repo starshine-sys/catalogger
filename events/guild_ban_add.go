@@ -67,7 +67,7 @@ func (bot *Bot) guildBanAdd(ev *gateway.GuildBanAddEvent) (resp *handler.Respons
 					resp.Embeds[0].Fields[0].Value = l.Reason
 				}
 
-				mod, err := bot.State(ev.GuildID).User(l.UserID)
+				mod, err := bot.User(l.UserID)
 				if err != nil {
 					resp.Embeds[0].Fields[1].Value = l.UserID.String()
 					break

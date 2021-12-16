@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/diamondburned/arikawa/v3/discord"
-	"github.com/diamondburned/arikawa/v3/state"
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/db"
 )
@@ -20,12 +19,10 @@ func (bot *Bot) watchlistSlash(ctx bcr.Contexter) (err error) {
 		return ctx.SendX("There are no users on the watchlist.")
 	}
 
-	m := map[discord.UserID]*discord.User{}
-
 	fields := []discord.EmbedField{}
 
 	for _, wl := range watchlist {
-		fields = append(fields, bot.watchlistField(ctx.Session(), m, wl))
+		fields = append(fields, bot.watchlistField(wl))
 	}
 
 	_, _, err = ctx.ButtonPages(bcr.FieldPaginator("Watchlist", "", bcr.ColourPurple, fields, 5), 15*time.Minute)
@@ -43,44 +40,30 @@ func (bot *Bot) watchlist(ctx *bcr.Context) (err error) {
 		return
 	}
 
-	m := map[discord.UserID]*discord.User{}
-
 	fields := []discord.EmbedField{}
 
 	for _, wl := range watchlist {
-		fields = append(fields, bot.watchlistField(ctx.State, m, wl))
+		fields = append(fields, bot.watchlistField(wl))
 	}
 
 	_, _, err = ctx.ButtonPages(bcr.FieldPaginator("Watchlist", "", bcr.ColourPurple, fields, 5), 15*time.Minute)
 	return
 }
 
-func (bot *Bot) watchlistField(s *state.State, m map[discord.UserID]*discord.User, wl db.WatchlistUser) (field discord.EmbedField) {
+func (bot *Bot) watchlistField(wl db.WatchlistUser) (field discord.EmbedField) {
 	var err error
 
-	u, ok := m[wl.UserID]
-	if !ok {
-		u, err = s.User(wl.UserID)
-		if err == nil {
-			m[wl.UserID] = u
-		}
-	}
+	u, err := bot.User(wl.UserID)
 
-	if u == nil {
+	if err != nil {
 		field.Name = "unknown user " + wl.UserID.String()
 	} else {
 		field.Name = u.Username + "#" + u.Discriminator
 	}
 
-	mod, ok := m[wl.Moderator]
-	if !ok {
-		mod, err = s.User(wl.Moderator)
-		if err == nil {
-			m[wl.Moderator] = u
-		}
-	}
+	mod, err := bot.User(wl.Moderator)
 
-	if mod == nil {
+	if err != nil {
 		field.Value = fmt.Sprintf("**Moderator:** %v", wl.Moderator.Mention())
 	} else {
 		field.Value = fmt.Sprintf("**Moderator:** %v#%v", mod.Username, mod.Discriminator)

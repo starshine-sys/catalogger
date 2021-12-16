@@ -92,7 +92,7 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) (*handler.Response,
 
 	mention := msg.UserID.Mention()
 	var author *discord.EmbedAuthor
-	u, err := bot.State(m.GuildID).User(msg.UserID)
+	u, err := bot.User(msg.UserID)
 	if err == nil {
 		mention = fmt.Sprintf("%v\n%v#%v\nID: %v", u.Mention(), u.Username, u.Discriminator, u.ID)
 		author = &discord.EmbedAuthor{

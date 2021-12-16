@@ -63,11 +63,11 @@ func (bot *Bot) guildUpdate(ev *gateway.GuildUpdateEvent) (resp *handler.Respons
 	}
 
 	if ev.OwnerID != old.OwnerID {
-		newOwner, err := bot.State(ev.ID).User(ev.OwnerID)
+		newOwner, err := bot.User(ev.OwnerID)
 		if err != nil {
 			return nil, err
 		}
-		oldOwner, err := bot.State(ev.ID).User(old.OwnerID)
+		oldOwner, err := bot.User(old.OwnerID)
 		if err != nil {
 			return nil, err
 		}

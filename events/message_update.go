@@ -209,7 +209,7 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) (*handler.Response,
 	if msg.System != nil && msg.Member != nil {
 		e.Title = fmt.Sprintf("Message by \"%v\" updated", m.Author.Username)
 
-		u, err := bot.State(m.GuildID).User(msg.UserID)
+		u, err := bot.User(msg.UserID)
 		if err == nil {
 			e.Fields[len(e.Fields)-1] = discord.EmbedField{
 				Name:   "Linked Discord account",

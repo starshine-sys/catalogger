@@ -84,7 +84,7 @@ func (bot *Bot) guildMemberRemove(ev *gateway.GuildMemberRemoveEvent) (resp *han
 				if time.Since(e.ID.Time()) < 1*time.Minute &&
 					e.TargetID == discord.Snowflake(m.User.ID) {
 
-					mod, err := bot.State(ev.GuildID).User(e.UserID)
+					mod, err := bot.User(e.UserID)
 					if err != nil {
 						common.Log.Infof("Error fetching user: %v", err)
 					}

@@ -67,7 +67,7 @@ func (bot *Bot) guildBanRemove(ev *gateway.GuildBanRemoveEvent) (resp *handler.R
 					e.Fields[0].Value = l.Reason
 				}
 
-				mod, err := bot.State(ev.GuildID).User(l.UserID)
+				mod, err := bot.User(l.UserID)
 				if err != nil {
 					e.Fields[1].Value = l.UserID.String()
 					break

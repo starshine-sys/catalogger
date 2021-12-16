@@ -266,7 +266,7 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) (resp *handler.Re
 		e.Fields = append(e.Fields, field)
 	}
 
-	mod, err := bot.State(m.GuildID).User(wl.Moderator)
+	mod, err := bot.User(wl.Moderator)
 	if err == nil {
 		e.Fields = append(e.Fields, discord.EmbedField{
 			Name:  "Moderator",

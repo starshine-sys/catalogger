@@ -147,7 +147,7 @@ func (bot *Bot) channelUpdate(ev *gateway.ChannelUpdateEvent) (resp *handler.Res
 					f.Value += r.Name + ", "
 				}
 			} else if r.Type == discord.OverwriteMember {
-				u, err := bot.State(ev.GuildID).User(discord.UserID(r.ID))
+				u, err := bot.User(discord.UserID(r.ID))
 				if err == nil {
 					f.Value += u.Username + "#" + u.Discriminator + ", "
 				}
@@ -169,9 +169,9 @@ func (bot *Bot) channelUpdate(ev *gateway.ChannelUpdateEvent) (resp *handler.Res
 				f.Name = "Role override for " + r.Name
 			}
 		} else if p.Type == discord.OverwriteMember {
-			u, err := bot.State(ev.GuildID).User(discord.UserID(p.ID))
+			u, err := bot.User(discord.UserID(p.ID))
 			if err == nil {
-				f.Name = "User override for " + u.Username + "#" + u.Discriminator
+				f.Name = "Member override for " + u.Username + "#" + u.Discriminator
 			}
 		}
 

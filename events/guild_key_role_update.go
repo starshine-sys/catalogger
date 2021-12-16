@@ -127,7 +127,7 @@ func (bot *Bot) keyroleUpdate(ev *GuildKeyRoleUpdateEvent) (resp *handler.Respon
 	if err == nil {
 		for _, l := range logs.Entries {
 			if discord.UserID(l.TargetID) == ev.User.ID && l.ID.Time().After(time.Now().Add(-10*time.Second)) {
-				mod, err := bot.State(ev.GuildID).User(l.UserID)
+				mod, err := bot.User(l.UserID)
 				if err == nil {
 					e.Fields = append(e.Fields, discord.EmbedField{
 						Name:  "Responsible moderator",

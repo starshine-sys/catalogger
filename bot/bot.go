@@ -2,6 +2,7 @@ package bot
 
 import (
 	"context"
+	"sync"
 
 	"emperror.dev/errors"
 	"github.com/diamondburned/arikawa/v3/discord"
@@ -28,13 +29,17 @@ type Bot struct {
 	DB          *db.DB
 	Redis       radix.Client
 	MemberStore mstore.Store
+
+	userCache map[discord.UserID]discord.User
+	userMu    sync.Mutex
 }
 
 // New ...
 func New(redisURL string, r *bcr.Router, db *db.DB) (b *Bot, err error) {
 	b = &Bot{
-		Bot: bot.NewWithRouter(r),
-		DB:  db,
+		Bot:       bot.NewWithRouter(r),
+		DB:        db,
+		userCache: map[discord.UserID]discord.User{},
 	}
 
 	b.Redis, err = (&radix.PoolConfig{}).New(context.Background(), "tcp", redisURL)
@@ -51,6 +56,7 @@ func New(redisURL string, r *bcr.Router, db *db.DB) (b *Bot, err error) {
 
 	b.Router.AddHandler(b.messageCreate)
 	b.Router.AddHandler(b.interactionCreate)
+	b.Router.AddHandler(b.handleEventForCache)
 
 	r.ShardManager.ForEach(func(s shard.Shard) {
 		state := s.(*state.State)

@@ -68,9 +68,9 @@ func (bot *Bot) channelCreate(ev *gateway.ChannelCreateEvent) (resp *handler.Res
 				f.Name = "Role override for " + r.Name
 			}
 		} else if p.Type == discord.OverwriteMember {
-			u, err := bot.State(ev.GuildID).User(discord.UserID(p.ID))
+			u, err := bot.User(discord.UserID(p.ID))
 			if err == nil {
-				f.Name = "Role override for " + u.Username + "#" + u.Discriminator
+				f.Name = "Member override for " + u.Username + "#" + u.Discriminator
 			}
 		}
 
