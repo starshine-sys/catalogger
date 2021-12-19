@@ -65,6 +65,8 @@ func (bot *Bot) guildMemberChunk(g *gateway.GuildMembersChunkEvent) {
 	}
 }
 
+const wsTimeout = 25 * time.Second
+
 func (bot *Bot) chunkGuilds() {
 	// tick every 3 seconds to avoid gateway rate limits
 	tick := time.NewTicker(3 * time.Second)
@@ -101,17 +103,21 @@ func (bot *Bot) chunkGuilds() {
 		bot.chunkMu.Unlock()
 
 		if chunkID.IsValid() {
-			err := bot.State(chunkID).Gateway.RequestGuildMembers(gateway.RequestGuildMembersData{
+			ctx, cancel := context.WithTimeout(context.Background(), wsTimeout)
+			err := bot.State(chunkID).Gateway().Send(ctx, &gateway.RequestGuildMembersCommand{
 				GuildIDs: []discord.GuildID{chunkID},
 				Limit:    0,
 			})
 			if err != nil {
+				cancel()
 				common.Log.Errorf("Error chunking members for guild %v: %v", chunkID, err)
 
 				bot.chunkMu.Lock()
 				bot.guildsToChunk[chunkID] = struct{}{}
 				bot.chunkMu.Unlock()
 			} else {
+				cancel()
+
 				ctx, cancel := getctx()
 
 				err = bot.MemberStore.MarkGuildCached(ctx, chunkID)

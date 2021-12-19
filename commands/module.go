@@ -26,9 +26,9 @@ func Init(bot *bot.Bot) {
 		SlashCommand: b.events,
 	})
 
-	var choices []discord.CommandOptionChoice
+	var choices []discord.StringChoice
 	for _, ev := range db.Events {
-		choices = append(choices, discord.CommandOptionChoice{
+		choices = append(choices, discord.StringChoice{
 			Name:  db.EventDescs[ev],
 			Value: ev,
 		})
@@ -51,16 +51,14 @@ func Init(bot *bot.Bot) {
 
 		SlashCommand: b.setChannelSlash,
 		Options: &[]discord.CommandOption{
-			{
-				Name:         "channel",
-				Type:         discord.ChannelOption,
+			&discord.ChannelOption{
+				OptionName:   "channel",
 				Description:  "The channel to log to.",
 				Required:     true,
 				ChannelTypes: []discord.ChannelType{discord.GuildNews, discord.GuildText},
 			},
-			{
-				Name:        "event",
-				Type:        discord.StringOption,
+			&discord.StringOption{
+				OptionName:  "event",
 				Description: "The event to log.",
 				Required:    true,
 				Choices:     choices,
@@ -75,10 +73,9 @@ func Init(bot *bot.Bot) {
 		Usage:        "<event>",
 		Args:         bcr.MinArgs(1),
 		SlashCommand: b.resetChannel,
-		Options: &[]discord.CommandOption{{
-			Type:        discord.StringOption,
-			Name:        "event",
-			Description: "The event to stop logging.",
+		Options: &[]discord.CommandOption{&discord.StringOption{
+			OptionName:  "event",
+			Description: "The event to log.",
 			Required:    true,
 			Choices:     choices,
 		}},
@@ -111,19 +108,17 @@ func Init(bot *bot.Bot) {
 				Permissions:  discord.PermissionManageGuild,
 				SlashCommand: b.redirectTo,
 				Options: &[]discord.CommandOption{
-					{
-						Name:         "from",
-						Type:         discord.ChannelOption,
-						ChannelTypes: []discord.ChannelType{discord.GuildNews, discord.GuildText},
+					&discord.ChannelOption{
+						OptionName:   "from",
 						Description:  "Text channel to redirect logs from.",
 						Required:     true,
-					},
-					{
-						Name:         "to",
-						Type:         discord.ChannelOption,
 						ChannelTypes: []discord.ChannelType{discord.GuildNews, discord.GuildText},
+					},
+					&discord.ChannelOption{
+						OptionName:   "to",
 						Description:  "Text channel to redirect logs to.",
 						Required:     true,
+						ChannelTypes: []discord.ChannelType{discord.GuildNews, discord.GuildText},
 					},
 				},
 			},
@@ -132,12 +127,11 @@ func Init(bot *bot.Bot) {
 				Summary:      "Reset a channel's logs, making them log to the default log channel again.",
 				Permissions:  discord.PermissionManageGuild,
 				SlashCommand: b.redirectRemove,
-				Options: &[]discord.CommandOption{{
-					Name:         "from",
-					Type:         discord.ChannelOption,
-					ChannelTypes: []discord.ChannelType{discord.GuildNews, discord.GuildText},
-					Description:  "Text channel to reset logs for.",
+				Options: &[]discord.CommandOption{&discord.ChannelOption{
+					OptionName:   "from",
+					Description:  "Text channel to redirect logs from.",
 					Required:     true,
+					ChannelTypes: []discord.ChannelType{discord.GuildNews, discord.GuildText},
 				}},
 			},
 		},
@@ -170,12 +164,11 @@ func Init(bot *bot.Bot) {
 
 		Permissions:  discord.PermissionManageGuild,
 		SlashCommand: b.ignore,
-		Options: &[]discord.CommandOption{{
-			Type:         discord.ChannelOption,
-			ChannelTypes: []discord.ChannelType{discord.GuildNews, discord.GuildText},
-			Name:         "channel",
+		Options: &[]discord.CommandOption{&discord.ChannelOption{
+			OptionName:   "channel",
 			Description:  "The channel to ignore.",
 			Required:     true,
+			ChannelTypes: []discord.ChannelType{discord.GuildNews, discord.GuildText},
 		}},
 	})
 
@@ -291,15 +284,13 @@ func Init(bot *bot.Bot) {
 		Permissions:  discord.PermissionManageGuild,
 		SlashCommand: b.renameInviteSlash,
 		Options: &[]discord.CommandOption{
-			{
-				Name:        "code",
-				Type:        discord.StringOption,
+			&discord.StringOption{
+				OptionName:  "code",
 				Description: "The invite to name.",
 				Required:    true,
 			},
-			{
-				Name:        "name",
-				Type:        discord.StringOption,
+			&discord.StringOption{
+				OptionName:  "name",
 				Description: "The name to give to the invite. Leave empty to reset the invite's name.",
 				Required:    false,
 			},
@@ -312,16 +303,14 @@ func Init(bot *bot.Bot) {
 		Permissions:  discord.PermissionManageGuild,
 		SlashCommand: b.createInvite,
 		Options: &[]discord.CommandOption{
-			{
-				Name:         "channel",
-				Type:         discord.ChannelOption,
+			&discord.ChannelOption{
+				OptionName:   "channel",
 				ChannelTypes: []discord.ChannelType{discord.GuildNews, discord.GuildText},
 				Description:  "The channel to create an invite in.",
 				Required:     true,
 			},
-			{
-				Name:        "name",
-				Type:        discord.StringOption,
+			&discord.StringOption{
+				OptionName:  "name",
 				Description: "What to name the new invite.",
 				Required:    false,
 			},
@@ -379,15 +368,14 @@ func Init(bot *bot.Bot) {
 				Permissions:  discord.PermissionKickMembers,
 				SlashCommand: b.watchlistAddSlash,
 				Options: &[]discord.CommandOption{
-					{
-						Name:        "user",
-						Type:        discord.UserOption,
+					&discord.UserOption{
+						OptionName: "user",
+
 						Description: "The user to add.",
 						Required:    true,
 					},
-					{
-						Name:        "reason",
-						Type:        discord.StringOption,
+					&discord.StringOption{
+						OptionName:  "reason",
 						Description: "Why you're adding this user.",
 						Required:    false,
 					},
@@ -398,9 +386,8 @@ func Init(bot *bot.Bot) {
 				Summary:      "Remove a user from the watchlist.",
 				Permissions:  discord.PermissionKickMembers,
 				SlashCommand: b.watchlistRemoveSlash,
-				Options: &[]discord.CommandOption{{
-					Name:        "user",
-					Type:        discord.UserOption,
+				Options: &[]discord.CommandOption{&discord.UserOption{
+					OptionName:  "user",
 					Description: "The user to remove.",
 					Required:    true,
 				}},
@@ -449,9 +436,8 @@ func Init(bot *bot.Bot) {
 				Summary:      "Add a key role.",
 				SlashCommand: b.keyroleAddSlash,
 				Permissions:  discord.PermissionManageGuild,
-				Options: &[]discord.CommandOption{{
-					Name:        "role",
-					Type:        discord.RoleOption,
+				Options: &[]discord.CommandOption{&discord.RoleOption{
+					OptionName:  "role",
 					Description: "The role to add.",
 					Required:    true,
 				}},
@@ -461,9 +447,8 @@ func Init(bot *bot.Bot) {
 				Summary:      "Remove a key role.",
 				SlashCommand: b.keyroleRemoveSlash,
 				Permissions:  discord.PermissionManageGuild,
-				Options: &[]discord.CommandOption{{
-					Name:        "role",
-					Type:        discord.RoleOption,
+				Options: &[]discord.CommandOption{&discord.RoleOption{
+					OptionName:  "role",
 					Description: "The role to remove.",
 					Required:    true,
 				}},

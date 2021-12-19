@@ -12,7 +12,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/diamondburned/arikawa/v3/state"
-	"github.com/diamondburned/arikawa/v3/utils/wsutil"
+	"github.com/diamondburned/arikawa/v3/utils/ws"
 	"github.com/getsentry/sentry-go"
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/bot"
@@ -31,8 +31,8 @@ var Command = &cli.Command{
 }
 
 func run(c *cli.Context) (err error) {
-	wsutil.WSDebug = common.Log.Named("ws").Debug
-	wsutil.WSError = func(err error) {
+	ws.WSDebug = common.Log.Named("ws").Debug
+	ws.WSError = func(err error) {
 		common.Log.Named("ws").Error(err)
 	}
 
@@ -114,10 +114,11 @@ func run(c *cli.Context) (err error) {
 		// we're not actually properly closing the gateway so it'll stay for a few minutes
 		// who needs a clean disconnection anyway :~]
 		b.ForEach(func(s *state.State) {
-			_ = s.UpdateStatus(gateway.UpdateStatusData{
+			_ = s.Gateway().Send(context.Background(), &gateway.UpdatePresenceCommand{
 				Status: discord.DoNotDisturbStatus,
 				Activities: []discord.Activity{{
 					Name: "Restarting, please wait...",
+					Type: discord.GameActivity,
 				}},
 			})
 		})

@@ -22,7 +22,7 @@ func (bot *Bot) guildMemberUpdate(ev *gateway.GuildMemberUpdateEvent) (resp *han
 	// copy member struct
 	up := m
 	up.RoleIDs = append([]discord.RoleID(nil), m.RoleIDs...)
-	ev.Update(&up)
+	ev.UpdateMember(&up)
 
 	ctx, cancel := getctx()
 	defer cancel()

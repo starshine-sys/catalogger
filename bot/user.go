@@ -30,7 +30,7 @@ func (bot *Bot) SetUser(u discord.User) {
 	bot.userMu.Unlock()
 }
 
-func (bot *Bot) handleEventForCache(iface gateway.Event) {
+func (bot *Bot) handleEventForCache(iface interface{}) {
 	switch ev := iface.(type) {
 	case *gateway.MessageCreateEvent:
 		bot.SetUser(ev.Author)

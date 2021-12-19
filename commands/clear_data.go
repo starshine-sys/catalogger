@@ -25,7 +25,7 @@ func (bot *Bot) clearData(ctx bcr.Contexter) (err error) {
 	yes, timeout := ctx.ConfirmButton(ctx.User().ID, bcr.ConfirmData{
 		Message:   fmt.Sprintf("⚠️ **Are you sure you want to clear this server's data?** This will delete all logged messages (%v messages) and will clear your settings.", humanize.Comma(msgCount)),
 		YesPrompt: "Delete data",
-		YesStyle:  discord.DangerButton,
+		YesStyle:  discord.DangerButtonStyle(),
 	})
 	if timeout {
 		_, err = send(ctx, "Operation timed out.")

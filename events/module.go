@@ -13,7 +13,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/api/webhook"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
-	"github.com/diamondburned/arikawa/v3/gateway/shard"
+	"github.com/diamondburned/arikawa/v3/session/shard"
 	"github.com/diamondburned/arikawa/v3/state"
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/bot"
@@ -328,7 +328,7 @@ func (bot *Bot) updateStatusLoop(s *state.State) {
 					s = fmt.Sprintf("%v | shard #%v", s, i)
 				}
 
-				err := state.UpdateStatus(gateway.UpdateStatusData{
+				err := state.Gateway().Send(context.Background(), &gateway.UpdatePresenceCommand{
 					Status: status,
 					Activities: []discord.Activity{{
 						Name: s,
