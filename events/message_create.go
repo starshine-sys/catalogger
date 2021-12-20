@@ -9,7 +9,7 @@ import (
 	"github.com/starshine-sys/catalogger/common"
 	"github.com/starshine-sys/catalogger/db"
 	"github.com/starshine-sys/catalogger/events/handler"
-	"github.com/starshine-sys/pkgo"
+	"github.com/starshine-sys/pkgo/v2"
 )
 
 var pk = pkgo.New("")
@@ -128,8 +128,10 @@ func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) (*handler.Response,
 
 	pkm, err := pk.Message(pkgo.Snowflake(m.ID))
 	if err != nil {
-		if err == pkgo.ErrMsgNotFound || err == pkgo.ErrNotFound {
-			return nil, nil
+		if v, ok := err.(*pkgo.PKAPIError); ok {
+			if v.Code == pkgo.MessageNotFound {
+				return nil, nil
+			}
 		}
 
 		common.Log.Errorf("Error getting message info from the PK API: %v", err)

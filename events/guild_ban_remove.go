@@ -10,7 +10,7 @@ import (
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/common"
 	"github.com/starshine-sys/catalogger/events/handler"
-	"github.com/starshine-sys/pkgo"
+	"github.com/starshine-sys/pkgo/v2"
 )
 
 func (bot *Bot) guildBanRemove(ev *gateway.GuildBanRemoveEvent) (resp *handler.Response, err error) {
@@ -90,16 +90,17 @@ func (bot *Bot) guildBanRemove(ev *gateway.GuildBanRemoveEvent) (resp *handler.R
 		}
 
 		e.Fields = append(e.Fields, discord.EmbedField{
-			Name:  "PluralKit system ID",
-			Value: sys.ID,
+			Name:   "PluralKit system ID/UUID",
+			Value:  fmt.Sprintf("%v/`%v`", sys.ID, sys.UUID),
+			Inline: false,
 		})
 
-		banned, err := bot.DB.IsSystemBanned(ev.GuildID, sys.ID)
+		banned, err := bot.DB.IsSystemBanned(ev.GuildID, sys.ID, sys.UUID)
 		if err != nil {
 			common.Log.Errorf("Error getting banned systems for %v: %v", ev.GuildID, err)
 			common.Log.Infof("Trying to unban %v anyway.", sys.ID)
 
-			err = bot.DB.UnbanSystem(ev.GuildID, sys.ID)
+			err = bot.DB.UnbanSystem(ev.GuildID, sys.ID, sys.UUID)
 			if err == nil {
 				e.Fields = append(e.Fields, discord.EmbedField{
 					Name:  "Linked system unbanned",
@@ -109,7 +110,7 @@ func (bot *Bot) guildBanRemove(ev *gateway.GuildBanRemoveEvent) (resp *handler.R
 		}
 
 		if banned {
-			err = bot.DB.UnbanSystem(ev.GuildID, sys.ID)
+			err = bot.DB.UnbanSystem(ev.GuildID, sys.ID, sys.UUID)
 			if err == nil {
 				e.Fields = append(e.Fields, discord.EmbedField{
 					Name:  "Linked system unbanned",

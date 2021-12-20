@@ -12,7 +12,7 @@ import (
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/common"
 	"github.com/starshine-sys/catalogger/events/handler"
-	"github.com/starshine-sys/pkgo"
+	"github.com/starshine-sys/pkgo/v2"
 )
 
 func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) (resp *handler.Response, err error) {
@@ -205,8 +205,8 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) (resp *handler.Re
 		})
 	}
 
-	if sys != nil && sys.ID != "" {
-		if banned, _ := bot.DB.IsSystemBanned(m.GuildID, sys.ID); banned {
+	if sys.ID != "" {
+		if banned, _ := bot.DB.IsSystemBanned(m.GuildID, sys.ID, sys.UUID); banned {
 			e := discord.Embed{
 				Title: "Banned system",
 

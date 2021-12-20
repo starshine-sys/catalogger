@@ -10,7 +10,7 @@ import (
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/common"
 	"github.com/starshine-sys/catalogger/events/handler"
-	"github.com/starshine-sys/pkgo"
+	"github.com/starshine-sys/pkgo/v2"
 )
 
 func (bot *Bot) guildBanAdd(ev *gateway.GuildBanAddEvent) (resp *handler.Response, err error) {
@@ -90,11 +90,11 @@ func (bot *Bot) guildBanAdd(ev *gateway.GuildBanAddEvent) (resp *handler.Respons
 		}
 
 		resp.Embeds[0].Fields = append(resp.Embeds[0].Fields, discord.EmbedField{
-			Name:  "PluralKit system ID",
-			Value: sys.ID,
+			Name:  "PluralKit system ID/UUID",
+			Value: fmt.Sprintf("%v/`%v`", sys.ID, sys.UUID),
 		})
 
-		banned, err := bot.DB.IsSystemBanned(ev.GuildID, sys.ID)
+		banned, err := bot.DB.IsSystemBanned(ev.GuildID, sys.ID, sys.UUID)
 		if err != nil {
 			common.Log.Errorf("Error getting banned systems for %v: %v", ev.GuildID, err)
 		}
@@ -105,7 +105,7 @@ func (bot *Bot) guildBanAdd(ev *gateway.GuildBanAddEvent) (resp *handler.Respons
 				Value: "The system linked to this account has already been banned.",
 			})
 		} else {
-			err = bot.DB.BanSystem(ev.GuildID, sys.ID)
+			err = bot.DB.BanSystem(ev.GuildID, sys.UUID)
 			if err != nil {
 				common.Log.Errorf("Erorr banning system: %v", err)
 				resp.Embeds[0].Fields = append(resp.Embeds[0].Fields, discord.EmbedField{

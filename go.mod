@@ -12,7 +12,7 @@ require (
 	github.com/getsentry/sentry-go v0.11.0
 	github.com/go-chi/chi/v5 v5.0.0
 	github.com/go-chi/render v1.0.1
-	github.com/google/uuid v1.1.2
+	github.com/google/uuid v1.3.0
 	github.com/influxdata/influxdb-client-go/v2 v2.5.1
 	github.com/jackc/pgconn v1.8.1
 	github.com/jackc/pgx/v4 v4.11.0
@@ -24,7 +24,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/starshine-sys/bcr v0.21.1-0.20211219015104-f87242ae8a59
 	github.com/starshine-sys/dischtml v0.1.1-0.20211028145618-7e1ef8c772bb
-	github.com/starshine-sys/pkgo v1.1.1
+	github.com/starshine-sys/pkgo/v2 v2.0.0-beta.1
 	github.com/urfave/cli/v2 v2.3.0
 	github.com/ziutek/mymysql v1.5.4 // indirect
 	go.uber.org/zap v1.16.0

@@ -10,7 +10,7 @@ import (
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/starshine-sys/catalogger/common"
 	"github.com/starshine-sys/catalogger/crypt"
-	"github.com/starshine-sys/pkgo"
+	"github.com/starshine-sys/pkgo/v2"
 
 	"github.com/Masterminds/squirrel"
 )
