@@ -31,6 +31,13 @@ func (bot *Bot) guildMemberUpdate(ev *gateway.GuildMemberUpdateEvent) (resp *han
 		common.Log.Errorf("Error updating member in cache: %v", err)
 	}
 
+	oldDisabledTime := m.CommunicationDisabledUntil.Time()
+	newDisabledTime := ev.CommunicationDisabledUntil.Time()
+
+	if !newDisabledTime.IsZero() && !newDisabledTime.Before(oldDisabledTime) && !newDisabledTime.Equal(oldDisabledTime) {
+		return bot.handleTimeout(ev)
+	}
+
 	if m.Nick != ev.Nick || m.User.Username+"#"+m.User.Discriminator != ev.User.Username+"#"+ev.User.Discriminator || m.User.Avatar != ev.User.Avatar {
 		// username or nickname changed, so run that handler
 		return bot.guildMemberNickUpdate(ev, m)
