@@ -182,6 +182,11 @@ func (bot *Bot) handleResponse(ev reflect.Value, resp *handler.Response) {
 
 	evName := ev.Elem().Type().Name()
 
+	if len(resp.Embeds) == 0 {
+		common.Log.Infof("Response for event %v was not nil, but has no embeds", evName)
+		return
+	}
+
 	wh, err := bot.webhookCache(resp.GuildID, resp.ChannelID)
 	if err != nil {
 		switch v := err.(type) {
@@ -218,10 +223,6 @@ func (bot *Bot) handleResponse(ev reflect.Value, resp *handler.Response) {
 			bot.handleError(ev, err)
 		}
 		return
-	}
-
-	if len(resp.Embeds) == 0 {
-		common.Log.Infof("Response for event %v was not nil, but has no embeds", evName)
 	}
 
 	bot.Send(wh, evName, resp.Embeds...)
