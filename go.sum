@@ -476,8 +476,8 @@ github.com/mattn/go-sqlite3 v2.0.1+incompatible/go.mod h1:FPy6KqzDD04eiIsT53CuJW
 github.com/mattn/goveralls v0.0.2/go.mod h1:8d1ZMHsd7fW6IRPKQh46F2WRpyib5/X4FOpevwGNQEw=
 github.com/matttproud/golang_protobuf_extensions v1.0.1/go.mod h1:D8He9yQNgCq6Z5Ld7szi9bcBfOoFv/3dc6xSMkL2PC0=
 github.com/mediocregopher/radix/v3 v3.4.2/go.mod h1:8FL3F6UQRXHXIBSPUs5h0RybMF8i4n7wVopoX3x7Bv8=
-github.com/mediocregopher/radix/v4 v4.0.0-beta.1 h1:RDgQ4wCQ6f+pUsX20CIzjNJnI5P9KDw4j1sjOVHxo7Y=
-github.com/mediocregopher/radix/v4 v4.0.0-beta.1/go.mod h1:Z74pilm773ghbGV4EEoPvi6XWgkAfr0VCNkfa8gI1PU=
+github.com/mediocregopher/radix/v4 v4.0.0 h1:BUj/kzvuppH81PTHoxQqmQhu8JpHDWRFST6JQQE0hBQ=
+github.com/mediocregopher/radix/v4 v4.0.0/go.mod h1:ajchozX/6ELmydxWeWM6xCFHVpZ4+67LXHOTOVR0nCE=
 github.com/microcosm-cc/bluemonday v1.0.2/go.mod h1:iVP4YcDBq+n/5fb23BhYFvIMq/leAFZyRl6bYmGDlGc=
 github.com/microcosm-cc/bluemonday v1.0.16 h1:kHmAq2t7WPWLjiGvzKa5o3HzSfahUKiOq7fAPUiMNIc=
 github.com/microcosm-cc/bluemonday v1.0.16/go.mod h1:Z0r70sCuXHig8YpBzCc5eGHAap2K7e/u082ZUpDRRqM=
@@ -616,8 +616,8 @@ github.com/starshine-sys/bcr v0.21.1-0.20211220235955-51d5e27d6e5e h1:voR19Pkksx
 github.com/starshine-sys/bcr v0.21.1-0.20211220235955-51d5e27d6e5e/go.mod h1:xUfJ0KK3qxEzaJvAK7W8WRgw1LC+3mOFjyQmtbSZagY=
 github.com/starshine-sys/dischtml v0.1.1-0.20211028145618-7e1ef8c772bb h1:bSJct6ENxnoOtsJSBSdocHcr19kWLoILXL4kaAV2JAg=
 github.com/starshine-sys/dischtml v0.1.1-0.20211028145618-7e1ef8c772bb/go.mod h1:8yIpm/ZlHDmYH0Fd+ynUc3y3HzpnDM1d6+ZsO5SFJ4w=
-github.com/starshine-sys/pkgo/v2 v2.0.0-beta.1 h1:62JKpgIMan9Y/Ej/kt2F2650EbXjeiXNRqTsqgtoAVo=
-github.com/starshine-sys/pkgo/v2 v2.0.0-beta.1/go.mod h1:P13mUJ7fo3l0LqRuF8aqrCMz7msQNNF0zgaWnHSx1y0=
+github.com/starshine-sys/pkgo/v2 v2.0.0 h1:/OA1Yh+ggWtdpMprl/JJ2uBBWSG54ezAaWt0c/BHsbI=
+github.com/starshine-sys/pkgo/v2 v2.0.0/go.mod h1:P13mUJ7fo3l0LqRuF8aqrCMz7msQNNF0zgaWnHSx1y0=
 github.com/starshine-sys/snowflake/v2 v2.0.0 h1:rVDUw1tXe1nDcGTMMAU5RzU+mX4O9IDEEs9lds7BYtI=
 github.com/starshine-sys/snowflake/v2 v2.0.0/go.mod h1:6E5AYqTPb9DL7bp24tcbTLx0/thTcAmyLgscZIP7tzw=
 github.com/streadway/amqp v0.0.0-20190404075320-75d898a42a94/go.mod h1:AZpEONHx3DKn8O/DFsRAY58/XVQiIPMTMB1SddzLXVw=

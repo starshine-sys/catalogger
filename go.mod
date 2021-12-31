@@ -17,14 +17,14 @@ require (
 	github.com/jackc/pgconn v1.8.1
 	github.com/jackc/pgx/v4 v4.11.0
 	github.com/joho/godotenv v1.3.0
-	github.com/mediocregopher/radix/v4 v4.0.0-beta.1
+	github.com/mediocregopher/radix/v4 v4.0.0
 	github.com/rubenv/sql-migrate v0.0.0-20210614095031-55d5740dbbcc
 	github.com/russross/blackfriday/v2 v2.1.0
 	github.com/shirou/gopsutil/v3 v3.21.9
 	github.com/spf13/pflag v1.0.5
 	github.com/starshine-sys/bcr v0.21.1-0.20211220235955-51d5e27d6e5e
 	github.com/starshine-sys/dischtml v0.1.1-0.20211028145618-7e1ef8c772bb
-	github.com/starshine-sys/pkgo/v2 v2.0.0-beta.1
+	github.com/starshine-sys/pkgo/v2 v2.0.0
 	github.com/urfave/cli/v2 v2.3.0
 	github.com/ziutek/mymysql v1.5.4 // indirect
 	go.uber.org/zap v1.16.0

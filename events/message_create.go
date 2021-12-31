@@ -140,7 +140,11 @@ func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) (*handler.Response,
 	bot.ProxiedTriggers[discord.MessageID(pkm.Original)] = struct{}{}
 	bot.ProxiedTriggersMu.Unlock()
 
-	err = bot.DB.UpdatePKInfo(m.ID, pkm.Sender, pkm.System.ID, pkm.Member.ID)
+	if pkm.System == nil || pkm.Member == nil {
+		err = bot.DB.UpdateUserID(m.ID, discord.UserID(pkm.Sender))
+	} else {
+		err = bot.DB.UpdatePKInfo(m.ID, pkm.Sender, pkm.System.ID, pkm.Member.ID)
+	}
 	return nil, err
 }
 
