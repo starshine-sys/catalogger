@@ -25,11 +25,11 @@ func (bot *Bot) guildRoleUpdate(ev *gateway.GuildRoleUpdateEvent) (resp *handler
 
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	if !ch[keys.GuildRoleUpdate].IsValid() {
-		return
+		return nil, nil
 	}
 
 	resp = &handler.Response{
@@ -96,9 +96,9 @@ func (bot *Bot) guildRoleUpdate(ev *gateway.GuildRoleUpdateEvent) (resp *handler
 	}
 
 	if !changed {
-		return
+		return nil, nil
 	}
 
 	resp.Embeds = append(resp.Embeds, e)
-	return
+	return resp, nil
 }

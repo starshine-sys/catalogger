@@ -24,7 +24,7 @@ type GuildKeyRoleUpdateEvent struct {
 
 func (bot *Bot) keyroleUpdate(ev *GuildKeyRoleUpdateEvent) (resp *handler.Response, err error) {
 	if !ev.ChannelID.IsValid() {
-		return
+		return nil, nil
 	}
 
 	resp = &handler.Response{
@@ -34,11 +34,11 @@ func (bot *Bot) keyroleUpdate(ev *GuildKeyRoleUpdateEvent) (resp *handler.Respon
 	var keyRoles []uint64
 	err = bot.DB.QueryRow(context.Background(), "select key_roles from guilds where id = $1", ev.GuildID).Scan(&keyRoles)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	if len(keyRoles) == 0 {
-		return
+		return nil, nil
 	}
 
 	var addedKeyRoles, removedKeyRoles []discord.RoleID
@@ -59,7 +59,7 @@ func (bot *Bot) keyroleUpdate(ev *GuildKeyRoleUpdateEvent) (resp *handler.Respon
 	}
 
 	if len(addedKeyRoles) == 0 && len(removedKeyRoles) == 0 {
-		return
+		return nil, nil
 	}
 
 	// register event in metrics
