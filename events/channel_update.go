@@ -22,12 +22,23 @@ func (bot *Bot) channelUpdate(ev *gateway.ChannelUpdateEvent) (resp *handler.Res
 	}
 	bot.ChannelsMu.Unlock()
 
+	defer func() {
+		bot.ChannelsMu.Lock()
+		bot.Channels[ev.ID] = ev.Channel
+		bot.ChannelsMu.Unlock()
+	}()
+
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {
 		return
 	}
 	if !ch[keys.ChannelUpdate].IsValid() {
 		return
+	}
+
+	// if the channel is blacklisted, return
+	if bot.DB.IsBlacklisted(ev.GuildID, ev.ID) {
+		return nil, nil
 	}
 
 	resp = &handler.Response{
