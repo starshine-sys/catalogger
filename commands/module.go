@@ -168,7 +168,7 @@ func Init(bot *bot.Bot) {
 			OptionName:   "channel",
 			Description:  "The channel to ignore.",
 			Required:     true,
-			ChannelTypes: []discord.ChannelType{discord.GuildNews, discord.GuildText},
+			ChannelTypes: []discord.ChannelType{discord.GuildNews, discord.GuildText, discord.GuildVoice, discord.GuildStageVoice},
 		}},
 	})
 
