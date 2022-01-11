@@ -78,8 +78,10 @@ func (bot *Bot) channelUpdate(ev *gateway.ChannelUpdateEvent) (resp *handler.Res
 			f.Value += fmt.Sprintf("\n**After:** %v", newCat.Name)
 		}
 
-		e.Fields = append(e.Fields, f)
-		changed = true
+		if f.Value != "" {
+			e.Fields = append(e.Fields, f)
+			changed = true
+		}
 	}
 
 	if ev.Name != old.Name {
@@ -155,6 +157,11 @@ func (bot *Bot) channelUpdate(ev *gateway.ChannelUpdateEvent) (resp *handler.Res
 				f.Value += r.ID.String() + ", "
 			}
 		}
+
+		if f.Value != "" {
+			e.Fields = append(e.Fields, f)
+			changed = true
+		}
 	}
 
 	for _, p := range append(addedRoles, editedRoles...) {
@@ -183,7 +190,10 @@ func (bot *Bot) channelUpdate(ev *gateway.ChannelUpdateEvent) (resp *handler.Res
 			f.Value += fmt.Sprintf("\n\n❌ %v", strings.Join(bcr.PermStrings(p.Deny), ", "))
 		}
 
-		e.Fields = append(e.Fields, f)
+		if f.Value != "" {
+			e.Fields = append(e.Fields, f)
+			changed = true
+		}
 	}
 
 	if len(e.Fields) > 20 {
