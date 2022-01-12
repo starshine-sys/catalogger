@@ -3,10 +3,9 @@ package events
 import (
 	"context"
 	"errors"
-	"fmt"
+	"net/http"
 	"os"
 	"reflect"
-	"strings"
 	"sync"
 	"time"
 
@@ -66,6 +65,10 @@ type Bot struct {
 	guildsToChunk, guildsToFetchInvites map[discord.GuildID]struct{}
 	chunkMu                             sync.RWMutex
 	doneChunking                        bool
+
+	// bot stats
+	client     *http.Client
+	topGGToken string
 }
 
 // Init ...
@@ -90,6 +93,9 @@ func Init(bot *bot.Bot) (clearCacheFunc func(discord.GuildID, ...discord.Channel
 		guildsToFetchInvites: make(map[discord.GuildID]struct{}),
 
 		BotJoinLeaveLog: discord.ChannelID(joinLeaveLog),
+
+		client:     &http.Client{},
+		topGGToken: os.Getenv("TOPGG_TOKEN"),
 	}
 
 	// either add counts to metrics collector, or spawn loop to collect stats every minute
@@ -287,62 +293,6 @@ func (bot *Bot) guildPerms(guildID discord.GuildID, userID discord.UserID) (g di
 	}
 
 	return g, perms, nil
-}
-
-func (bot *Bot) updateStatusLoop(s *state.State) {
-	time.Sleep(5 * time.Second)
-
-	for {
-		guildCount := 0
-		bot.Router.ShardManager.ForEach(func(s shard.Shard) {
-			state := s.(*state.State)
-
-			guilds, _ := state.GuildStore.Guilds()
-			guildCount += len(guilds)
-		})
-
-		status := discord.IdleStatus
-		if bot.doneChunking {
-			status = discord.OnlineStatus
-		} else {
-			common.Log.Infof("Not done chunking, setting idle status")
-		}
-
-		shardNumber := 0
-		bot.Router.ShardManager.ForEach(func(s shard.Shard) {
-			state := s.(*state.State)
-
-			str := fmt.Sprintf("%vhelp", strings.Split(os.Getenv("PREFIXES"), ",")[0])
-			if guildCount != 0 {
-				str += fmt.Sprintf(" | in %v servers", guildCount)
-			}
-
-			i := shardNumber
-			shardNumber++
-
-			go func() {
-				i := i
-				common.Log.Infof("Setting status for shard #%v", i)
-				s := str
-				if bot.Router.ShardManager.NumShards() > 1 {
-					s = fmt.Sprintf("%v | shard #%v", s, i)
-				}
-
-				err := state.Gateway().Send(context.Background(), &gateway.UpdatePresenceCommand{
-					Status: status,
-					Activities: []discord.Activity{{
-						Name: s,
-						Type: discord.GameActivity,
-					}},
-				})
-				if err != nil {
-					common.Log.Errorf("Error setting status for shard #%v: %v", i, err)
-				}
-			}()
-		})
-
-		time.Sleep(10 * time.Minute)
-	}
 }
 
 // handleError handles any errors in event handlers
