@@ -99,6 +99,8 @@ func (bot *Bot) postServerStats(ctx context.Context, count int) {
 	defer cancel()
 
 	if bot.topGGToken != "" {
+		common.Log.Infof("Posting stats (count=%v) to top.gg", count)
+
 		req, err := http.NewRequestWithContext(cctx, "POST", "https://top.gg/api/bots/"+bot.Router.Bot.ID.String()+"/stats", strings.NewReader(`{"server_count":`+strconv.Itoa(count)+`}`))
 		if err != nil {
 			common.Log.Errorf("Error posting stats to top.gg: %v", req)
@@ -117,6 +119,8 @@ func (bot *Bot) postServerStats(ctx context.Context, count int) {
 
 		if resp.StatusCode != 200 {
 			common.Log.Warnf("Non-200 status code: %v", resp.StatusCode)
+		} else {
+			common.Log.Infof("Posted stats (count=%v) to top.gg!", count)
 		}
 	}
 }
