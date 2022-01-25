@@ -1,7 +1,8 @@
 version: "3"
 
 services:
-  catalogger:
+  bot:
+    image: catalogger
     build: .
     command: ["/app/catalogger", "bot"]
     environment:
@@ -13,6 +14,26 @@ services:
     depends_on:
       - redis
       - postgres
+    networks:
+      - default
+
+  dashboard:
+    image: catalogger
+    command: ["/app/catalogger", "web"]
+    environment:
+      - "DATABASE_URL=postgresql://postgres:postgres@postgres/postgres"
+      - "REDIS=redis:6379"
+      - "PORT=:5000"
+      - "RPC_HOST=bot:50051"
+    volumes:
+      - "./.env:/app/.env:ro"
+    ports:
+      - "127.0.0.1:2838:5000"
+    restart: unless-stopped
+    depends_on:
+      - redis
+      - postgres
+      - bot
     networks:
       - default
 
