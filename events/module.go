@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"reflect"
+	"strconv"
 	"sync"
 	"time"
 
@@ -69,6 +70,8 @@ type Bot struct {
 	// bot stats
 	client     *http.Client
 	topGGToken string
+
+	messageRetentionDays int
 }
 
 // Init ...
@@ -96,6 +99,20 @@ func Init(bot *bot.Bot) (clearCacheFunc func(discord.GuildID, ...discord.Channel
 
 		client:     &http.Client{},
 		topGGToken: os.Getenv("TOPGG_TOKEN"),
+	}
+
+	i, err := strconv.Atoi(os.Getenv("MESSAGE_RETENTION_DAYS"))
+	if err != nil {
+		b.messageRetentionDays = 15
+	} else {
+		if i <= 0 {
+			common.Log.Warnf("MESSAGE_RETENTION_DAYS must be a positive number, got %d; falling back to 15 days", i)
+			b.messageRetentionDays = 15
+		} else if i > 30 {
+			common.Log.Fatalf("MESSAGE_RETENTION_DAYS cannot be over 30, got %d", i)
+		} else {
+			b.messageRetentionDays = i
+		}
 	}
 
 	// either add counts to metrics collector, or spawn loop to collect stats every minute
@@ -241,7 +258,7 @@ func (bot *Bot) State(id discord.GuildID) *state.State {
 
 func (bot *Bot) cleanMessages() {
 	for {
-		ct, err := bot.DB.Exec(context.Background(), "delete from messages where msg_id < $1", discord.NewSnowflake(time.Now().UTC().Add(15*-24*time.Hour)))
+		ct, err := bot.DB.Exec(context.Background(), "delete from messages where msg_id < $1", discord.NewSnowflake(time.Now().UTC().Add(time.Duration(bot.messageRetentionDays)*-24*time.Hour)))
 		if err != nil {
 			time.Sleep(1 * time.Minute)
 			continue
