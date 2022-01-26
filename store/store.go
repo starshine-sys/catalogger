@@ -19,6 +19,7 @@ type Store interface {
 	Member(ctx context.Context, guildID discord.GuildID, userID discord.UserID) (discord.Member, error)
 	Members(ctx context.Context, guildID discord.GuildID) ([]discord.Member, error)
 	SetMember(ctx context.Context, guildID discord.GuildID, m discord.Member) error
+	MemberExists(ctx context.Context, guildID discord.GuildID, userID discord.UserID) (bool, error)
 
 	// This can easily just wrap SetMember, this function is separate for optimization reasons
 	SetMembers(ctx context.Context, guildID discord.GuildID, ms []discord.Member) error

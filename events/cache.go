@@ -2,8 +2,11 @@ package events
 
 import (
 	"context"
+	"time"
 
 	"github.com/diamondburned/arikawa/v3/discord"
+	"github.com/diamondburned/arikawa/v3/gateway"
+	"github.com/starshine-sys/catalogger/common"
 )
 
 func (bot *Bot) Member(guildID discord.GuildID, userID discord.UserID) (discord.Member, error) {
@@ -62,5 +65,55 @@ func IsThread(ch *discord.Channel) bool {
 		return true
 	default:
 		return false
+	}
+}
+
+func (bot *Bot) HandleCache(iface interface{}) {
+	time.Sleep(2 * time.Second)
+
+	ctx, cancel := getctx()
+	defer cancel()
+
+	switch ev := iface.(type) {
+	case *gateway.MessageCreateEvent:
+		if !ev.GuildID.IsValid() || ev.WebhookID.IsValid() || ev.Member == nil {
+			return
+		}
+		// otherwise, check if member exists and cache them
+		ok, err := bot.MemberStore.MemberExists(ctx, ev.GuildID, ev.Author.ID)
+		if err != nil {
+			common.Log.Errorf("Error checking if member %v:%v exists: %v", ev.GuildID, ev.Author.ID, err)
+			return
+		}
+		if ok {
+			return
+		}
+		err = bot.MemberStore.SetMember(ctx, ev.GuildID, *ev.Member)
+		if err != nil {
+			common.Log.Errorf("Error storing member %v:%v: %v", ev.GuildID, ev.Author.ID, err)
+		}
+
+	case *gateway.GuildMemberUpdateEvent:
+		ok, err := bot.MemberStore.MemberExists(ctx, ev.GuildID, ev.User.ID)
+		if err != nil {
+			common.Log.Errorf("Error checking if member %v:%v exists: %v", ev.GuildID, ev.User.ID, err)
+			return
+		}
+		if ok {
+			return
+		}
+
+		s, _ := bot.Router.StateFromGuildID(ev.GuildID)
+		m, err := s.Client.Member(ev.GuildID, ev.User.ID)
+		if err != nil {
+			common.Log.Errorf("Error fetching member %v:%v: %v", ev.GuildID, ev.User.ID, err)
+			return
+		}
+
+		ev.UpdateMember(m)
+		err = bot.MemberStore.SetMember(ctx, ev.GuildID, *m)
+		if err != nil {
+			common.Log.Errorf("Error storing member %v:%v: %v", ev.GuildID, ev.User.ID, err)
+		}
 	}
 }

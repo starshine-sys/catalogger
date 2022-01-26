@@ -81,3 +81,13 @@ func (s *Store) Members(ctx context.Context, guildID discord.GuildID) (ms []disc
 
 	return ms, nil
 }
+
+func (s *Store) MemberExists(ctx context.Context, guildID discord.GuildID, userID discord.UserID) (bool, error) {
+	var i int
+	// HEXISTS returns 0 if the field was not found, 1 if it exists
+	err := s.client.Do(ctx, radix.Cmd(&i, "HEXISTS", guildMemberKey(guildID), userID.String()))
+	if err != nil {
+		return false, err
+	}
+	return i == 1, nil
+}

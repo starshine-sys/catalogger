@@ -131,6 +131,7 @@ func Init(bot *bot.Bot) (clearCacheFunc func(discord.GuildID, ...discord.Channel
 	b.Router.AddHandler(b.inviteCreate)
 	b.Router.AddHandler(b.inviteDelete)
 	b.Router.AddHandler(b.webhooksUpdate)
+	b.Router.AddHandler(b.HandleCache)
 
 	evh := handler.New()
 	b.EventHandler = evh
