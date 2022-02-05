@@ -38,7 +38,7 @@ type Client struct {
 	httpMode bool
 	httpReqs *uint32
 
-	Counts func() (guilds, channels, roles, messages int64)
+	Counts func() (guilds, channels, roles, messages int64, timeTaken time.Duration)
 }
 
 // New creates a new client
@@ -46,8 +46,8 @@ func New(url, token, organization, database string) *Client {
 	c := &Client{
 		m:    make(map[string]uint32),
 		reqs: make(map[string]uint32),
-		Counts: func() (int64, int64, int64, int64) {
-			return 0, 0, 0, 0
+		Counts: func() (int64, int64, int64, int64, time.Duration) {
+			return 0, 0, 0, 0, 0
 		},
 		httpReqs: new(uint32),
 	}
@@ -231,13 +231,14 @@ func (c *Client) submitInner() {
 		}
 	}
 
-	guilds, channels, roles, messages := c.Counts()
+	guilds, channels, roles, messages, taken := c.Counts()
 	// if the first one isn't 0, we actually got data
 	if guilds != 0 {
 		data["guilds"] = guilds
 		data["channels"] = channels
 		data["roles"] = roles
 		data["messages"] = messages
+		data["query_time"] = int64(taken)
 	}
 
 	p = influxdb2.NewPoint("statistics", nil, data, time.Now())

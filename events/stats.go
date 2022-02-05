@@ -43,6 +43,12 @@ func (bot *Bot) ping(ctx bcr.Contexter) (err error) {
 	}
 
 	dbLatency := time.Since(t).Round(time.Microsecond)
+	statsQuery := bot.lastStatsQuery
+	if statsQuery >= time.Second {
+		statsQuery = statsQuery.Round(time.Millisecond)
+	} else {
+		statsQuery = statsQuery.Round(time.Microsecond)
+	}
 
 	e := discord.Embed{
 		Color:     bcr.ColourPurple,
@@ -82,10 +88,12 @@ func (bot *Bot) ping(ctx bcr.Contexter) (err error) {
 				Name: "Numbers",
 				Value: fmt.Sprintf(
 					`%v messages from %v servers
-Cached %v channels and %v roles`,
+Cached %v channels and %v roles
+Last statistics query took %v`,
 					humanize.Comma(bot.msgCount), humanize.Comma(bot.guildCount),
 					humanize.Comma(bot.channelCount),
 					humanize.Comma(bot.roleCount),
+					statsQuery.Round(time.Microsecond),
 				),
 			},
 		},
@@ -121,7 +129,15 @@ func (bot *Bot) countsLoop() {
 	}
 }
 
-func (bot *Bot) counts() (guidlCount int64, channelCount int64, roleCount int64, msgCount int64) {
+func (bot *Bot) counts() (
+	guildCount int64,
+	channelCount int64,
+	roleCount int64,
+	msgCount int64,
+	timeTaken time.Duration,
+) {
+	t := time.Now()
+
 	bot.GuildsMu.Lock()
 	bot.guildCount = int64(len(bot.Guilds))
 	bot.GuildsMu.Unlock()
@@ -138,5 +154,8 @@ func (bot *Bot) counts() (guidlCount int64, channelCount int64, roleCount int64,
 	if err != nil {
 		common.Log.Errorf("Error getting message count: %v", err)
 	}
-	return bot.guildCount, bot.channelCount, bot.roleCount, bot.msgCount
+
+	bot.lastStatsQuery = time.Since(t)
+
+	return bot.guildCount, bot.channelCount, bot.roleCount, bot.msgCount, bot.lastStatsQuery
 }

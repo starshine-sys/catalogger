@@ -62,6 +62,7 @@ type Bot struct {
 	EventHandler *handler.Handler
 
 	guildCount, roleCount, channelCount, msgCount int64
+	lastStatsQuery                                time.Duration
 
 	guildsToChunk, guildsToFetchInvites map[discord.GuildID]struct{}
 	chunkMu                             sync.RWMutex
