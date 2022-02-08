@@ -36,7 +36,7 @@ func (bot *Bot) handleTimeout(ev *gateway.GuildMemberUpdateEvent) (resp *handler
 
 		Fields: []discord.EmbedField{{
 			Name:   "Until",
-			Value:  fmt.Sprintf("<t:%v>\n%v", ev.CommunicationDisabledUntil.Time().Unix(), bcr.HumanizeTime(bcr.DurationPrecisionSeconds, ev.CommunicationDisabledUntil.Time())),
+			Value:  fmt.Sprintf("<t:%v>\n%v", ev.CommunicationDisabledUntil.Time().Unix(), bcr.HumanizeTime(bcr.DurationPrecisionSeconds, ev.CommunicationDisabledUntil.Time().Add(time.Second))),
 			Inline: false,
 		}},
 

@@ -3,6 +3,7 @@ package events
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
@@ -31,10 +32,10 @@ func (bot *Bot) guildMemberUpdate(ev *gateway.GuildMemberUpdateEvent) (resp *han
 		common.Log.Errorf("Error updating member in cache: %v", err)
 	}
 
-	oldDisabledTime := m.CommunicationDisabledUntil.Time()
-	newDisabledTime := ev.CommunicationDisabledUntil.Time()
+	oldDisabledTime := m.CommunicationDisabledUntil.Time().Round(time.Minute)
+	newDisabledTime := ev.CommunicationDisabledUntil.Time().Round(time.Minute)
 
-	if !newDisabledTime.IsZero() && !newDisabledTime.Before(oldDisabledTime) && !newDisabledTime.Equal(oldDisabledTime) {
+	if !newDisabledTime.IsZero() && !newDisabledTime.Before(oldDisabledTime) && !newDisabledTime.Equal(oldDisabledTime) && !newDisabledTime.Before(time.Now().UTC().Add(-time.Hour)) {
 		return bot.handleTimeout(ev)
 	}
 

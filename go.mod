@@ -6,7 +6,7 @@ require (
 	emperror.dev/errors v0.8.0
 	github.com/Masterminds/squirrel v1.5.0
 	github.com/ReneKroon/ttlcache/v2 v2.1.0
-	github.com/diamondburned/arikawa/v3 v3.0.0-rc.4.0.20211220235611-bc8a2b0cae3f
+	github.com/diamondburned/arikawa/v3 v3.0.0-rc.4.0.20220205230513-7727d140a04c
 	github.com/dustin/go-humanize v1.0.0
 	github.com/georgysavva/scany v0.2.8
 	github.com/getsentry/sentry-go v0.11.0
@@ -22,7 +22,7 @@ require (
 	github.com/russross/blackfriday/v2 v2.1.0
 	github.com/shirou/gopsutil/v3 v3.21.9
 	github.com/spf13/pflag v1.0.5
-	github.com/starshine-sys/bcr v0.21.1-0.20211220235955-51d5e27d6e5e
+	github.com/starshine-sys/bcr v0.21.1-0.20220205193809-aa85130f923e
 	github.com/starshine-sys/dischtml v0.1.1-0.20211028145618-7e1ef8c772bb
 	github.com/starshine-sys/pkgo/v2 v2.0.0
 	github.com/urfave/cli/v2 v2.3.0
