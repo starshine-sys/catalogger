@@ -69,8 +69,9 @@ type Bot struct {
 	doneChunking                        bool
 
 	// bot stats
-	client     *http.Client
-	topGGToken string
+	client      *http.Client
+	topGGToken  string
+	botsGGToken string
 
 	messageRetentionDays int
 }
@@ -98,8 +99,9 @@ func Init(bot *bot.Bot) (clearCacheFunc func(discord.GuildID, ...discord.Channel
 
 		BotJoinLeaveLog: discord.ChannelID(joinLeaveLog),
 
-		client:     &http.Client{},
-		topGGToken: os.Getenv("TOPGG_TOKEN"),
+		client:      &http.Client{},
+		topGGToken:  os.Getenv("TOPGG_TOKEN"),
+		botsGGToken: os.Getenv("BOTSGG_TOKEN"),
 	}
 
 	i, err := strconv.Atoi(os.Getenv("MESSAGE_RETENTION_DAYS"))

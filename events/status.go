@@ -95,10 +95,12 @@ func (bot *Bot) updateStatusInner(ctx context.Context) {
 }
 
 func (bot *Bot) postServerStats(ctx context.Context, count int) {
-	cctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
+	shardCount := bot.Router.ShardManager.NumShards()
 
 	if bot.topGGToken != "" {
+		cctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+		defer cancel()
+
 		common.Log.Infof("Posting stats (count=%v) to top.gg", count)
 
 		req, err := http.NewRequestWithContext(cctx, "POST", "https://top.gg/api/bots/"+bot.Router.Bot.ID.String()+"/stats", strings.NewReader(`{"server_count":`+strconv.Itoa(count)+`}`))
@@ -118,9 +120,38 @@ func (bot *Bot) postServerStats(ctx context.Context, count int) {
 		defer resp.Body.Close()
 
 		if resp.StatusCode != 200 {
-			common.Log.Warnf("Non-200 status code: %v", resp.StatusCode)
+			common.Log.Warnf("Non-200 status code for top.gg: %v", resp.StatusCode)
 		} else {
 			common.Log.Infof("Posted stats (count=%v) to top.gg!", count)
+		}
+	}
+
+	if bot.botsGGToken != "" {
+		cctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+		defer cancel()
+
+		common.Log.Infof("Posting stats (count=%v) to discord.bots.gg", count)
+
+		req, err := http.NewRequestWithContext(cctx, "POST", "https://discord.bots.gg/api/v1/bots/"+bot.Router.Bot.ID.String()+"/stats", strings.NewReader(`{"guildCount":`+strconv.Itoa(count)+`,"shardCount":`+strconv.Itoa(shardCount)+`}`))
+		if err != nil {
+			common.Log.Errorf("Error posting stats to discord.bots.gg: %v", req)
+			return
+		}
+
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("Authorization", bot.botsGGToken)
+
+		resp, err := bot.client.Do(req)
+		if err != nil {
+			common.Log.Errorf("Error posting stats to discord.bots.gg: %v", err)
+			return
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != 200 {
+			common.Log.Warnf("Non-200 status code for discord.bots.gg: %v", resp.StatusCode)
+		} else {
+			common.Log.Infof("Posted stats (count=%v) to discord.bots.gg!", count)
 		}
 	}
 }
