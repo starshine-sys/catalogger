@@ -47,8 +47,13 @@ func (bot *Bot) permcheck(ctx bcr.Contexter) (err error) {
 		Color: bcr.ColourGreen,
 	}
 
+	m, err := ctx.Session().Member(ctx.GetGuild().ID, bot.Router.Bot.ID)
+	if err != nil {
+		return bot.DB.ReportCtx(ctx, err)
+	}
+
 	// global perms first
-	perms, err := bot.globalPerms(ctx, ctx.GetGuild().ID, bot.Router.Bot.ID)
+	perms, err := bot.globalPerms(ctx, m, ctx.GetGuild())
 	if err == nil {
 		for _, p := range requiredPerms {
 			if perms.Has(p.Permission) {
@@ -67,12 +72,22 @@ func (bot *Bot) permcheck(ctx bcr.Contexter) (err error) {
 		}
 	}
 
-	for ch := range toCheck {
-		p, err := ctx.Session().Permissions(ch, bot.Router.Bot.ID)
-		if err != nil {
-			_, err = ctx.Sendf("There was an error checking permissions for %v (ID: %v).", ch.Mention(), ch)
-			return err
+	g := ctx.GetGuild()
+	chs, err := ctx.Session().Channels(g.ID)
+	if err != nil {
+		return bot.DB.ReportCtx(ctx, err)
+	}
+
+	for id := range toCheck {
+		var ch discord.Channel
+		for _, c := range chs {
+			if c.ID == id {
+				ch = c
+				break
+			}
 		}
+
+		p := discord.CalcOverwrites(*g, ch, *m)
 
 		if !p.Has(discord.PermissionManageWebhooks) {
 			missingPerms["webhooks"] = append(missingPerms["webhooks"], ch.Mention())
@@ -116,21 +131,9 @@ If that doesn't work, contact the developer.`, bot.Router.Bot.Username),
 	return
 }
 
-func (bot *Bot) globalPerms(ctx bcr.Contexter, guildID discord.GuildID, userID discord.UserID) (perms discord.Permissions, err error) {
-	// global perms first
-	m, err := ctx.Session().Member(guildID, userID)
-	if err != nil {
-		return
-	}
-
-	g, err := ctx.Session().Guild(guildID)
-	if err != nil {
-		return
-	}
-
-	g.Roles, err = ctx.Session().Roles(g.ID)
-	if err != nil {
-		return
+func (bot *Bot) globalPerms(ctx bcr.Contexter, m *discord.Member, g *discord.Guild) (perms discord.Permissions, err error) {
+	if m == nil || g == nil {
+		return 0, nil
 	}
 
 	for _, user := range m.RoleIDs {
