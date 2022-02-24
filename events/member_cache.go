@@ -14,17 +14,13 @@ func getctx() (context.Context, func()) {
 }
 
 func (bot *Bot) requestGuildMembers(g *gateway.GuildCreateEvent) {
-	bot.ChannelsMu.Lock()
 	for _, ch := range g.Channels {
-		bot.Channels[ch.ID] = ch
+		bot.Channels.Set(ch.ID, ch)
 	}
-	bot.ChannelsMu.Unlock()
 
-	bot.RolesMu.Lock()
 	for _, r := range g.Roles {
-		bot.Roles[r.ID] = r
+		bot.Roles.Set(r.ID, r)
 	}
-	bot.RolesMu.Unlock()
 
 	ctx, cancel := getctx()
 	defer cancel()
@@ -38,10 +34,8 @@ func (bot *Bot) requestGuildMembers(g *gateway.GuildCreateEvent) {
 		return
 	}
 
-	bot.chunkMu.Lock()
-	bot.guildsToChunk[g.ID] = struct{}{}
-	bot.guildsToFetchInvites[g.ID] = struct{}{}
-	bot.chunkMu.Unlock()
+	bot.guildsToChunk.Add(g.ID)
+	bot.guildsToFetchInvites.Add(g.ID)
 }
 
 func (bot *Bot) chunkGuildDelete(g *gateway.GuildDeleteEvent) {
@@ -49,10 +43,8 @@ func (bot *Bot) chunkGuildDelete(g *gateway.GuildDeleteEvent) {
 		return
 	}
 
-	bot.chunkMu.Lock()
-	delete(bot.guildsToChunk, g.ID)
-	delete(bot.guildsToFetchInvites, g.ID)
-	bot.chunkMu.Unlock()
+	bot.guildsToChunk.Remove(g.ID)
+	bot.guildsToFetchInvites.Remove(g.ID)
 }
 
 func (bot *Bot) guildMemberChunk(g *gateway.GuildMembersChunkEvent) {
@@ -75,9 +67,7 @@ func (bot *Bot) chunkGuilds() {
 	t := time.Now().UTC()
 
 	for range tick.C {
-		bot.chunkMu.Lock()
-
-		if len(bot.guildsToChunk) == 0 && len(bot.guildsToFetchInvites) == 0 {
+		if bot.guildsToChunk.Length() == 0 && bot.guildsToFetchInvites.Length() == 0 {
 			if !bot.doneChunking {
 				common.Log.Infof("Done chunking in %v!", time.Since(t).Round(time.Millisecond))
 				bot.doneChunking = true
@@ -89,18 +79,16 @@ func (bot *Bot) chunkGuilds() {
 		}
 
 		var chunkID, inviteID discord.GuildID
-		for k := range bot.guildsToChunk {
+		for _, k := range bot.guildsToChunk.Values() {
 			chunkID = k
-			delete(bot.guildsToChunk, k)
+			bot.guildsToChunk.Remove(k)
 			break
 		}
-		for k := range bot.guildsToFetchInvites {
+		for _, k := range bot.guildsToFetchInvites.Values() {
 			inviteID = k
-			delete(bot.guildsToFetchInvites, k)
+			bot.guildsToFetchInvites.Remove(k)
 			break
 		}
-
-		bot.chunkMu.Unlock()
 
 		if chunkID.IsValid() {
 			ctx, cancel := context.WithTimeout(context.Background(), wsTimeout)
@@ -112,9 +100,7 @@ func (bot *Bot) chunkGuilds() {
 				cancel()
 				common.Log.Errorf("Error chunking members for guild %v: %v", chunkID, err)
 
-				bot.chunkMu.Lock()
-				bot.guildsToChunk[chunkID] = struct{}{}
-				bot.chunkMu.Unlock()
+				bot.guildsToChunk.Add(chunkID)
 			} else {
 				cancel()
 

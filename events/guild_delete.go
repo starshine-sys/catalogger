@@ -15,14 +15,11 @@ func (bot *Bot) guildDelete(ev *gateway.GuildDeleteEvent) (resp *handler.Respons
 		return
 	}
 
-	bot.GuildsMu.Lock()
-	g, ok := bot.Guilds[ev.ID]
+	g, ok := bot.Guilds.Get(ev.ID)
 	if !ok {
-		bot.GuildsMu.Unlock()
 		return bot.guildDeleteNoState(ev)
 	}
-	delete(bot.Guilds, ev.ID)
-	bot.GuildsMu.Unlock()
+	bot.Guilds.Remove(ev.ID)
 
 	e := discord.Embed{
 		Title: "Left server",

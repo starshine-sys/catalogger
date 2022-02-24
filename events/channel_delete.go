@@ -10,9 +10,7 @@ import (
 )
 
 func (bot *Bot) channelDelete(ev *gateway.ChannelDeleteEvent) (resp *handler.Response, err error) {
-	bot.ChannelsMu.Lock()
-	delete(bot.Channels, ev.ID)
-	bot.ChannelsMu.Unlock()
+	bot.Channels.Remove(ev.ID)
 
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {

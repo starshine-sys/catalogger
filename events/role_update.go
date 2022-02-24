@@ -12,16 +12,12 @@ import (
 )
 
 func (bot *Bot) guildRoleUpdate(ev *gateway.GuildRoleUpdateEvent) (resp *handler.Response, err error) {
-	bot.RolesMu.Lock()
-	old, ok := bot.Roles[ev.Role.ID]
+	old, ok := bot.Roles.Get(ev.Role.ID)
 	if !ok {
-		bot.Roles[ev.Role.ID] = ev.Role
-		bot.RolesMu.Unlock()
 		common.Log.Errorf("Error getting info for role %v", ev.Role.ID)
 		return
 	}
-	bot.Roles[ev.Role.ID] = ev.Role
-	bot.RolesMu.Unlock()
+	bot.Roles.Set(ev.Role.ID, ev.Role)
 
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {

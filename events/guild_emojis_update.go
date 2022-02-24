@@ -11,20 +11,15 @@ import (
 )
 
 func (bot *Bot) emojiUpdate(ev *gateway.GuildEmojisUpdateEvent) (resp *handler.Response, err error) {
-	bot.GuildsMu.Lock()
-	guild, ok := bot.Guilds[ev.GuildID]
+	guild, ok := bot.Guilds.Get(ev.GuildID)
 	if !ok {
-		bot.GuildsMu.Unlock()
 		return
 	}
-	bot.GuildsMu.Unlock()
 
 	defer func() {
-		bot.GuildsMu.Lock()
-		g := bot.Guilds[ev.GuildID]
+		g, _ := bot.Guilds.Get(ev.GuildID)
 		g.Emojis = ev.Emojis
-		bot.Guilds[ev.GuildID] = g
-		bot.GuildsMu.Unlock()
+		bot.Guilds.Set(g.ID, g)
 	}()
 
 	var removed, added []discord.Emoji

@@ -75,10 +75,7 @@ func NewQueue() *Queue {
 
 // WebhookClient gets a client for the given webhook.
 func (bot *Bot) WebhookClient(wh *discord.Webhook) *webhook.Client {
-	bot.WebhooksMu.Lock()
-	defer bot.WebhooksMu.Unlock()
-
-	client, ok := bot.WebhookClients[wh.ID]
+	client, ok := bot.WebhookClients.Get(wh.ID)
 	if !ok {
 		common.Log.Debugf("Creating new webhook client for %v", wh.ID)
 
@@ -86,7 +83,7 @@ func (bot *Bot) WebhookClient(wh *discord.Webhook) *webhook.Client {
 		s, _ := bot.Router.StateFromGuildID(0)
 
 		client = webhook.FromAPI(wh.ID, wh.Token, s.Client)
-		bot.WebhookClients[wh.ID] = client
+		bot.WebhookClients.Set(wh.ID, client)
 	}
 	return client
 }
@@ -101,15 +98,13 @@ func (q *Queue) TotalLength() (length int) {
 
 // Queue queues an embed.
 func (bot *Bot) Queue(wh *discord.Webhook, event string, embed discord.Embed) {
-	bot.QueueMu.Lock()
-	q, ok := bot.Queues[wh.ID]
+	q, ok := bot.Queues.Get(wh.ID)
 	if !ok {
 		common.Log.Debugf("Creating new embed queue for %v", wh.ID)
 
 		q = NewQueue()
-		bot.Queues[wh.ID] = q
+		bot.Queues.Set(wh.ID, q)
 	}
-	bot.QueueMu.Unlock()
 
 	client := bot.WebhookClient(wh)
 
@@ -229,12 +224,8 @@ func (bot *Bot) handleResponse(ev reflect.Value, resp *handler.Response) {
 }
 
 func (bot *Bot) shouldSendError(ch discord.ChannelID) bool {
-	bot.UnauthorizedErrorsMu.Lock()
-	defer bot.UnauthorizedErrorsMu.Unlock()
-
-	if bot.UnauthorizedErrorsSent[ch].Before(time.Now().Add(-10 * time.Minute)) {
-		bot.UnauthorizedErrorsSent[ch] = time.Now()
-
+	if t, _ := bot.UnauthorizedErrorsSent.Get(ch); t.Before(time.Now().Add(-10 * time.Minute)) {
+		bot.UnauthorizedErrorsSent.Set(ch, time.Now())
 		return true
 	}
 

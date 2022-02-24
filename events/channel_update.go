@@ -12,21 +12,13 @@ import (
 )
 
 func (bot *Bot) channelUpdate(ev *gateway.ChannelUpdateEvent) (resp *handler.Response, err error) {
-	bot.ChannelsMu.Lock()
-	old, ok := bot.Channels[ev.ID]
+	defer bot.Channels.Set(ev.ID, ev.Channel)
+
+	old, ok := bot.Channels.Get(ev.ID)
 	if !ok {
 		common.Log.Errorf("Couldn't find channel %v in the cache", ev.ID)
-		bot.Channels[ev.ID] = ev.Channel
-		bot.ChannelsMu.Unlock()
 		return
 	}
-	bot.ChannelsMu.Unlock()
-
-	defer func() {
-		bot.ChannelsMu.Lock()
-		bot.Channels[ev.ID] = ev.Channel
-		bot.ChannelsMu.Unlock()
-	}()
 
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {

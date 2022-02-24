@@ -138,17 +138,9 @@ func (bot *Bot) counts() (
 ) {
 	t := time.Now()
 
-	bot.GuildsMu.Lock()
-	bot.guildCount = int64(len(bot.Guilds))
-	bot.GuildsMu.Unlock()
-
-	bot.ChannelsMu.Lock()
-	bot.channelCount = int64(len(bot.Channels))
-	bot.ChannelsMu.Unlock()
-
-	bot.RolesMu.Lock()
-	bot.roleCount = int64(len(bot.Roles))
-	bot.RolesMu.Unlock()
+	bot.guildCount = int64(bot.Guilds.Length())
+	bot.channelCount = int64(bot.Channels.Length())
+	bot.roleCount = int64(bot.Roles.Length())
 
 	err := bot.DB.QueryRow(context.Background(), "select count(*) from messages").Scan(&bot.msgCount)
 	if err != nil {

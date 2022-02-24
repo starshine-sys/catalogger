@@ -3,6 +3,7 @@ module github.com/starshine-sys/catalogger
 go 1.18
 
 require (
+	1f320.xyz/x v0.2.0
 	emperror.dev/errors v0.8.0
 	github.com/Masterminds/squirrel v1.5.0
 	github.com/ReneKroon/ttlcache/v2 v2.1.0

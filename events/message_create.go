@@ -114,13 +114,10 @@ func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) (*handler.Response,
 	time.Sleep(2 * time.Second)
 
 	// check if we handled this message already
-	bot.HandledMessagesMu.Lock()
-	if _, ok := bot.HandledMessages[m.ID]; ok {
-		delete(bot.HandledMessages, m.ID)
-		bot.HandledMessagesMu.Unlock()
+	if bot.HandledMessages.Exists(m.ID) {
+		bot.HandledMessages.Remove(m.ID)
 		return nil, nil
 	}
-	bot.HandledMessagesMu.Unlock()
 
 	common.Log.Debugf("No PK info for webhook message %v, falling back to API", m.ID)
 
@@ -136,9 +133,7 @@ func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) (*handler.Response,
 		return nil, err
 	}
 
-	bot.ProxiedTriggersMu.Lock()
-	bot.ProxiedTriggers[discord.MessageID(pkm.Original)] = struct{}{}
-	bot.ProxiedTriggersMu.Unlock()
+	bot.ProxiedTriggers.Add(discord.MessageID(pkm.Original))
 
 	if pkm.System == nil || pkm.Member == nil {
 		err = bot.DB.UpdateUserID(m.ID, discord.UserID(pkm.Sender))
@@ -186,9 +181,7 @@ func (bot *Bot) pkMessageCreate(m *gateway.MessageCreateEvent) (resp *handler.Re
 		msgID = discord.MessageID(sf)
 
 		originalMessageID, _ := discord.ParseSnowflake(groups[5])
-		bot.ProxiedTriggersMu.Lock()
-		bot.ProxiedTriggers[discord.MessageID(originalMessageID)] = struct{}{}
-		bot.ProxiedTriggersMu.Unlock()
+		bot.ProxiedTriggers.Add(discord.MessageID(originalMessageID))
 	}
 
 	err = bot.DB.UpdatePKInfo(msgID, pkgo.Snowflake(userID), sysID, memberID)
@@ -196,9 +189,7 @@ func (bot *Bot) pkMessageCreate(m *gateway.MessageCreateEvent) (resp *handler.Re
 		return nil, err
 	}
 
-	bot.HandledMessagesMu.Lock()
-	bot.HandledMessages[msgID] = struct{}{}
-	bot.HandledMessagesMu.Unlock()
+	bot.HandledMessages.Add(msgID)
 
 	return nil, nil
 }
