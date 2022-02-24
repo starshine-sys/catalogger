@@ -22,30 +22,25 @@ func (bot *Bot) listInvites(ctx bcr.Contexter) (err error) {
 		return
 	}
 
-	var (
-		invites = map[string]discord.Invite{}
-		names   = map[string]string{}
-	)
-
+	invites := map[string]discord.Invite{}
 	for _, i := range is {
 		i := i
 		invites[i.Code] = i
-		names[i.Code] = "Unnamed"
 	}
 
-	names, err = bot.DB.GetInvites(ctx.GetGuild().ID, names)
+	names, err := bot.DB.GetInvites(ctx.GetGuild().ID)
 	if err != nil {
 		return bot.DB.ReportCtx(ctx, err)
 	}
 
 	var fields []discord.EmbedField
 
-	for code, name := range names {
+	for code, invite := range invites {
 		fields = append(fields, discord.EmbedField{
 			Name: code,
 			Value: fmt.Sprintf(`%v
 Uses: %v
-Created by %v#%v`, name, invites[code].Uses, invites[code].Inviter.Username, invites[code].Inviter.Discriminator),
+Created by %v#%v`, names.Name(code), invite.Uses, invite.Inviter.Username, invite.Inviter.Discriminator),
 			Inline: true,
 		})
 	}

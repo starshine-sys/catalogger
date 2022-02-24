@@ -10,25 +10,37 @@ import (
 	"github.com/starshine-sys/catalogger/crypt"
 )
 
-// GetInvites gets this guild's named invites
-func (db *DB) GetInvites(guildID discord.GuildID, invites map[string]string) (names map[string]string, err error) {
-	var list []struct {
-		Code string
-		Name string
-	}
+type Invite struct {
+	Code, Name string
+}
 
-	sql, args, err := sq.Select("code", "name").From("invites").Where(squirrel.Eq{"guild_id": 1}).ToSql()
+type Invites []Invite
+
+func (i Invites) Name(code string) string {
+	for _, i := range i {
+		if i.Code == code {
+			return i.Name
+		}
+	}
+	return "Unnamed"
+}
+
+// GetInvites gets this guild's named invites
+func (db *DB) GetInvites(guildID discord.GuildID) (Invites, error) {
+	sql, args, err := sq.Select("code", "name").From("invites").Where(squirrel.Eq{"guild_id": guildID}).ToSql()
 	if err != nil {
 		return nil, err
 	}
 
+	var list []Invite
+
 	err = pgxscan.Select(context.Background(), db, &list, sql, args...)
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	for _, i := range list {
-		b, err := hex.DecodeString(i.Name)
+	for i := range list {
+		b, err := hex.DecodeString(list[i].Name)
 		if err != nil {
 			return nil, err
 		}
@@ -38,11 +50,9 @@ func (db *DB) GetInvites(guildID discord.GuildID, invites map[string]string) (na
 			return nil, err
 		}
 
-		i.Name = string(out)
-
-		invites[i.Code] = i.Name
+		list[i].Name = string(out)
 	}
-	return invites, err
+	return list, err
 }
 
 // NameInvite names an invite
