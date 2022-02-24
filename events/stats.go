@@ -52,7 +52,7 @@ func (bot *Bot) ping(ctx bcr.Contexter) (err error) {
 
 	e := discord.Embed{
 		Color:     bcr.ColourPurple,
-		Footer:    &discord.EmbedFooter{Text: fmt.Sprintf("Version %v", common.Version)},
+		Footer:    &discord.EmbedFooter{Text: fmt.Sprintf("Version %v (%v on %v/%v)", common.Version, runtime.Version(), runtime.GOOS, runtime.GOARCH)},
 		Timestamp: discord.NowTimestamp(),
 		Fields: []discord.EmbedField{
 			{
