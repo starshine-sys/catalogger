@@ -22,6 +22,7 @@ import (
 	"github.com/starshine-sys/catalogger/events"
 	"github.com/starshine-sys/catalogger/web/server"
 	"github.com/urfave/cli/v2"
+	"go.uber.org/zap"
 )
 
 var Command = &cli.Command{
@@ -30,10 +31,12 @@ var Command = &cli.Command{
 	Action: run,
 }
 
-func run(c *cli.Context) (err error) {
+func run(*cli.Context) (err error) {
+	desugared := common.Log.Desugar()
+
 	ws.WSDebug = common.Log.Named("ws").Debug
 	ws.WSError = func(err error) {
-		common.Log.Named("ws").Error(err)
+		desugared.WithOptions(zap.AddCallerSkip(1)).Sugar().Error(err)
 	}
 
 	// set up logger for this section
