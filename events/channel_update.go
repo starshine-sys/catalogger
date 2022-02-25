@@ -52,12 +52,10 @@ func (bot *Bot) channelUpdate(ev *gateway.ChannelUpdateEvent) (resp *handler.Res
 	}
 
 	e := discord.Embed{
-		Title:       "Channel updated",
-		Color:       bcr.ColourBlue,
-		Description: fmt.Sprintf("%v - #%v", ev.Mention(), ev.Name),
-
+		Title: "Channel updated",
+		Color: bcr.ColourBlue,
 		Footer: &discord.EmbedFooter{
-			Text: "ID: " + ev.ID.String(),
+			Text: "ID: " + ev.ID.String() + " | Name: " + ev.Name,
 		},
 		Timestamp: discord.NowTimestamp(),
 	}
@@ -193,12 +191,42 @@ func (bot *Bot) channelUpdate(ev *gateway.ChannelUpdateEvent) (resp *handler.Res
 			}
 		}
 
-		if p.Allow != 0 {
-			f.Value += fmt.Sprintf("✅ %v", strings.Join(bcr.PermStrings(p.Allow), ", "))
-		}
+		if old, ok := oldPerm(p.ID, old.Overwrites); ok {
+			for _, perm := range bcr.AllPerms {
+				switch {
+				case p.Allow.Has(perm.Permission) && !old.Allow.Has(perm.Permission) && !old.Deny.Has(perm.Permission):
+					// new allow
+					f.Value += fmt.Sprintf("**%v:** ⬜ ➜ ✅\n", perm.Name)
 
-		if p.Deny != 0 {
-			f.Value += fmt.Sprintf("\n\n❌ %v", strings.Join(bcr.PermStrings(p.Deny), ", "))
+				case p.Deny.Has(perm.Permission) && !old.Allow.Has(perm.Permission) && !old.Deny.Has(perm.Permission):
+					// new deny
+					f.Value += fmt.Sprintf("**%v:** ⬜ ➜ ❌\n", perm.Name)
+
+				case p.Allow.Has(perm.Permission) && old.Deny.Has(perm.Permission):
+					// deny -> allow
+					f.Value += fmt.Sprintf("**%v:** ❌ ➜ ✅\n", perm.Name)
+
+				case p.Deny.Has(perm.Permission) && old.Allow.Has(perm.Permission):
+					// allow -> deny
+					f.Value += fmt.Sprintf("**%v:** ✅ ➜ ❌\n", perm.Name)
+
+				case !p.Deny.Has(perm.Permission) && !p.Allow.Has(perm.Permission) && old.Allow.Has(perm.Permission):
+					// allow -> nothing
+					f.Value += fmt.Sprintf("**%v:** ✅ ➜ ⬜\n", perm.Name)
+
+				case !p.Deny.Has(perm.Permission) && !p.Allow.Has(perm.Permission) && old.Deny.Has(perm.Permission):
+					// deny -> nothing
+					f.Value += fmt.Sprintf("**%v:** ❌ ➜ ⬜\n", perm.Name)
+				}
+			}
+		} else {
+			if p.Allow != 0 {
+				f.Value += fmt.Sprintf("✅ %v", strings.Join(bcr.PermStrings(p.Allow), ", "))
+			}
+
+			if p.Deny != 0 {
+				f.Value += fmt.Sprintf("\n\n❌ %v", strings.Join(bcr.PermStrings(p.Deny), ", "))
+			}
 		}
 
 		if f.Value != "" {
@@ -226,4 +254,13 @@ func overwriteIn(s []discord.Overwrite, p discord.Overwrite) (exists bool) {
 		}
 	}
 	return false
+}
+
+func oldPerm(id discord.Snowflake, ows []discord.Overwrite) (discord.Overwrite, bool) {
+	for _, ow := range ows {
+		if ow.ID == id {
+			return ow, true
+		}
+	}
+	return discord.Overwrite{}, false
 }
