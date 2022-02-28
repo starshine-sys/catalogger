@@ -9,6 +9,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/common"
+	"github.com/starshine-sys/catalogger/events/duration"
 	"github.com/starshine-sys/catalogger/events/handler"
 )
 
@@ -36,7 +37,7 @@ func (bot *Bot) handleTimeout(ev *gateway.GuildMemberUpdateEvent) (resp *handler
 
 		Fields: []discord.EmbedField{{
 			Name:   "Until",
-			Value:  fmt.Sprintf("<t:%v>\n%v", ev.CommunicationDisabledUntil.Time().Unix(), bcr.HumanizeTime(bcr.DurationPrecisionSeconds, ev.CommunicationDisabledUntil.Time().Add(time.Second))),
+			Value:  fmt.Sprintf("<t:%v>\n%v", ev.CommunicationDisabledUntil.Time().Unix(), duration.FormatTime(ev.CommunicationDisabledUntil.Time().Add(time.Second))),
 			Inline: false,
 		}},
 

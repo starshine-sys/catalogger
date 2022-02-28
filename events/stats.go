@@ -15,6 +15,7 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/common"
+	"github.com/starshine-sys/catalogger/events/duration"
 )
 
 func (bot *Bot) ping(ctx bcr.Contexter) (err error) {
@@ -79,7 +80,7 @@ func (bot *Bot) ping(ctx bcr.Contexter) (err error) {
 				Name: "Uptime",
 				Value: fmt.Sprintf(
 					"%v\n(Since <t:%v:D> <t:%v:T>)",
-					bcr.HumanizeDuration(bcr.DurationPrecisionSeconds, time.Since(bot.Start)),
+					duration.Format(time.Since(bot.Start)),
 					bot.Start.Unix(), bot.Start.Unix(),
 				),
 				Inline: true,

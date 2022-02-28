@@ -2,15 +2,16 @@ package events
 
 import (
 	"fmt"
-	"strconv"
 	"time"
 
 	"emperror.dev/errors"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
+	"github.com/dustin/go-humanize"
 	"github.com/jackc/pgx/v4"
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/common"
+	"github.com/starshine-sys/catalogger/events/duration"
 	"github.com/starshine-sys/catalogger/events/handler"
 	"github.com/starshine-sys/pkgo/v2"
 )
@@ -39,22 +40,13 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) (resp *handler.Re
 	}
 
 	e := discord.Embed{
-		Title: "Member joined",
-		Thumbnail: &discord.EmbedThumbnail{
-			URL: m.User.AvatarURL(),
+		Author: &discord.EmbedAuthor{
+			Name: m.User.Tag(),
+			Icon: m.User.AvatarURL(),
 		},
-
+		Title:       "Member joined",
 		Color:       bcr.ColourGreen,
-		Description: fmt.Sprintf("%v#%v %v", m.User.Username, m.User.Discriminator, m.Mention()),
-
-		Fields: []discord.EmbedField{
-			{
-				Name:   "Account created",
-				Value:  fmt.Sprintf("<t:%v> (%v)", m.User.ID.Time().Unix(), bcr.HumanizeTime(bcr.DurationPrecisionMinutes, m.User.ID.Time())),
-				Inline: true,
-			},
-		},
-
+		Description: m.Mention(),
 		Footer: &discord.EmbedFooter{
 			Text: fmt.Sprintf("ID: %v", m.User.ID),
 		},
@@ -63,50 +55,28 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) (resp *handler.Re
 
 	g, err := bot.State(m.GuildID).GuildWithCount(m.GuildID)
 	if err == nil {
-		e.Fields = append(e.Fields, discord.EmbedField{
-			Name:   "Current member count",
-			Value:  strconv.FormatUint(g.ApproximateMembers, 10),
-			Inline: true,
-		})
+		e.Description += fmt.Sprintf(" %v to join", humanize.Ordinal(int(g.ApproximateMembers)))
 	}
+
+	e.Description += fmt.Sprintf("\ncreated <t:%v>\n(%v)", m.User.ID.Time().Unix(), duration.FormatTime(m.User.ID.Time()))
 
 	sys, err := pk.Account(pkgo.Snowflake(m.User.ID))
 	if err == nil {
-		e.Fields = append(e.Fields, discord.EmbedField{
-			Name:   "​",
-			Value:  "**PluralKit system information**",
-			Inline: false,
-		})
+		var (
+			name = sys.Name
+			tag  = sys.Tag
+		)
 
-		if sys.Name != "" {
-			e.Fields = append(e.Fields, discord.EmbedField{
-				Name:   "Name",
-				Value:  sys.Name,
-				Inline: true,
-			})
+		if name == "" {
+			name = "*(none)*"
+		}
+		if tag == "" {
+			name = "*(none)*"
 		}
 
 		e.Fields = append(e.Fields, discord.EmbedField{
-			Name:   "ID",
-			Value:  sys.ID,
-			Inline: true,
-		})
-
-		tag := "(None)"
-		if sys.Tag != "" {
-			tag = sys.Tag
-		}
-
-		e.Fields = append(e.Fields, discord.EmbedField{
-			Name:   "Tag",
-			Value:  tag,
-			Inline: true,
-		})
-
-		e.Fields = append(e.Fields, discord.EmbedField{
-			Name:   "Created",
-			Value:  fmt.Sprintf("<t:%v>\n%v", sys.Created.Unix(), bcr.HumanizeTime(bcr.DurationPrecisionMinutes, sys.Created)),
-			Inline: false,
+			Name:  "PluralKit system",
+			Value: fmt.Sprintf("**ID:** %v\n**Name:** %v\n**Tag:** %v\n**Created:** <t:%v>", sys.ID, name, tag, sys.Created.Unix()),
 		})
 	}
 
@@ -118,11 +88,10 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) (resp *handler.Re
 				inv, found := checkInvites(allExisting, is)
 
 				if !found {
-
 					if g.VanityURLCode != "" {
 						e.Fields = append(e.Fields, discord.EmbedField{
 							Name:  "Invite used",
-							Value: "Vanity invite (" + bcr.EscapeBackticks(g.VanityURLCode) + ")",
+							Value: "Vanity invite (" + bcr.AsCode(g.VanityURLCode) + ")",
 						})
 					} else {
 						e.Fields = append(e.Fields, discord.EmbedField{
@@ -130,53 +99,24 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) (resp *handler.Re
 							Value: "Could not determine invite.",
 						})
 					}
-
 				} else {
 					name, err := bot.DB.GetInviteName(inv.Code)
 					if err != nil {
 						common.Log.Errorf("Error getting invite name: %v", err)
 					}
 
-					e.Fields = append(e.Fields, []discord.EmbedField{
-						{
-							Name:  "​",
-							Value: "**Invite information**",
-						},
-						{
-							Name:   "Name",
-							Value:  name,
-							Inline: true,
-						},
-						{
-							Name:   "Code",
-							Value:  inv.Code,
-							Inline: true,
-						},
-						{
-							Name:   "Uses",
-							Value:  fmt.Sprint(inv.Uses),
-							Inline: true,
-						},
-						{
-							Name:   "Created at",
-							Value:  fmt.Sprintf("<t:%v>", inv.CreatedAt.Time().Unix()),
-							Inline: true,
-						},
-					}...)
+					s := fmt.Sprintf("**Code:** %v\n**Name:** %v\n**Uses:** %v\n**Created at:** <t:%v>", inv.Code, name, inv.Uses, inv.CreatedAt.Time().Unix())
 
 					if inv.Inviter != nil {
-						e.Fields = append(e.Fields, discord.EmbedField{
-							Name:   "Created by",
-							Value:  fmt.Sprintf("%v#%v %v", inv.Inviter.Username, inv.Inviter.Discriminator, inv.Inviter.Mention()),
-							Inline: true,
-						})
+						s = fmt.Sprintf("%v\n**Created by:** %v %v", s, inv.Inviter.Tag(), inv.Inviter.Mention())
 					} else {
-						e.Fields = append(e.Fields, discord.EmbedField{
-							Name:   "Created by",
-							Value:  "Unknown",
-							Inline: true,
-						})
+						s = fmt.Sprintf("%v\n**Created by:** unknown", s)
 					}
+
+					e.Fields = append(e.Fields, discord.EmbedField{
+						Name:  "Invite used",
+						Value: s,
+					})
 				}
 
 			} else {
@@ -200,7 +140,7 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) (resp *handler.Re
 	if m.User.CreatedAt().After(time.Now().UTC().Add(-168 * time.Hour)) {
 		resp.Embeds = append(resp.Embeds, discord.Embed{
 			Title:       "New account",
-			Description: fmt.Sprintf("⚠️ This account was only created **%v** (<t:%v>)", bcr.HumanizeTime(bcr.DurationPrecisionSeconds, m.User.CreatedAt()), m.User.CreatedAt().Unix()),
+			Description: fmt.Sprintf("⚠️ Created **%v** (<t:%v>)", duration.FormatTime(m.User.CreatedAt()), m.User.CreatedAt().Unix()),
 			Color:       bcr.ColourOrange,
 		})
 	}

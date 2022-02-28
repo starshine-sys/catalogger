@@ -2,6 +2,7 @@ package events
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/common"
+	"github.com/starshine-sys/catalogger/events/duration"
 	"github.com/starshine-sys/catalogger/events/handler"
 )
 
@@ -49,26 +51,53 @@ func (bot *Bot) guildMemberRemove(ev *gateway.GuildMemberRemoveEvent) (resp *han
 
 	m, err := bot.MemberStore.Member(ctx, ev.GuildID, ev.User.ID)
 	if err == nil {
-		e.Fields = append(e.Fields, discord.EmbedField{
-			Name:  "Joined",
-			Value: fmt.Sprintf("<t:%v> (%v)", m.Joined.Time().Unix(), bcr.HumanizeTime(bcr.DurationPrecisionSeconds, m.Joined.Time())),
-		})
+		e.Description = fmt.Sprintf("%v joined <t:%v>\n(%v)", e.Description, m.Joined.Time().Unix(), duration.FormatTime(m.Joined.Time()))
 
 		if len(m.RoleIDs) > 0 {
-			var s []string
-			for _, r := range m.RoleIDs {
-				s = append(s, r.Mention())
+			mentions := make([]string, 0, len(m.RoleIDs))
+
+			rls, err := bot.State(ev.GuildID).Roles(ev.GuildID)
+			if err == nil {
+				userRoles := make([]discord.Role, 0, len(m.RoleIDs))
+
+				for _, r := range rls {
+					for _, id := range m.RoleIDs {
+						if id == r.ID {
+							userRoles = append(userRoles, r)
+							break
+						}
+					}
+				}
+
+				sort.Sort(bcr.Roles(userRoles))
+				for _, r := range userRoles {
+					mentions = append(mentions, r.Mention())
+				}
+
+			} else {
+				for _, r := range m.RoleIDs {
+					mentions = append(mentions, r.Mention())
+				}
 			}
 
-			v := strings.Join(s, ", ")
-			if len(v) > 1000 {
-				v = v[:1000] + "..."
+			var b strings.Builder
+			for i, r := range mentions {
+				if b.Len() > 900 {
+					b.WriteString(fmt.Sprintf("\n(too many roles to list, showing %v/%v)", i, len(mentions)))
+					break
+				}
+				b.WriteString(r)
+				if i != len(mentions)-1 {
+					b.WriteString(", ")
+				}
 			}
 
-			e.Fields = append(e.Fields, discord.EmbedField{
-				Name:  "Roles",
-				Value: v,
-			})
+			if b.Len() != 0 {
+				e.Fields = append(e.Fields, discord.EmbedField{
+					Name:  "Roles",
+					Value: b.String(),
+				})
+			}
 		}
 	}
 

@@ -8,6 +8,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/common"
+	"github.com/starshine-sys/catalogger/events/duration"
 	"github.com/starshine-sys/catalogger/events/handler"
 )
 
@@ -43,7 +44,7 @@ func (bot *Bot) guildRoleDelete(ev *gateway.GuildRoleDeleteEvent) (resp *handler
 **Mentionable:** %v
 **Shown separately:** %v
 **Position:** %v
-Created <t:%v> (%v)`, old.Name, old.Color, old.Mentionable, old.Hoist, old.Position, old.ID.Time().Unix(), bcr.HumanizeTime(bcr.DurationPrecisionSeconds, old.ID.Time())),
+Created <t:%v> (%v)`, old.Name, old.Color, old.Mentionable, old.Hoist, old.Position, old.ID.Time().Unix(), duration.FormatTime(old.ID.Time())),
 
 		Color: bcr.ColourRed,
 		Footer: &discord.EmbedFooter{
