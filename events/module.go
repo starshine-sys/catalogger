@@ -10,7 +10,6 @@ import (
 	"sync"
 	"time"
 
-	"1f320.xyz/x/concurrent"
 	"github.com/diamondburned/arikawa/v3/api/webhook"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
@@ -21,6 +20,7 @@ import (
 	"github.com/starshine-sys/catalogger/common"
 	"github.com/starshine-sys/catalogger/events/eventcollector"
 	"github.com/starshine-sys/catalogger/events/handler"
+	"gitlab.com/1f320/x/concurrent"
 )
 
 // delete messages after this many days have passed

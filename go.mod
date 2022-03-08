@@ -3,7 +3,6 @@ module github.com/starshine-sys/catalogger
 go 1.18
 
 require (
-	1f320.xyz/x v0.2.0
 	emperror.dev/errors v0.8.0
 	github.com/Masterminds/squirrel v1.5.0
 	github.com/ReneKroon/ttlcache/v2 v2.1.0
@@ -27,6 +26,7 @@ require (
 	github.com/starshine-sys/dischtml v0.1.1-0.20211028145618-7e1ef8c772bb
 	github.com/starshine-sys/pkgo/v2 v2.0.0
 	github.com/urfave/cli/v2 v2.3.0
+	gitlab.com/1f320/x v0.3.0
 	go.uber.org/zap v1.16.0
 	golang.org/x/oauth2 v0.0.0-20210628180205-a41e5a781914
 	google.golang.org/grpc v1.35.0

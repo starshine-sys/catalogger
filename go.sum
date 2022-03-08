@@ -1,7 +1,3 @@
-1f320.xyz/x v0.1.0 h1:poDV/+UKrYjhrBy+DYC9L+AAHVjAPsWN2eLsGoeJBnY=
-1f320.xyz/x v0.1.0/go.mod h1:P/4Qt+PpjzeOCocJZA/vc5lOJhp/eVmqruOcfURILrc=
-1f320.xyz/x v0.2.0 h1:WnuneTF/s8Si2eDrHsf8Op8nTqHbIQMFL5ZD+pNroeQ=
-1f320.xyz/x v0.2.0/go.mod h1:P/4Qt+PpjzeOCocJZA/vc5lOJhp/eVmqruOcfURILrc=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.38.0/go.mod h1:990N+gfupTy94rShfmMCWGDn0LpTmnzTp2qbd1dvSRU=
@@ -672,6 +668,8 @@ github.com/yuin/goldmark v1.1.32/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9de
 github.com/zenazn/goji v0.9.0/go.mod h1:7S9M489iMyHBNxwZnk9/EHS098H4/F6TATF2mIxtB1Q=
 github.com/ziutek/mymysql v1.5.4 h1:GB0qdRGsTwQSBVYuVShFBKaXSnSnYYC2d9knnE1LHFs=
 github.com/ziutek/mymysql v1.5.4/go.mod h1:LMSpPZ6DbqWFxNCHW77HeMg9I646SAhApZ/wKdgO/C0=
+gitlab.com/1f320/x v0.3.0 h1:Y05hPtsBKbCx0Z5sfswm05+VQzySammOCXso0Brmum0=
+gitlab.com/1f320/x v0.3.0/go.mod h1:vMUleQINRQbhKJJEIcGmFT1tEPfGyozIZckYCeHMR0k=
 go.etcd.io/bbolt v1.3.2/go.mod h1:IbVyRI1SCnLcuJnV2u8VeU0CEYM7e686BmAb1XKL+uU=
 go.etcd.io/bbolt v1.3.3/go.mod h1:IbVyRI1SCnLcuJnV2u8VeU0CEYM7e686BmAb1XKL+uU=
 go.etcd.io/etcd v0.0.0-20191023171146-3cf2f69b5738/go.mod h1:dnLIgRNXwCJa5e+c6mIZCrds/GIG4ncV9HhK5PX7jPg=
