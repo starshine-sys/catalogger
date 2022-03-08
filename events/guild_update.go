@@ -11,16 +11,12 @@ import (
 )
 
 func (bot *Bot) guildUpdate(ev *gateway.GuildUpdateEvent) (resp *handler.Response, err error) {
-	bot.GuildsMu.Lock()
-	old, ok := bot.Guilds[ev.ID]
+	old, ok := bot.Guilds.Get(ev.ID)
 	if !ok {
-		bot.Guilds[ev.ID] = ev.Guild
-		bot.GuildsMu.Unlock()
 		common.Log.Errorf("Error getting info for guild %v", ev.ID)
 		return
 	}
-	bot.Guilds[ev.ID] = ev.Guild
-	bot.GuildsMu.Unlock()
+	defer bot.Guilds.Set(ev.ID, ev.Guild)
 
 	ch, err := bot.DB.Channels(ev.ID)
 	if err != nil {

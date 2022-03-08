@@ -13,15 +13,12 @@ import (
 )
 
 func (bot *Bot) guildRoleDelete(ev *gateway.GuildRoleDeleteEvent) (resp *handler.Response, err error) {
-	bot.RolesMu.Lock()
-	old, ok := bot.Roles[ev.RoleID]
-	delete(bot.Roles, ev.RoleID)
+	old, ok := bot.Roles.Get(ev.RoleID)
+	bot.Roles.Remove(ev.RoleID)
 	if !ok {
-		bot.RolesMu.Unlock()
 		common.Log.Errorf("Error getting info for role %v", ev.RoleID)
 		return
 	}
-	bot.RolesMu.Unlock()
 
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {

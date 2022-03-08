@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"1f320.xyz/x/concurrent"
 	"github.com/diamondburned/arikawa/v3/api/webhook"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
@@ -31,41 +32,25 @@ type Bot struct {
 
 	SentryEnricher *handler.SentryHandler
 
-	ProxiedTriggers   map[discord.MessageID]struct{}
-	ProxiedTriggersMu sync.Mutex
-
-	HandledMessages   map[discord.MessageID]struct{}
-	HandledMessagesMu sync.Mutex
-
-	UnauthorizedErrorsSent map[discord.ChannelID]time.Time
-	UnauthorizedErrorsMu   sync.Mutex
-
-	Channels   map[discord.ChannelID]discord.Channel
-	ChannelsMu sync.RWMutex
-
-	Roles   map[discord.RoleID]discord.Role
-	RolesMu sync.Mutex
-
-	Guilds   map[discord.GuildID]discord.Guild
-	GuildsMu sync.RWMutex
+	ProxiedTriggers        *concurrent.Set[discord.MessageID]
+	HandledMessages        *concurrent.Set[discord.MessageID]
+	UnauthorizedErrorsSent *concurrent.Map[discord.ChannelID, time.Time]
+	Channels               *concurrent.Map[discord.ChannelID, discord.Channel]
+	Roles                  *concurrent.Map[discord.RoleID, discord.Role]
+	Guilds                 *concurrent.Map[discord.GuildID, discord.Guild]
+	Queues                 *concurrent.Map[discord.WebhookID, *Queue]
+	WebhookClients         *concurrent.Map[discord.WebhookID, *webhook.Client]
 
 	BotJoinLeaveLog discord.ChannelID
 
 	Start time.Time
-
-	Queues  map[discord.WebhookID]*Queue
-	QueueMu sync.Mutex
-
-	WebhookClients map[discord.WebhookID]*webhook.Client
-	WebhooksMu     sync.Mutex
 
 	EventHandler *handler.Handler
 
 	guildCount, roleCount, channelCount, msgCount int64
 	lastStatsQuery                                time.Duration
 
-	guildsToChunk, guildsToFetchInvites map[discord.GuildID]struct{}
-	chunkMu                             sync.RWMutex
+	guildsToChunk, guildsToFetchInvites *concurrent.Set[discord.GuildID]
 	doneChunking                        bool
 
 	// bot stats
@@ -85,17 +70,17 @@ func Init(bot *bot.Bot) (clearCacheFunc func(discord.GuildID, ...discord.Channel
 		Start:          time.Now().UTC(),
 		SentryEnricher: eventcollector.New(),
 
-		ProxiedTriggers:        make(map[discord.MessageID]struct{}),
-		HandledMessages:        make(map[discord.MessageID]struct{}),
-		UnauthorizedErrorsSent: make(map[discord.ChannelID]time.Time),
+		ProxiedTriggers:        concurrent.NewSet[discord.MessageID](),
+		HandledMessages:        concurrent.NewSet[discord.MessageID](),
+		UnauthorizedErrorsSent: concurrent.NewMap[discord.ChannelID, time.Time](),
 
-		Channels:             make(map[discord.ChannelID]discord.Channel),
-		Roles:                make(map[discord.RoleID]discord.Role),
-		Guilds:               make(map[discord.GuildID]discord.Guild),
-		Queues:               make(map[discord.WebhookID]*Queue),
-		WebhookClients:       make(map[discord.WebhookID]*webhook.Client),
-		guildsToChunk:        make(map[discord.GuildID]struct{}),
-		guildsToFetchInvites: make(map[discord.GuildID]struct{}),
+		Channels:             concurrent.NewMap[discord.ChannelID, discord.Channel](),
+		Roles:                concurrent.NewMap[discord.RoleID, discord.Role](),
+		Guilds:               concurrent.NewMap[discord.GuildID, discord.Guild](),
+		Queues:               concurrent.NewMap[discord.WebhookID, *Queue](),
+		WebhookClients:       concurrent.NewMap[discord.WebhookID, *webhook.Client](),
+		guildsToChunk:        concurrent.NewSet[discord.GuildID](),
+		guildsToFetchInvites: concurrent.NewSet[discord.GuildID](),
 
 		BotJoinLeaveLog: discord.ChannelID(joinLeaveLog),
 
@@ -244,12 +229,7 @@ func Init(bot *bot.Bot) (clearCacheFunc func(discord.GuildID, ...discord.Channel
 		return -1
 	}
 	guildPermFunc = b.guildPerms
-	joinedFunc = func(id discord.GuildID) bool {
-		b.GuildsMu.Lock()
-		_, ok := b.Guilds[id]
-		b.GuildsMu.Unlock()
-		return ok
-	}
+	joinedFunc = b.Guilds.Exists
 
 	return clearCacheFunc, memberFunc, guildPermFunc, joinedFunc
 }
@@ -279,9 +259,7 @@ func (bot *Bot) cleanMessages() {
 }
 
 func (bot *Bot) guildPerms(guildID discord.GuildID, userID discord.UserID) (g discord.Guild, perms discord.Permissions, err error) {
-	bot.GuildsMu.Lock()
-	g, ok := bot.Guilds[guildID]
-	bot.GuildsMu.Unlock()
+	ok := bot.Guilds.Exists(guildID)
 	if !ok {
 		return g, 0, errors.New("guild not found")
 	}

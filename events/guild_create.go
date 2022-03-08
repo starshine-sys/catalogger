@@ -13,9 +13,7 @@ import (
 )
 
 func (bot *Bot) guildCreate(g *gateway.GuildCreateEvent) (resp *handler.Response, err error) {
-	bot.GuildsMu.Lock()
-	bot.Guilds[g.ID] = g.Guild
-	bot.GuildsMu.Unlock()
+	bot.Guilds.Set(g.ID, g.Guild)
 
 	// if we joined this guild more than one minute ago, return
 	if g.Joined.Time().UTC().Before(time.Now().UTC().Add(-1 * time.Minute)) {

@@ -59,14 +59,11 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) (*handler.Response,
 	time.Sleep(5 * time.Second)
 
 	// trigger messages should be ignored too
-	bot.ProxiedTriggersMu.Lock()
-	if _, ok := bot.ProxiedTriggers[m.ID]; ok {
+	if bot.ProxiedTriggers.Exists(m.ID) {
 		err = bot.DB.DeleteMessage(m.ID)
-		delete(bot.ProxiedTriggers, m.ID)
-		bot.ProxiedTriggersMu.Unlock()
-		return nil, err
+		bot.ProxiedTriggers.Remove(m.ID)
+		return nil, nil
 	}
-	bot.ProxiedTriggersMu.Unlock()
 
 	msg, err := bot.DB.GetMessage(m.ID)
 	if err != nil {

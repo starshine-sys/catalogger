@@ -11,9 +11,7 @@ import (
 )
 
 func (bot *Bot) channelCreate(ev *gateway.ChannelCreateEvent) (resp *handler.Response, err error) {
-	bot.ChannelsMu.Lock()
-	bot.Channels[ev.ID] = ev.Channel
-	bot.ChannelsMu.Unlock()
+	bot.Channels.Set(ev.ID, ev.Channel)
 
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {

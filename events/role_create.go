@@ -11,9 +11,7 @@ import (
 )
 
 func (bot *Bot) guildRoleCreate(ev *gateway.GuildRoleCreateEvent) (resp *handler.Response, err error) {
-	bot.RolesMu.Lock()
-	bot.Roles[ev.Role.ID] = ev.Role
-	bot.RolesMu.Unlock()
+	bot.Roles.Set(ev.Role.ID, ev.Role)
 
 	ch, err := bot.DB.Channels(ev.GuildID)
 	if err != nil {

@@ -144,21 +144,16 @@ PK system: %v / PK member: %v
 }
 
 func (bot *Bot) bulkHTML(guildID discord.GuildID, channelID discord.ChannelID, msgs []*db.Message) (string, error) {
-	bot.GuildsMu.RLock()
-	g, ok := bot.Guilds[guildID]
+
+	g, ok := bot.Guilds.Get(guildID)
 	if !ok {
-		bot.GuildsMu.RUnlock()
 		return "", errors.New("guild not found")
 	}
-	bot.GuildsMu.RUnlock()
 
-	bot.ChannelsMu.RLock()
-	ch, ok := bot.Channels[channelID]
+	ch, ok := bot.Channels.Get(channelID)
 	if !ok {
-		bot.ChannelsMu.RUnlock()
 		return "", errors.New("channel not found")
 	}
-	bot.ChannelsMu.RUnlock()
 
 	chans, err := bot.State(g.ID).Channels(g.ID)
 	if err != nil {
