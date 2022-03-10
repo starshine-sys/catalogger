@@ -2,12 +2,15 @@ package events
 
 import (
 	"fmt"
+	"strings"
 
 	"emperror.dev/errors"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
+	"github.com/diamondburned/arikawa/v3/utils/sendpart"
 	"github.com/jackc/pgx/v4"
 	"github.com/starshine-sys/bcr"
+	"github.com/starshine-sys/catalogger/common"
 	"github.com/starshine-sys/catalogger/db"
 	"github.com/starshine-sys/catalogger/events/handler"
 )
@@ -33,7 +36,7 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) (*handler.Response,
 		return nil, err
 	}
 
-	if !ch[keys.MessageUpdate].IsValid() {
+	if !ch[keys.MessageUpdate].IsValid() && !ch[keys.MessageDelete].IsValid() && !ch[keys.MessageDeleteBulk].IsValid() {
 		return nil, nil
 	}
 
@@ -60,15 +63,42 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) (*handler.Response,
 			UserID:    m.Author.ID,
 			ChannelID: m.ChannelID,
 			ServerID:  m.GuildID,
-			Username:  m.Author.Username + "#" + m.Author.Discriminator,
+			Username:  m.Author.Tag(),
 
 			Content: m.Content,
 		})
 		return nil, err
 	}
 
+	defer func() {
+		common.Log.Debugf("updating message %v", m.ID)
+
+		username := m.Author.Username
+		if msg.System == nil {
+			username += "#" + m.Author.Discriminator
+		}
+
+		err2 := bot.DB.InsertMessage(db.Message{
+			MsgID:     m.ID,
+			UserID:    m.Author.ID,
+			ChannelID: m.ChannelID,
+			ServerID:  m.GuildID,
+			Username:  username,
+			Member:    msg.Member,
+			System:    msg.System,
+
+			Content: m.Content,
+		})
+		if err2 != nil {
+			err = errors.Append(err, err2)
+		}
+	}()
+
 	var resp handler.Response
 	resp.ChannelID = ch[keys.MessageUpdate]
+	if !resp.ChannelID.IsValid() {
+		return nil, nil
+	}
 
 	redirects, err := bot.DB.Redirects(m.GuildID)
 	if err != nil {
@@ -87,7 +117,7 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) (*handler.Response,
 
 	e := discord.Embed{
 		Author: author,
-		Title:  fmt.Sprintf("Message by \"%v#%v\" updated", m.Author.Username, m.Author.Discriminator),
+		Title:  "Message updated",
 		Color:  bcr.ColourPurple,
 		Footer: &discord.EmbedFooter{
 			Text: fmt.Sprintf("ID: %v", msg.MsgID),
@@ -207,10 +237,15 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) (*handler.Response,
 	}...)
 
 	if msg.System != nil && msg.Member != nil {
-		e.Title = fmt.Sprintf("Message by \"%v\" updated", m.Author.Username)
+		e.Title = fmt.Sprintf("Message by %v updated", m.Author.Username)
 
 		u, err := bot.User(msg.UserID)
 		if err == nil {
+			e.Author = &discord.EmbedAuthor{
+				Icon: u.AvatarURLWithType(discord.PNGImage),
+				Name: u.Tag(),
+			}
+
 			e.Fields[len(e.Fields)-1] = discord.EmbedField{
 				Name:   "Linked Discord account",
 				Value:  fmt.Sprintf("%v\n%v#%v\nID: %v", u.Mention(), u.Username, u.Discriminator, u.ID),
@@ -249,22 +284,19 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) (*handler.Response,
 
 	resp.Embeds = append(resp.Embeds, e)
 
-	// update the message
-	username := m.Author.Username
-	if msg.System == nil {
-		username += "#" + m.Author.Discriminator
+	// new content > 2000 gets cut off due to embed limits, so add it as an attachment
+	if len(m.Content) > 2000 {
+		resp.Files = append(resp.Files, []sendpart.File{
+			{
+				Name:   "before.txt",
+				Reader: strings.NewReader(msg.Content),
+			},
+			{
+				Name:   "after.txt",
+				Reader: strings.NewReader(m.Content),
+			},
+		}...)
 	}
 
-	err = bot.DB.InsertMessage(db.Message{
-		MsgID:     m.ID,
-		UserID:    m.Author.ID,
-		ChannelID: m.ChannelID,
-		ServerID:  m.GuildID,
-		Username:  username,
-		Member:    msg.Member,
-		System:    msg.System,
-
-		Content: m.Content,
-	})
 	return &resp, err
 }

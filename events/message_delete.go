@@ -114,8 +114,8 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) (*handler.Response,
 		Timestamp: discord.NewTimestamp(msg.MsgID.Time()),
 	}
 
-	if msg.Username != "" {
-		e.Title = "Message by \"" + msg.Username + "\" deleted"
+	if msg.Member != nil && msg.Username != "" {
+		e.Title = "Message by " + msg.Username + " deleted"
 	}
 
 	value := fmt.Sprintf("%v\nID: %v", msg.ChannelID.Mention(), msg.ChannelID)
