@@ -4,7 +4,7 @@ FROM golang:latest AS builder
 
 WORKDIR /build
 COPY . ./
-RUN go mod download
+RUN go mod download -x
 ENV CGO_ENABLED 0
 RUN go build -v -o catalogger -ldflags="-X github.com/starshine-sys/catalogger/common.Version=`git rev-parse --short HEAD`" ./cmd/catalogger/
 
