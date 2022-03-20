@@ -20,6 +20,7 @@ import (
 	"github.com/starshine-sys/catalogger/db/stats"
 	mstore "github.com/starshine-sys/catalogger/store"
 	"github.com/starshine-sys/catalogger/store/redisstore"
+	"gitlab.com/1f320/x/concurrent"
 )
 
 // Bot ...
@@ -29,6 +30,10 @@ type Bot struct {
 	DB          *db.DB
 	Redis       radix.Client
 	MemberStore mstore.Store
+
+	Channels *concurrent.Map[discord.ChannelID, discord.Channel]
+	Roles    *concurrent.Map[discord.RoleID, discord.Role]
+	Guilds   *concurrent.Map[discord.GuildID, discord.Guild]
 
 	userCache map[discord.UserID]discord.User
 	userMu    sync.Mutex
@@ -40,6 +45,9 @@ func New(redisURL string, r *bcr.Router, db *db.DB) (b *Bot, err error) {
 		Bot:       bot.NewWithRouter(r),
 		DB:        db,
 		userCache: map[discord.UserID]discord.User{},
+		Channels:  concurrent.NewMap[discord.ChannelID, discord.Channel](),
+		Roles:     concurrent.NewMap[discord.RoleID, discord.Role](),
+		Guilds:    concurrent.NewMap[discord.GuildID, discord.Guild](),
 	}
 
 	b.Redis, err = (&radix.PoolConfig{}).New(context.Background(), "tcp", redisURL)

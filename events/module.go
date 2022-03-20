@@ -35,9 +35,6 @@ type Bot struct {
 	ProxiedTriggers        *concurrent.Set[discord.MessageID]
 	HandledMessages        *concurrent.Set[discord.MessageID]
 	UnauthorizedErrorsSent *concurrent.Map[discord.ChannelID, time.Time]
-	Channels               *concurrent.Map[discord.ChannelID, discord.Channel]
-	Roles                  *concurrent.Map[discord.RoleID, discord.Role]
-	Guilds                 *concurrent.Map[discord.GuildID, discord.Guild]
 	Queues                 *concurrent.Map[discord.WebhookID, *Queue]
 	WebhookClients         *concurrent.Map[discord.WebhookID, *webhook.Client]
 
@@ -73,14 +70,10 @@ func Init(bot *bot.Bot) (clearCacheFunc func(discord.GuildID, ...discord.Channel
 		ProxiedTriggers:        concurrent.NewSet[discord.MessageID](),
 		HandledMessages:        concurrent.NewSet[discord.MessageID](),
 		UnauthorizedErrorsSent: concurrent.NewMap[discord.ChannelID, time.Time](),
-
-		Channels:             concurrent.NewMap[discord.ChannelID, discord.Channel](),
-		Roles:                concurrent.NewMap[discord.RoleID, discord.Role](),
-		Guilds:               concurrent.NewMap[discord.GuildID, discord.Guild](),
-		Queues:               concurrent.NewMap[discord.WebhookID, *Queue](),
-		WebhookClients:       concurrent.NewMap[discord.WebhookID, *webhook.Client](),
-		guildsToChunk:        concurrent.NewSet[discord.GuildID](),
-		guildsToFetchInvites: concurrent.NewSet[discord.GuildID](),
+		Queues:                 concurrent.NewMap[discord.WebhookID, *Queue](),
+		WebhookClients:         concurrent.NewMap[discord.WebhookID, *webhook.Client](),
+		guildsToChunk:          concurrent.NewSet[discord.GuildID](),
+		guildsToFetchInvites:   concurrent.NewSet[discord.GuildID](),
 
 		BotJoinLeaveLog: discord.ChannelID(joinLeaveLog),
 
