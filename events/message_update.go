@@ -40,13 +40,14 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) (*handler.Response,
 		return nil, nil
 	}
 
-	// if the channel is blacklisted, return
 	channelID := m.ChannelID
 	if channel.Type == discord.GuildNewsThread || channel.Type == discord.GuildPrivateThread || channel.Type == discord.GuildPublicThread {
 		channelID = channel.ParentID
 	}
 
-	if bot.DB.IsBlacklisted(m.GuildID, channelID) {
+	// if the channel or user is ignored, return
+	if bot.isIgnored(m.GuildID, m.ChannelID, m.Author.ID) {
+		common.Log.Debugf("user %v or channel %v is ignored in guild %v", m.Author.ID, m.ChannelID, m.GuildID)
 		return nil, nil
 	}
 

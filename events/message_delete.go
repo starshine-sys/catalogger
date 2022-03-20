@@ -8,6 +8,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/starshine-sys/bcr"
+	"github.com/starshine-sys/catalogger/common"
 	"github.com/starshine-sys/catalogger/events/handler"
 )
 
@@ -79,6 +80,12 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) (*handler.Response,
 
 		resp.Embeds = append(resp.Embeds, e)
 		return &resp, nil
+	}
+
+	// if the message author is ignored, return
+	if bot.isUserIgnored(m.GuildID, msg.UserID) {
+		common.Log.Debugf("user %v is ignored in guild %v", msg.UserID, m.GuildID)
+		return nil, nil
 	}
 
 	// ignore any pk;edit messages

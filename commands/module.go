@@ -421,6 +421,34 @@ func Init(bot *bot.Bot) {
 		Permissions: discord.PermissionManageGuild,
 	})
 
+	ignoredUsers := b.Router.AddCommand(&bcr.Command{
+		Name:         "ignore-users",
+		Aliases:      []string{"ignored-users", "ignore-user"},
+		Summary:      "List and manage this server's ignored users.",
+		SlashCommand: b.ignoreUsersList,
+		Permissions:  discord.PermissionManageGuild,
+	})
+
+	ignoredUsers.AddSubcommand(&bcr.Command{
+		Name:        "add",
+		Aliases:     []string{"ignore"},
+		Summary:     "Add a user to be ignored.",
+		Usage:       "<user>",
+		Args:        bcr.MinArgs(1),
+		Command:     b.ignoreUsersAdd,
+		Permissions: discord.PermissionManageGuild,
+	})
+
+	ignoredUsers.AddSubcommand(&bcr.Command{
+		Name:        "remove",
+		Aliases:     []string{"unignore"},
+		Summary:     "Unignore a user.",
+		Usage:       "<user>",
+		Args:        bcr.MinArgs(1),
+		Command:     b.ignoreUsersRemove,
+		Permissions: discord.PermissionManageGuild,
+	})
+
 	b.Router.AddGroup(&bcr.Group{
 		Name:        "keyroles",
 		Description: "List and manage this server's key roles.",
@@ -450,6 +478,41 @@ func Init(bot *bot.Bot) {
 				Options: &[]discord.CommandOption{&discord.RoleOption{
 					OptionName:  "role",
 					Description: "The role to remove.",
+					Required:    true,
+				}},
+			},
+		},
+	})
+
+	b.Router.AddGroup(&bcr.Group{
+		Name:        "ignore-users",
+		Description: "Add and remove ignored users.",
+		Subcommands: []*bcr.Command{
+			{
+				Name:         "list",
+				Summary:      "List the currently ignored users.",
+				SlashCommand: b.ignoreUsersList,
+				Permissions:  discord.PermissionManageGuild,
+			},
+			{
+				Name:         "add",
+				Summary:      "Ignore a user.",
+				SlashCommand: b.ignoreUsersAddSlash,
+				Permissions:  discord.PermissionManageGuild,
+				Options: &[]discord.CommandOption{&discord.UserOption{
+					OptionName:  "user",
+					Description: "The user to ignore.",
+					Required:    true,
+				}},
+			},
+			{
+				Name:         "remove",
+				Summary:      "Stop ignoring a user.",
+				SlashCommand: b.ignoreUsersRemoveSlash,
+				Permissions:  discord.PermissionManageGuild,
+				Options: &[]discord.CommandOption{&discord.UserOption{
+					OptionName:  "user",
+					Description: "The user to stop ignoring.",
 					Required:    true,
 				}},
 			},

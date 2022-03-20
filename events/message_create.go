@@ -38,7 +38,7 @@ func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) (*handler.Response,
 		return nil, nil
 	}
 
-	// if the channel is blacklisted, return
+	// if the channel is ignored, return
 	channel, err := bot.RootChannel(m.GuildID, m.ChannelID)
 	if err != nil {
 		return nil, err
