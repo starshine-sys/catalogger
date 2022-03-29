@@ -34,8 +34,8 @@ type serverPageData struct {
 }
 
 type redirect struct {
-	From channel
-	To   channel
+	From discord.Channel
+	To   discord.Channel
 }
 
 type guild struct {
@@ -43,15 +43,7 @@ type guild struct {
 	ID      discord.GuildID
 	IconURL string
 
-	Channels []channel
-}
-
-type channel struct {
-	ID       discord.ChannelID
-	ParentID discord.ChannelID
-	Name     string
-	Position int32
-	Type     discord.ChannelType
+	Channels []discord.Channel
 }
 
 func (s *server) rpcGuild(ctx context.Context, guildID discord.GuildID, client *userCache) (*proto.GuildResponse, error) {
@@ -140,11 +132,11 @@ func (s *server) serverPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, ch := range resp.GetChannels() {
-		c := channel{
+		c := discord.Channel{
 			ID:       discord.ChannelID(ch.GetId()),
 			ParentID: discord.ChannelID(ch.GetParentID()),
 			Name:     ch.GetName(),
-			Position: ch.GetPosition(),
+			Position: int(ch.GetPosition()),
 		}
 
 		switch ch.GetType() {
@@ -165,10 +157,7 @@ func (s *server) serverPage(w http.ResponseWriter, r *http.Request) {
 
 		data.Guild.Channels = append(data.Guild.Channels, c)
 	}
-
-	sort.Slice(data.Guild.Channels, func(i, j int) bool {
-		return data.Guild.Channels[i].Name < data.Guild.Channels[j].Name
-	})
+	data.Guild.Channels = common.SortChannels(data.Guild.Channels)
 
 	redirMap, err := s.DB.Redirects(discord.GuildID(resp.GetId()))
 	if err != nil {
@@ -228,13 +217,27 @@ const emojiBaseURL = "https://cdn.discordapp.com/emojis/"
 var emojiMatch = regexp.MustCompile(`<(?P<animated>a)?:(?P<name>\w+):(?P<emoteID>\d{15,})>`)
 
 var funcs template.FuncMap = map[string]interface{}{
-	"selectOptions": func(channels []channel, selected discord.ChannelID) template.HTML {
-		var b strings.Builder
+	"selectOptions": func(channels []discord.Channel, selected discord.ChannelID) template.HTML {
+		var (
+			firstCategory = true
+			hasCategory   = false
+			b             strings.Builder
+		)
 
 		b.WriteString("<option value=\"0\">None</option>\n")
 
 		for _, ch := range channels {
-			if ch.Type != discord.GuildText {
+			if ch.Type == discord.GuildCategory {
+				if !firstCategory {
+					b.WriteString("</optgroup>\n")
+				}
+				b.WriteString(`<optgroup label="` + ch.Name + `">` + "\n")
+				hasCategory = true
+
+				continue
+			}
+
+			if ch.Type != discord.GuildText && ch.Type != discord.GuildNews {
 				continue
 			}
 
@@ -244,12 +247,31 @@ var funcs template.FuncMap = map[string]interface{}{
 			}
 			b.WriteString(">#" + ch.Name + "</option>\n")
 		}
+
+		if hasCategory {
+			b.WriteString("</optgroup>")
+		}
+
 		return template.HTML(strings.TrimSpace(b.String()))
 	},
-	"selectOptionsIgnoreMultiple": func(channels []channel, ignored []discord.ChannelID) template.HTML {
-		var b strings.Builder
+	"selectOptionsIgnoreMultiple": func(channels []discord.Channel, ignored []discord.ChannelID) template.HTML {
+		var (
+			firstCategory = true
+			hasCategory   = false
+			b             strings.Builder
+		)
 
 		for _, ch := range channels {
+			if ch.Type == discord.GuildCategory {
+				if !firstCategory {
+					b.WriteString("</optgroup>\n")
+				}
+				b.WriteString(`<optgroup label="` + ch.Name + `">` + "\n")
+				hasCategory = true
+
+				continue
+			}
+
 			if ch.Type != discord.GuildText && ch.Type != discord.GuildNews {
 				continue
 			}
@@ -261,9 +283,13 @@ var funcs template.FuncMap = map[string]interface{}{
 			b.WriteString(`<option value="` + ch.ID.String() + `">#` + ch.Name + "</option>\n")
 		}
 
+		if hasCategory {
+			b.WriteString("</optgroup>")
+		}
+
 		return template.HTML(strings.TrimSpace(b.String()))
 	},
-	"multiselectOptions": func(channels []channel, selected []uint64) template.HTML {
+	"multiselectOptions": func(channels []discord.Channel, selected []uint64) template.HTML {
 		var b strings.Builder
 
 		for _, ch := range channels {
