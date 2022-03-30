@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"net/url"
 	"os"
 	"reflect"
 	"strconv"
@@ -20,6 +21,7 @@ import (
 	"github.com/starshine-sys/catalogger/common"
 	"github.com/starshine-sys/catalogger/events/eventcollector"
 	"github.com/starshine-sys/catalogger/events/handler"
+	"github.com/starshine-sys/pkgo/v2"
 	"gitlab.com/1f320/x/concurrent"
 )
 
@@ -292,6 +294,11 @@ func (bot *Bot) handleError(ev reflect.Value, err error) {
 	evName := ev.Elem().Type().Name()
 
 	common.Log.Errorf("Error in %v: %v", evName, err)
+
+	switch err.(type) {
+	case *url.Error, *pkgo.PKAPIError:
+		return
+	}
 
 	if bot.DB.Hub == nil {
 		return
