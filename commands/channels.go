@@ -56,6 +56,5 @@ func (bot *Bot) channels(ctx bcr.Contexter) (err error) {
 		})
 	}
 
-	_, err = ctx.Send("", e)
-	return
+	return ctx.SendEphemeral("", e)
 }

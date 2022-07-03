@@ -21,6 +21,5 @@ func (bot *Bot) events(ctx bcr.Contexter) (err error) {
 		Color:       bcr.ColourPurple,
 	}
 
-	_, err = ctx.Send("", e)
-	return
+	return ctx.SendEphemeral("", e)
 }

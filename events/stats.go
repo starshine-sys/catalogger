@@ -24,7 +24,7 @@ func (bot *Bot) ping(ctx bcr.Contexter) (err error) {
 
 	t := time.Now()
 
-	err = ctx.SendX("...")
+	err = ctx.SendEphemeral("...")
 	if err != nil {
 		return err
 	}

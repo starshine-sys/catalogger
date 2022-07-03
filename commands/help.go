@@ -66,7 +66,7 @@ To get started, use `+"`%vsetchannel`"+` with one or more events.
 		e.Description += fmt.Sprintf("\n\nYou can also use the [dashboard](%v/servers) to configure %v!", dashboard, bot.Router.Bot.Username)
 	}
 
-	return ctx.SendX("", e)
+	return ctx.SendEphemeral("", e)
 }
 
 func (bot *Bot) invite(ctx bcr.Contexter) (err error) {
