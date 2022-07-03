@@ -48,21 +48,21 @@ type guild struct {
 
 func (s *server) rpcGuild(ctx context.Context, guildID discord.GuildID, client *userCache) (*proto.GuildResponse, error) {
 	resp, err := s.RPC.Guild(ctx, &proto.GuildRequest{Id: uint64(guildID), UserId: uint64(client.User.ID)})
+	if err != nil {
+		return resp, err
+	}
+
+	guilds, err := s.guilds(ctx, client)
 	if err == nil {
-		if resp.Permissions == 0 {
-			guilds, err := s.guilds(ctx, client)
-			if err == nil {
-				for _, g := range guilds {
-					if g.ID == discord.GuildID(guildID) {
-						resp.Permissions = uint64(g.Permissions)
-					}
-				}
+		for _, g := range guilds {
+			if g.ID == discord.GuildID(guildID) {
+				resp.Permissions = uint64(g.Permissions)
 			}
 		}
+	}
 
-		if discord.Permissions(resp.Permissions).Has(discord.PermissionAdministrator) {
-			resp.Permissions = uint64(discord.PermissionAll)
-		}
+	if discord.Permissions(resp.Permissions).Has(discord.PermissionAdministrator) {
+		resp.Permissions = uint64(discord.PermissionAll)
 	}
 	return resp, err
 }
