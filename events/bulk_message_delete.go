@@ -56,7 +56,7 @@ func (bot *Bot) bulkMessageDelete(ev *gateway.MessageDeleteBulkEvent) (resp *han
 	}
 
 	var msgs []*db.Message
-	var found, notFound int
+	var found, notFound, ignored int
 	users := map[discord.UserID]*discord.User{}
 
 	for _, id := range ev.IDs {
@@ -79,6 +79,12 @@ func (bot *Bot) bulkMessageDelete(ev *gateway.MessageDeleteBulkEvent) (resp *han
 			found++
 			continue
 		}
+
+		if bot.DB.IsIgnored(id) {
+			ignored++
+			continue
+		}
+
 		// else add a dummy message with the ID
 		msgs = append(msgs, &db.Message{
 			MsgID:     id,
@@ -135,7 +141,7 @@ PK system: %v / PK member: %v
 
 	resp.Embeds = []discord.Embed{{
 		Title:       "Bulk message deletion",
-		Description: fmt.Sprintf("%v messages were deleted in %v.\n%v messages archived, %v messages not found.", len(ev.IDs), ev.ChannelID.Mention(), found, notFound),
+		Description: fmt.Sprintf("%v messages were deleted in %v.\n%v messages archived, %v messages ignored, %v messages not found.", len(ev.IDs), ev.ChannelID.Mention(), found, ignored, notFound),
 		Color:       bcr.ColourRed,
 		Timestamp:   discord.NowTimestamp(),
 	}}

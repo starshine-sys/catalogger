@@ -236,20 +236,26 @@ func (bot *Bot) State(id discord.GuildID) *state.State {
 }
 
 func (bot *Bot) cleanMessages() {
+	t := time.NewTicker(time.Minute)
+
 	for {
-		ct, err := bot.DB.Exec(context.Background(), "delete from messages where msg_id < $1", discord.NewSnowflake(time.Now().UTC().Add(time.Duration(bot.messageRetentionDays)*-24*time.Hour)))
+		<-t.C
+
+		id := discord.NewSnowflake(time.Now().UTC().Add(time.Duration(bot.messageRetentionDays) * -24 * time.Hour))
+
+		ct, err := bot.DB.Exec(context.Background(), "delete from messages where msg_id < $1", id)
 		if err != nil {
-			time.Sleep(1 * time.Minute)
+			common.Log.Errorf("deleting old messages: %v", err)
 			continue
 		}
+		common.Log.Infof("Deleted %v messages older than %v days.", ct.RowsAffected(), deleteAfterDays)
 
-		if ct.RowsAffected() == 0 {
-			common.Log.Debugf("Deleted 0 messages older than %v days.", deleteAfterDays)
-		} else {
-			common.Log.Infof("Deleted %v messages older than %v days.", ct.RowsAffected(), deleteAfterDays)
+		ct, err = bot.DB.Exec(context.Background(), "delete from ignored_messages where id < $1", id)
+		if err != nil {
+			common.Log.Errorf("deleting old ignored message IDs: %v", err)
+			continue
 		}
-
-		time.Sleep(1 * time.Minute)
+		common.Log.Infof("Deleted %v ignored message IDs older than %v days.", ct.RowsAffected(), deleteAfterDays)
 	}
 }
 

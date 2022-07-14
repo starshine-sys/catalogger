@@ -45,7 +45,15 @@ func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) (*handler.Response,
 	}
 
 	if bot.DB.IsBlacklisted(m.GuildID, channel.ID) {
-		return nil, nil
+		err = bot.DB.IgnoreMessage(m.ID)
+		return nil, err
+	}
+
+	if bot.isUserIgnored(m.GuildID, m.Author.ID) {
+		common.Log.Debugf("user %v is ignored in guild %v", m.Author.ID, m.GuildID)
+
+		err = bot.DB.IgnoreMessage(m.ID)
+		return nil, err
 	}
 
 	for _, id := range pkBotsToCheck {

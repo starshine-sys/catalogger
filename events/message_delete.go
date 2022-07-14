@@ -20,6 +20,12 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) (*handler.Response,
 		return nil, nil
 	}
 
+	// check if message is already marked to be ignored
+	if bot.DB.IsIgnored(m.ID) {
+		common.Log.Debugf("message %v should be ignored", m.ID)
+		return nil, nil
+	}
+
 	channel, err := bot.State(m.GuildID).Channel(m.ChannelID)
 	if err != nil {
 		return nil, err
