@@ -1,6 +1,4 @@
-// Package store defines interfaces for a persistent data store for members and invites.
-// Reasoning: these aren't sent in ready/guild create events, so we need to fetch them from Discord, but this means we aren't actually "ready" after a restart until *everything* is fetched.
-// Moving it out of the bot means these caches can survive bot restarts (maybe even server restarts if the cache itself is persistent, i.e. redis written to disk)
+// Package store defines interfaces for storing Discord data.
 package store
 
 import (
@@ -12,7 +10,8 @@ import (
 
 const ErrNotFound = errors.Sentinel("value not found in store")
 
-type Store interface {
+// MemberStore stores members and invites
+type MemberStore interface {
 	IsGuildCached(ctx context.Context, guildID discord.GuildID) (bool, error)
 	MarkGuildCached(ctx context.Context, guildID discord.GuildID) error
 
@@ -28,4 +27,39 @@ type Store interface {
 
 	Invites(ctx context.Context, guildID discord.GuildID) ([]discord.Invite, error)
 	SetInvites(ctx context.Context, guildID discord.GuildID, is []discord.Invite) error
+}
+
+type ChannelStore interface {
+	Channels(context.Context, discord.GuildID) ([]discord.Channel, error)
+	Channel(context.Context, discord.ChannelID) (discord.Channel, error)
+
+	SetChannel(context.Context, discord.GuildID, discord.Channel) error
+	SetChannels(context.Context, discord.GuildID, []discord.Channel) error
+	RemoveChannel(context.Context, discord.GuildID, discord.ChannelID) error
+	RemoveChannels(context.Context, discord.GuildID) error
+}
+
+type GuildStore interface {
+	Guild(context.Context, discord.GuildID) (discord.Guild, error)
+
+	GuildSet(context.Context, discord.Guild) error
+	GuildRemove(context.Context, discord.GuildID) error
+}
+
+type RoleStore interface {
+	Roles(ctx context.Context, guildID discord.GuildID) ([]discord.Role, error)
+	Role(ctx context.Context, guildID discord.GuildID, roleID discord.RoleID) (discord.Role, error)
+	SetRoles(ctx context.Context, guildID discord.GuildID, rs []discord.Role) error
+	SetRole(ctx context.Context, guildID discord.GuildID, r discord.Role) error
+	RemoveRole(ctx context.Context, guildID discord.GuildID, roleID discord.RoleID) error
+	RemoveRoles(ctx context.Context, guildID discord.GuildID) error
+}
+
+// Cabinet combines all stores into a single struct.
+// As this struct is entirely made up of interfaces, it can be copied around.
+type Cabinet struct {
+	MemberStore
+	ChannelStore
+	GuildStore
+	RoleStore
 }
