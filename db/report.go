@@ -3,13 +3,17 @@ package db
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/diamondburned/arikawa/v3/discord"
+	"github.com/diamondburned/arikawa/v3/utils/httputil"
 	"github.com/getsentry/sentry-go"
+	"github.com/google/uuid"
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/common"
+	"github.com/starshine-sys/pkgo/v2"
 )
 
 // ErrorContext is the context for an error
@@ -27,6 +31,16 @@ func (db *DB) Report(ctx ErrorContext, err error) *sentry.EventID {
 	if cs == "" {
 		cs = ctx.Command
 	}
+
+	// check if error should be reported to Sentry
+	if !ShouldReportError(err) {
+		id := uuid.New().String()
+
+		common.Log.Errorf("[%v] Error in %v: %v", id, cs, err)
+
+		return (*sentry.EventID)(&id)
+	}
+
 	common.Log.Errorf("Error in %v: %v", cs, err)
 
 	if db.Hub == nil {
@@ -114,4 +128,18 @@ func (db *DB) ReportEmbed(ctx bcr.Contexter, id *sentry.EventID) (err error) {
 	}
 
 	return ctx.SendEphemeral(s, embeds...)
+}
+
+// ShouldReportError returns true if err should be reported to Sentry.
+func ShouldReportError(err error) bool {
+	switch err.(type) {
+	case pkgo.PKAPIError, pkgo.HTTPError:
+		return false
+	case *strconv.NumError:
+		return false
+	case *httputil.HTTPError:
+		return false
+	}
+
+	return true
 }

@@ -19,6 +19,7 @@ import (
 	"github.com/starshine-sys/bcr"
 	"github.com/starshine-sys/catalogger/bot"
 	"github.com/starshine-sys/catalogger/common"
+	"github.com/starshine-sys/catalogger/db"
 	"github.com/starshine-sys/catalogger/events/eventcollector"
 	"github.com/starshine-sys/catalogger/events/handler"
 	"github.com/starshine-sys/pkgo/v2"
@@ -313,6 +314,10 @@ func (bot *Bot) handleError(ev reflect.Value, err error) {
 	hub := bot.DB.Hub.Clone()
 
 	bot.SentryEnricher.Handle(hub, ev.Interface())
+
+	if !db.ShouldReportError(err) {
+		return
+	}
 
 	hub.CaptureException(err)
 }

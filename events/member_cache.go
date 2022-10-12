@@ -6,6 +6,7 @@ import (
 
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
+	"github.com/diamondburned/arikawa/v3/utils/json/option"
 	"github.com/starshine-sys/catalogger/common"
 )
 
@@ -94,7 +95,7 @@ func (bot *Bot) chunkGuilds() {
 			ctx, cancel := context.WithTimeout(context.Background(), wsTimeout)
 			err := bot.State(chunkID).Gateway().Send(ctx, &gateway.RequestGuildMembersCommand{
 				GuildIDs: []discord.GuildID{chunkID},
-				Limit:    0,
+				Query:    option.NewString(""),
 			})
 			if err != nil {
 				cancel()
