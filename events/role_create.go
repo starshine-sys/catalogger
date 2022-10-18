@@ -31,7 +31,7 @@ func (bot *Bot) guildRoleCreate(ev *gateway.GuildRoleCreateEvent) (resp *handler
 		Color: bcr.ColourGreen,
 
 		Description: fmt.Sprintf(`**Name:** %v
-**Colour:** #%06X
+**Colour:** %s
 **Mentionable:** %v
 **Shown separately:** %v`, ev.Role.Name, ev.Role.Color, ev.Role.Mentionable, ev.Role.Hoist),
 

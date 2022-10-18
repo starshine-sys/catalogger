@@ -37,7 +37,7 @@ func (bot *Bot) guildRoleDelete(ev *gateway.GuildRoleDeleteEvent) (resp *handler
 	e := discord.Embed{
 		Title: fmt.Sprintf("Role \"%v\" deleted", old.Name),
 		Description: fmt.Sprintf(`**Name:** %v
-**Colour:** #%06X
+**Colour:** %s
 **Mentionable:** %v
 **Shown separately:** %v
 **Position:** %v

@@ -65,7 +65,7 @@ func (bot *Bot) guildRoleUpdate(ev *gateway.GuildRoleUpdateEvent) (resp *handler
 	if ev.Role.Color != old.Color {
 		e.Fields = append(e.Fields, discord.EmbedField{
 			Name:  "Colour",
-			Value: fmt.Sprintf("**Before:** #%06X\n**After:** #%06X", old.Color, ev.Role.Color),
+			Value: fmt.Sprintf("**Before:** %s\n**After:** %s", old.Color, ev.Role.Color),
 		})
 		changed = true
 	}
