@@ -1,6 +1,12 @@
 package db
 
-import "github.com/diamondburned/arikawa/v3/discord"
+import (
+	"context"
+
+	"emperror.dev/errors"
+	"github.com/diamondburned/arikawa/v3/discord"
+	"github.com/georgysavva/scany/pgxscan"
+)
 
 // LogChannels is the map of log channels stored per server
 type LogChannels struct {
@@ -25,4 +31,28 @@ type LogChannels struct {
 	MessageUpdate         discord.ChannelID `json:"MESSAGE_UPDATE"`
 	MessageDelete         discord.ChannelID `json:"MESSAGE_DELETE"`
 	MessageDeleteBulk     discord.ChannelID `json:"MESSAGE_DELETE_BULK"`
+}
+
+// For returns the channel ID for the given event.
+// TODO: add all events
+func (lc LogChannels) For(evName string) discord.ChannelID {
+	switch evName {
+	case "GuildRoleCreateEvent":
+		return lc.GuildRoleCreate
+	}
+
+	return discord.NullChannelID
+}
+
+func (db *DB) Channels(guildID discord.GuildID) (lc LogChannels, err error) {
+	sql, args, err := sq.Select("channels").From("guilds").Where("id = ?", guildID).ToSql()
+	if err != nil {
+		return lc, errors.Wrap(err, "building sql")
+	}
+
+	err = pgxscan.Get(context.Background(), db, &lc, sql, args...)
+	if err != nil {
+		return lc, errors.Wrap(err, "getting channels")
+	}
+	return lc, nil
 }

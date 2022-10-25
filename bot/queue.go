@@ -9,13 +9,27 @@ import (
 	"github.com/diamondburned/arikawa/v3/api/webhook"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
+	"github.com/diamondburned/arikawa/v3/utils/sendpart"
 	"github.com/starshine-sys/catalogger/v2/common/log"
 )
 
+type SendData struct {
+	// If ChanneLID is not valid, the channel ID is fetched by bot.Send.
+	// This should only be set if the log channel ID is checked in the log handler.
+	ChannelID discord.ChannelID
+
+	Embeds []discord.Embed
+	Files  []sendpart.File
+}
+
 // Send either sends a slice of embeds immediately, or queues a single embed.
 // `event` should either be the event received in the handler, or a string name.
-func (bot *Bot) Send(wh *discord.Webhook, event any, embeds ...discord.Embed) {
-	if len(embeds) == 0 {
+func (bot *Bot) Send(
+	guildID discord.GuildID,
+	event any,
+	data SendData,
+) {
+	if len(data.Embeds) == 0 {
 		return
 	}
 
@@ -25,9 +39,31 @@ func (bot *Bot) Send(wh *discord.Webhook, event any, embeds ...discord.Embed) {
 		eventName = bot.eventName(event)
 	}
 
+	// get channel ID, if not set
+	channelID := data.ChannelID
+	if !channelID.IsValid() {
+		channels, err := bot.DB.Channels(guildID)
+		if err != nil {
+			log.Errorf("getting channels for guild %v: %v", guildID, err)
+		}
+
+		channelID = channels.For(eventName)
+		if !channelID.IsValid() {
+			log.Debugf("event %v in guild %v has no valid channel", eventName, guildID)
+			return
+		}
+	}
+
+	// get webhook
+	wh, err := bot.getWebhook(channelID)
+	if err != nil {
+		log.Errorf("getting webhook for channel %v: %v", channelID, err)
+		return
+	}
+
 	// if the event should be queued to be sent in bulk, queue it and return
-	if shouldQueue[eventName] && len(embeds) == 1 {
-		bot.queue(wh, eventName, embeds[0])
+	if shouldQueue[eventName] && len(data.Embeds) == 1 && len(data.Files) == 0 {
+		bot.queue(wh, eventName, data.Embeds[0])
 		return
 	}
 
@@ -35,9 +71,10 @@ func (bot *Bot) Send(wh *discord.Webhook, event any, embeds ...discord.Embed) {
 
 	client := bot.webhookClient(wh)
 
-	err := client.Execute(webhook.ExecuteData{
+	err = client.Execute(webhook.ExecuteData{
 		AvatarURL: bot.user.AvatarURL(),
-		Embeds:    embeds,
+		Embeds:    data.Embeds,
+		Files:     data.Files,
 	})
 	if err != nil {
 		log.Errorf("executing webhook %v: %v", wh.ID, err)

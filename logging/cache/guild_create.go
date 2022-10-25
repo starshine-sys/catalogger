@@ -15,7 +15,19 @@ func (bot *Bot) guildCreate(ev *gateway.GuildCreateEvent) {
 
 	err := bot.Cabinet.GuildSet(ctx, ev.Guild)
 	if err != nil {
-		log.Errorf("setting guild %v: %v", err)
+		log.Errorf("setting guild %v: %v", ev.ID, err)
+		return
+	}
+
+	err = bot.Cabinet.SetRoles(ctx, ev.ID, ev.Roles)
+	if err != nil {
+		log.Errorf("setting roles for %v: %v", ev.ID, err)
+		return
+	}
+
+	err = bot.Cabinet.SetChannels(ctx, ev.ID, ev.Channels)
+	if err != nil {
+		log.Errorf("setting channels for %v: %v", ev.ID, err)
 		return
 	}
 

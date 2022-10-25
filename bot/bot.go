@@ -14,6 +14,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/utils/ws"
 	"github.com/starshine-sys/bcr/v2"
 	"github.com/starshine-sys/catalogger/v2/common/log"
+	"github.com/starshine-sys/catalogger/v2/db"
 	"github.com/starshine-sys/catalogger/v2/store"
 	"github.com/starshine-sys/catalogger/v2/store/memory"
 	"github.com/starshine-sys/catalogger/v2/store/redis"
@@ -30,7 +31,10 @@ const Intents = gateway.IntentGuildBans |
 
 type Bot struct {
 	Router *bcr.Router
+	DB     *db.DB
+
 	user   discord.User
+	Config Config
 
 	Cabinet store.Cabinet
 
@@ -67,7 +71,14 @@ func New(c Config) (*Bot, error) {
 
 	// set up interaction router + bot
 	bot := &Bot{
+		Config: c,
 		Router: bcr.NewFromShardManager("Bot "+c.Auth.Discord, mgr),
+	}
+
+	// setup database
+	bot.DB, err = db.New(c.Auth.Postgres, c.Auth.Redis)
+	if err != nil {
+		return nil, errors.Wrap(err, "creating database")
 	}
 
 	// create stores
