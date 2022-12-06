@@ -10,18 +10,15 @@ import (
 const cachedGuildsKey = "cachedGuilds"
 
 func (s *Store) IsGuildCached(ctx context.Context, guildID discord.GuildID) (bool, error) {
-	// we don't actually care about the value, just if it's null
-	// if the return value is null the guild isn't cached
-	mb := radix.Maybe{}
-
-	err := s.client.Do(ctx, radix.Cmd(&mb, "LPOS", cachedGuildsKey, guildID.String()))
+	var resp int
+	err := s.client.Do(ctx, radix.Cmd(&resp, "SISMEMBER", cachedGuildsKey, guildID.String()))
 	if err != nil {
 		return false, err
 	}
 
-	return !mb.Null, nil
+	return resp == 1, nil
 }
 
 func (s *Store) MarkGuildCached(ctx context.Context, guildID discord.GuildID) error {
-	return s.client.Do(ctx, radix.Cmd(nil, "RPUSH", cachedGuildsKey, guildID.String()))
+	return s.client.Do(ctx, radix.Cmd(nil, "SADD", cachedGuildsKey, guildID.String()))
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/starshine-sys/catalogger/v2/bot"
 	"github.com/starshine-sys/catalogger/v2/common/log"
 	"github.com/starshine-sys/catalogger/v2/logging/cache"
+	"github.com/starshine-sys/catalogger/v2/logging/roles"
 	"github.com/urfave/cli/v2"
 )
 
@@ -37,6 +38,7 @@ func run(c *cli.Context) error {
 
 	// set up modules (cache, logging, commands)
 	cache.Setup(b)
+	roles.Setup(b) // role logging
 
 	// actually run bot!
 	ctx, cancel := signal.NotifyContext(c.Context, os.Interrupt, os.Kill)

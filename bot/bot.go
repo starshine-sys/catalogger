@@ -73,10 +73,12 @@ func New(c Config) (*Bot, error) {
 	bot := &Bot{
 		Config: c,
 		Router: bcr.NewFromShardManager("Bot "+c.Auth.Discord, mgr),
+
+		webhookClients: map[discord.WebhookID]*webhook.Client{},
 	}
 
 	// setup database
-	bot.DB, err = db.New(c.Auth.Postgres, c.Auth.Redis)
+	bot.DB, err = db.New(c.Auth.Postgres, c.Auth.Redis, c.Bot.AESKey)
 	if err != nil {
 		return nil, errors.Wrap(err, "creating database")
 	}

@@ -14,5 +14,7 @@ func Setup(root *bot.Bot) {
 	bot.AddHandler(
 		// role create logs
 		bot.roleCreate,
+		// role update logs
+		bot.roleUpdate,
 	)
 }

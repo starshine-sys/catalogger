@@ -21,7 +21,7 @@ func (bot *Bot) fetchLoop(s *state.State) {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
 	defer cancel()
 
-	ticker := time.NewTicker(3 * time.Second)
+	ticker := time.NewTicker(750 * time.Millisecond)
 	defer ticker.Stop()
 
 	for {
@@ -109,7 +109,7 @@ func (bot *Bot) fetchOneGuild(s *state.State) {
 }
 
 func (bot *Bot) guildMembersChunk(ev *gateway.GuildMembersChunkEvent) {
-	log.Debugf("received chunk %d/%d for guild %v", ev.ChunkIndex, ev.ChunkCount, ev.GuildID)
+	log.Debugf("received chunk %d/%d for guild %v", ev.ChunkIndex+1, ev.ChunkCount, ev.GuildID)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -118,5 +118,14 @@ func (bot *Bot) guildMembersChunk(ev *gateway.GuildMembersChunkEvent) {
 	if err != nil {
 		log.Errorf("setting members for %v (chunk %d/%d): %v", ev.GuildID, ev.ChunkIndex, ev.ChunkCount, err)
 		return
+	}
+
+	if ev.ChunkIndex == ev.ChunkCount-1 {
+		log.Debugf("last chunk for guild %v received, marking as cached", ev.GuildID)
+
+		err = bot.Cabinet.MarkGuildCached(ctx, ev.GuildID)
+		if err != nil {
+			log.Errorf("marking guild %v cached: %v", ev.GuildID, err)
+		}
 	}
 }

@@ -58,6 +58,7 @@ func (s *Store) SetChannels(_ context.Context, guildID discord.GuildID, chs []di
 	defer s.channelsMu.Unlock()
 
 	for _, ch := range chs {
+		ch := ch
 		s.channels[ch.ID] = &ch
 
 		if !contains(s.guildChannels[guildID], ch.ID) {

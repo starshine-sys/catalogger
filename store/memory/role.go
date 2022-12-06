@@ -40,14 +40,12 @@ func (s *Store) Role(_ context.Context, _ discord.GuildID, roleID discord.RoleID
 	return *r, nil
 }
 
-func (s *Store) SetRole(_ context.Context, guildID discord.GuildID, ch discord.Role) error {
+func (s *Store) SetRole(_ context.Context, guildID discord.GuildID, r discord.Role) error {
 	s.rolesMu.Lock()
 	defer s.rolesMu.Unlock()
 
-	s.roles[ch.ID] = &ch
-
-	if !contains(s.guildRoles[guildID], ch.ID) {
-		s.guildRoles[guildID] = append(s.guildRoles[guildID], ch.ID)
+	if !contains(s.guildRoles[guildID], r.ID) {
+		s.guildRoles[guildID] = append(s.guildRoles[guildID], r.ID)
 	}
 
 	return nil
@@ -58,6 +56,7 @@ func (s *Store) SetRoles(_ context.Context, guildID discord.GuildID, rls []disco
 	defer s.rolesMu.Unlock()
 
 	for _, r := range rls {
+		r := r
 		s.roles[r.ID] = &r
 
 		if !contains(s.guildRoles[guildID], r.ID) {

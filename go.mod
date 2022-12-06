@@ -6,17 +6,21 @@ require (
 	emperror.dev/errors v0.8.1
 	github.com/BurntSushi/toml v1.2.0
 	github.com/Masterminds/squirrel v1.5.3
-	github.com/diamondburned/arikawa/v3 v3.1.1-0.20221004061843-83cf77407318
+	github.com/diamondburned/arikawa/v3 v3.1.1-0.20221204032416-686a47e5d1fb
 	github.com/georgysavva/scany v1.2.1
 	github.com/jackc/pgx/v4 v4.17.2
 	github.com/mediocregopher/radix/v4 v4.1.0
+	github.com/rubenv/sql-migrate v1.2.0
 	github.com/starshine-sys/bcr/v2 v2.0.0-20220715105734-c9f61cbd22fe
+	github.com/starshine-sys/pkgo/v2 v2.0.2
 	github.com/urfave/cli/v2 v2.16.3
 	go.uber.org/zap v1.23.0
 )
 
 require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
+	github.com/go-gorp/gorp/v3 v3.0.2 // indirect
+	github.com/google/uuid v1.3.0 // indirect
 	github.com/gorilla/schema v1.2.0 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect

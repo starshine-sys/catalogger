@@ -5,7 +5,6 @@ import (
 
 	"emperror.dev/errors"
 	"github.com/diamondburned/arikawa/v3/discord"
-	"github.com/georgysavva/scany/pgxscan"
 )
 
 // LogChannels is the map of log channels stored per server
@@ -39,6 +38,8 @@ func (lc LogChannels) For(evName string) discord.ChannelID {
 	switch evName {
 	case "GuildRoleCreateEvent":
 		return lc.GuildRoleCreate
+	case "GuildRoleUpdateEvent":
+		return lc.GuildRoleUpdate
 	}
 
 	return discord.NullChannelID
@@ -50,7 +51,7 @@ func (db *DB) Channels(guildID discord.GuildID) (lc LogChannels, err error) {
 		return lc, errors.Wrap(err, "building sql")
 	}
 
-	err = pgxscan.Get(context.Background(), db, &lc, sql, args...)
+	err = db.QueryRow(context.Background(), sql, args...).Scan(&lc)
 	if err != nil {
 		return lc, errors.Wrap(err, "getting channels")
 	}
