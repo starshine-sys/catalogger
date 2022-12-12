@@ -69,7 +69,7 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) (*handler.Response,
 	if bot.ProxiedTriggers.Exists(m.ID) {
 		err = bot.DB.DeleteMessage(m.ID)
 		bot.ProxiedTriggers.Remove(m.ID)
-		return nil, nil
+		return nil, err
 	}
 
 	msg, err := bot.DB.GetMessage(m.ID)

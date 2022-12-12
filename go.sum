@@ -93,6 +93,8 @@ github.com/diamondburned/arikawa/v3 v3.0.0-rc.2/go.mod h1:sNqM/iGXuH87wEH1rpQBEY
 github.com/diamondburned/arikawa/v3 v3.0.0-rc.4.0.20220129113810-3fe7fbc24b83/go.mod h1:5jBSNnp82Z/EhsKa6Wk9FsOqSxfVkNZDTDBPOj47LpY=
 github.com/diamondburned/arikawa/v3 v3.1.1-0.20221003114850-d952c988299c h1:1ohawJBUBsjvSLpGSvVQtdlF26y5hdSlp5+vS+NNB2s=
 github.com/diamondburned/arikawa/v3 v3.1.1-0.20221003114850-d952c988299c/go.mod h1:5jBSNnp82Z/EhsKa6Wk9FsOqSxfVkNZDTDBPOj47LpY=
+github.com/diamondburned/arikawa/v3 v3.1.1-0.20221210140357-3b98cde06f9e h1:vP/3xB9FOXh+rj86fQdlz/LFBmSeGmFHnmpDbF7QTCw=
+github.com/diamondburned/arikawa/v3 v3.1.1-0.20221210140357-3b98cde06f9e/go.mod h1:5jBSNnp82Z/EhsKa6Wk9FsOqSxfVkNZDTDBPOj47LpY=
 github.com/dustin/go-humanize v1.0.0 h1:VSnTsYCnlFHaM2/igO1h6X3HA71jcobQuxemgkq4zYo=
 github.com/dustin/go-humanize v1.0.0/go.mod h1:HtrtbFcZ19U5GC7JDqmcUSB87Iq5E25KnS6fMYU6eOk=
 github.com/envoyproxy/go-control-plane v0.9.0/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=

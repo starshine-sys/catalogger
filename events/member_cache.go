@@ -61,8 +61,8 @@ func (bot *Bot) guildMemberChunk(g *gateway.GuildMembersChunkEvent) {
 const wsTimeout = 25 * time.Second
 
 func (bot *Bot) chunkGuilds() {
-	// tick every 3 seconds to avoid gateway rate limits
-	tick := time.NewTicker(3 * time.Second)
+	// tick every 750 milliseconds to avoid gateway rate limits
+	tick := time.NewTicker(750 * time.Millisecond)
 	defer tick.Stop()
 
 	t := time.Now().UTC()

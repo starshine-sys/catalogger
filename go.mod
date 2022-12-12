@@ -6,7 +6,7 @@ require (
 	emperror.dev/errors v0.8.0
 	github.com/Masterminds/squirrel v1.5.0
 	github.com/ReneKroon/ttlcache/v2 v2.1.0
-	github.com/diamondburned/arikawa/v3 v3.1.1-0.20221003114850-d952c988299c
+	github.com/diamondburned/arikawa/v3 v3.1.1-0.20221210140357-3b98cde06f9e
 	github.com/dustin/go-humanize v1.0.0
 	github.com/georgysavva/scany v1.0.0
 	github.com/getsentry/sentry-go v0.13.0
