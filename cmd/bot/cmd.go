@@ -8,6 +8,7 @@ import (
 	"github.com/starshine-sys/catalogger/v2/bot"
 	"github.com/starshine-sys/catalogger/v2/common/log"
 	"github.com/starshine-sys/catalogger/v2/logging/cache"
+	"github.com/starshine-sys/catalogger/v2/logging/messages"
 	"github.com/starshine-sys/catalogger/v2/logging/roles"
 	"github.com/urfave/cli/v2"
 )
@@ -16,13 +17,6 @@ var Command = &cli.Command{
 	Name:   "bot",
 	Usage:  "Run the bot",
 	Action: run,
-	Flags: []cli.Flag{
-		&cli.StringFlag{
-			Name:    "token",
-			Usage:   "Bot token",
-			Aliases: []string{"t"},
-		},
-	},
 }
 
 func run(c *cli.Context) error {
@@ -37,8 +31,9 @@ func run(c *cli.Context) error {
 	}
 
 	// set up modules (cache, logging, commands)
-	cache.Setup(b)
-	roles.Setup(b) // role logging
+	cache.Setup(b)    // non-logging cache handlers
+	roles.Setup(b)    // role logging
+	messages.Setup(b) // message logging
 
 	// actually run bot!
 	ctx, cancel := signal.NotifyContext(c.Context, os.Interrupt, os.Kill)

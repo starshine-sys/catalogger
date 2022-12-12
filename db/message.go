@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"encoding/hex"
 	"encoding/json"
 
 	"emperror.dev/errors"
@@ -21,8 +20,11 @@ type Message struct {
 	ChannelID discord.ChannelID
 	ServerID  discord.GuildID
 
-	Content  string
-	Username string
+	Content  string `db:"-"`
+	Username string `db:"-"`
+
+	EncryptedContent  []byte `db:"content"`
+	EncryptedUsername []byte `db:"username"`
 
 	// These are only filled if the message was proxied by PluralKit
 	Member *string
@@ -45,17 +47,16 @@ func (db *DB) InsertMessage(m Message) (err error) {
 	if m.Content == "" {
 		m.Content = "None"
 	}
-	out, err := encrypt([]byte(m.Content), db.aesKey)
+
+	m.EncryptedContent, err = encrypt([]byte(m.Content), db.aesKey)
 	if err != nil {
 		return errors.Wrap(err, "encrypting content")
 	}
-	m.Content = hex.EncodeToString(out)
 
-	out, err = encrypt([]byte(m.Username), db.aesKey)
+	m.EncryptedUsername, err = encrypt([]byte(m.Username), db.aesKey)
 	if err != nil {
 		return errors.Wrap(err, "encrypting username")
 	}
-	m.Username = hex.EncodeToString(out)
 
 	var metadata *[]byte
 	if m.Metadata != nil {
@@ -75,7 +76,7 @@ func (db *DB) InsertMessage(m Message) (err error) {
 (msg_id, user_id, channel_id, server_id, content, username, member, system, metadata) values
 ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 on conflict (msg_id) do update
-set content = $5`, m.MsgID, m.UserID, m.ChannelID, m.ServerID, m.Content, m.Username, m.Member, m.System, metadata)
+set content = $5`, m.MsgID, m.UserID, m.ChannelID, m.ServerID, m.EncryptedContent, m.EncryptedUsername, m.Member, m.System, metadata)
 	return err
 }
 
@@ -126,30 +127,16 @@ func (db *DB) GetMessage(id discord.MessageID) (m *Message, err error) {
 		return nil, errors.Wrap(err, "getting from database")
 	}
 
-	// content and username are stored as hex strings, not byte arrays (don't ask me why)
-	// so we have to decode them before decrypting
-	b, err := hex.DecodeString(m.Content)
-	if err != nil {
-		return nil, errors.Wrap(err, "decoding content")
-	}
-
-	out, err := decrypt(b, db.aesKey)
+	out, err := decrypt(m.EncryptedContent, db.aesKey)
 	if err != nil {
 		return nil, errors.Wrap(err, "decrypting content")
 	}
-
 	m.Content = string(out)
 
-	b, err = hex.DecodeString(m.Username)
-	if err != nil {
-		return nil, errors.Wrap(err, "decoding username")
-	}
-
-	out, err = decrypt(b, db.aesKey)
+	out, err = decrypt(m.EncryptedUsername, db.aesKey)
 	if err != nil {
 		return nil, errors.Wrap(err, "decrypting username")
 	}
-
 	m.Username = string(out)
 
 	if m.RawMetadata != nil {

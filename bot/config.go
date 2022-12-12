@@ -40,6 +40,10 @@ type BotConfig struct {
 	// TestMode disables all interaction with Discord that is not necessary for building a cache.
 	// No logging or command responses are done in this mode, invites and members are still fetched.
 	TestMode bool `toml:"test_mode"`
+
+	// NoAutoMigrate specifies if migrations should be done automatically when the bot starts.
+	// If this is set to true, migrations must be done manually by running the `./catalogger migrate` command.
+	NoAutoMigrate bool `toml:"no_auto_migrate"`
 }
 
 type DashboardConfig struct {

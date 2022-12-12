@@ -2,43 +2,45 @@
 
 -- 2022-10-25: Initial database schema
 -- Again consolidates every old migration into a single schema.
-create table if not exists guilds (
+create table guilds (
     id  bigint  primary key,
 
-    channels    json    not null,
-    redirects   json    not null default '{}',
+    channels  jsonb not null,
+    redirects jsonb not null default '{}',
+    ignores   jsonb not null default '{}',
 
-    ignored_channels    bigint[]    not null    default array[]::bigint[],
-    banned_systems      text[]      not null    default array[]::text[],
-    key_roles           bigint[]    not null    default array[]::bigint[],
-    ignored_users       bigint[]    not null    default array[]::bigint[]
+    banned_systems text[]   not null default array[]::text[],
+    key_roles      bigint[] not null default array[]::bigint[]
 );
 
-create table if not exists messages (
-    msg_id      bigint  primary key,
-    user_id     bigint  not null    default 0,
-    channel_id  bigint  not null    default 0,
-    server_id   bigint  not null    default 0,
+create table messages (
+    id          bigint  primary key,
+    user_id     bigint  not null,
+    channel_id  bigint  not null,
+    guild_id    bigint  not null,
 
-    username    text not null default '',
+    username    bytea not null,
     member      text,
     system      text,
 
-    content     text    not null,
-    metadata    bytea
+    content     bytea not null,
+    metadata    bytea,
+
+    -- statistics to see if we can also log attachments in the future
+    attachment_size integer not null default 0
 );
 
-create table if not exists ignored_messages (
+create table ignored_messages (
     id  bigint  primary key
 );
 
-create table if not exists invites (
+create table invites (
     guild_id    bigint  not null,
     code        text    primary key,
     name        text    not null
 );
 
-create table if not exists watchlist (
+create table watchlist (
     guild_id    bigint,
     user_id     bigint,
 
@@ -50,9 +52,6 @@ create table if not exists watchlist (
     primary key (guild_id, user_id)
 );
 
-create index if not exists messages_server_id_idx on messages (server_id);
-create index if not exists invites_guild_idx on invites (guild_id);
-create index if not exists watchlist_guild_id_idx on watchlist (guild_id);
-
--- remove old migration history
-drop table if exists gorp_migrations;
+create index messages_guild_id_idx on messages (guild_id);
+create index invites_guild_idx on invites (guild_id);
+create index watchlist_guild_id_idx on watchlist (guild_id);

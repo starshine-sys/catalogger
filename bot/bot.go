@@ -77,8 +77,12 @@ func New(c Config) (*Bot, error) {
 		webhookClients: map[discord.WebhookID]*webhook.Client{},
 	}
 
+	if !c.Bot.NoAutoMigrate {
+		log.Warnf("Not running migrations automatically. Please run `catalogger migrate` before starting the bot.")
+	}
+
 	// setup database
-	bot.DB, err = db.New(c.Auth.Postgres, c.Auth.Redis, c.Bot.AESKey)
+	bot.DB, err = db.New(c.Auth.Postgres, c.Auth.Redis, c.Bot.AESKey, !c.Bot.NoAutoMigrate)
 	if err != nil {
 		return nil, errors.Wrap(err, "creating database")
 	}
@@ -129,6 +133,8 @@ func (bot *Bot) StateFromGuildID(guildID discord.GuildID) (s *state.State, id in
 	shard, id := bot.Router.ShardManager.FromGuildID(guildID)
 	return shard.(*state.State), id
 }
+
+func (bot *Bot) Me() discord.User { return bot.user }
 
 // ready sets the bot user for webhook purposes
 func (bot *Bot) ready(ev *gateway.ReadyEvent) {

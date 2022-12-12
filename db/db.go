@@ -28,8 +28,8 @@ type DB struct {
 	aesKey [32]byte
 }
 
-func New(postgres, redis, aesKey string) (*DB, error) {
-	err := runMigrations(postgres)
+func New(postgres, redis, aesKey string, shouldMigrate bool) (*DB, error) {
+	err := RunMigrations(postgres)
 	if err != nil {
 		return nil, errors.Wrap(err, "running migrations")
 	}
@@ -57,8 +57,13 @@ func New(postgres, redis, aesKey string) (*DB, error) {
 //go:embed migrations
 var fs embed.FS
 
-// runMigrations runs all of the migrations in migrations/.
-func runMigrations(postgres string) (err error) {
+var migrations = &migrate.EmbedFileSystemMigrationSource{
+	FileSystem: fs,
+	Root:       "migrations",
+}
+
+// RunMigrations runs all of the migrations in migrations/.
+func RunMigrations(postgres string) (err error) {
 	db, err := sql.Open("pgx", postgres)
 	if err != nil {
 		return errors.Wrap(err, "opening database")
@@ -72,16 +77,6 @@ func runMigrations(postgres string) (err error) {
 		return errors.Wrap(err, "pinging database")
 	}
 
-	// set up migrations from the embedded filesystem
-	migrations := &migrate.EmbedFileSystemMigrationSource{
-		FileSystem: fs,
-		Root:       "migrations",
-	}
-
-	// don't use the default migration table name
-	// we already used sql-migrate before with another history
-	migrate.SetTable("migration_history")
-
 	// run migrations!
 	n, err := migrate.Exec(db, "postgres", migrations, migrate.Up)
 	if err != nil {
@@ -90,6 +85,8 @@ func runMigrations(postgres string) (err error) {
 
 	if n != 0 {
 		log.Debugf("Performed %v migrations!", n)
+	} else {
+		log.Debugf("The database is already fully migrated")
 	}
 	return nil
 }
