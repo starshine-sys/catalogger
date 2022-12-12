@@ -14,14 +14,10 @@ import (
 
 var pk = pkgo.New("")
 
-// these names are ignored if the webhook message has
-// - m.Content == ""
-// - len(m.Embeds) > 0
-// - len(m.Attachments) == 0
-var ignoreBotNames = [...]string{
-	"", // changed to bot user at runtime
-	"Carl-bot Logging",
-	"GitHub",
+// only fetch pk api data for these webhook IDs
+// this probably doesn't need to be an array, but just for future proofing's sake
+var pkAppIDs = [...]discord.AppID{
+	466378653216014359, // PluralKit#4020
 }
 
 func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) (*handler.Response, error) {
@@ -49,7 +45,7 @@ func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) (*handler.Response,
 		return nil, err
 	}
 
-	if bot.isUserIgnored(m.GuildID, m.Author.ID) {
+	if bot.isUserIgnored(m.GuildID, m.Author.ID, m.ApplicationID) {
 		common.Log.Debugf("user %v is ignored in guild %v", m.Author.ID, m.GuildID)
 
 		err = bot.DB.IgnoreMessage(m.ID)
@@ -97,25 +93,23 @@ func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) (*handler.Response,
 		return nil, err
 	}
 
-	if !m.WebhookID.IsValid() {
+	if !m.WebhookID.IsValid() || !m.ApplicationID.IsValid() {
 		return nil, nil
 	}
 
-	// set bot name
-	if ignoreBotNames[0] == "" {
-		ignoreBotNames[0] = bot.Router.Bot.Username
+	// we only need to fetch PluralKit messages
+	// any other application ID *cannot* be a proxied message (at least, not with PK...)
+	var isPK bool
+	for _, id := range pkAppIDs {
+		if id == m.ApplicationID {
+			isPK = true
+			break
+		}
 	}
 
-	// filter out log messages [as best as we can]
-	// - message with content or attachments is assumed to be a proxied message
-	// - message must have embeds to be a log message
-	if m.Content == "" && len(m.Embeds) > 0 && len(m.Attachments) == 0 {
-		for _, name := range ignoreBotNames {
-			if m.Author.Username == name {
-				common.Log.Debugf("Ignoring webhook message by %v", m.Author.Tag())
-				return nil, nil
-			}
-		}
+	if !isPK {
+		common.Log.Debugf("Webhook created by app ID %v cannot be a PluralKit message, ignoring", m.ApplicationID)
+		return nil, nil
 	}
 
 	// give some time for PK to process the message
@@ -127,7 +121,7 @@ func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) (*handler.Response,
 		return nil, nil
 	}
 
-	common.Log.Debugf("No PK info for webhook message %v, falling back to API", m.ID)
+	common.Log.Debugf("No PK info for proxied message %v, falling back to API", m.ID)
 
 	pkm, err := pk.Message(pkgo.Snowflake(m.ID))
 	if err != nil {

@@ -52,8 +52,8 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) (*handler.Response,
 	}
 
 	// if the channel or user is ignored, return
-	if bot.isIgnored(m.GuildID, m.ChannelID, m.Author.ID) {
-		common.Log.Debugf("user %v or channel %v is ignored in guild %v", m.Author.ID, m.ChannelID, m.GuildID)
+	if bot.isIgnored(m.GuildID, m.ChannelID, m.Author.ID, m.ApplicationID) {
+		common.Log.Debugf("user %v, application %v, or channel %v is ignored in guild %v", m.Author.ID, m.ApplicationID, m.ChannelID, m.GuildID)
 		return nil, nil
 	}
 

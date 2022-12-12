@@ -89,7 +89,7 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) (*handler.Response,
 	}
 
 	// if the message author is ignored, return
-	if bot.isUserIgnored(m.GuildID, msg.UserID) {
+	if bot.isUserIgnored(m.GuildID, msg.UserID, discord.NullAppID) {
 		common.Log.Debugf("user %v is ignored in guild %v", msg.UserID, m.GuildID)
 		return nil, nil
 	}
