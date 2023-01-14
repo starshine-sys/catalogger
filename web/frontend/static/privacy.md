@@ -31,4 +31,4 @@ Additionally, the dashboard collects the following data:
 To clear your server's data, use the `lg!cleardata` command.  
 Catalogger will stop collecting any information when that command is used, unless you reenable logging afterwards.
 
-Note that that command won't remove any data from database backups. Contact us if you want those wiped too.
+Note that that command won't remove any data from database backups. [Contact us](/contact) if you want those wiped too.

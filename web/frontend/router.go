@@ -22,6 +22,12 @@ var privacyMD []byte
 //go:embed static/docs.md
 var docsMD []byte
 
+//go:embed static/tos.md
+var tosMD []byte
+
+//go:embed static/contact.md
+var contactMD []byte
+
 func newRouter(s *server) chi.Router {
 	r := chi.NewMux()
 
@@ -80,6 +86,34 @@ func newRouter(s *server) chi.Router {
 		data.Docs = template.HTML(blackfriday.Run(docsMD))
 
 		err := tmpl.ExecuteTemplate(w, "docs.html", data)
+		if err != nil {
+			common.Log.Errorf("Error executing template: %v", err)
+			return
+		}
+	})
+
+	r.Get("/tos", func(w http.ResponseWriter, r *http.Request) {
+		data := struct {
+			Docs template.HTML
+		}{}
+
+		data.Docs = template.HTML(blackfriday.Run(tosMD))
+
+		err := tmpl.ExecuteTemplate(w, "tos.html", data)
+		if err != nil {
+			common.Log.Errorf("Error executing template: %v", err)
+			return
+		}
+	})
+
+	r.Get("/contact", func(w http.ResponseWriter, r *http.Request) {
+		data := struct {
+			Docs template.HTML
+		}{}
+
+		data.Docs = template.HTML(blackfriday.Run(contactMD))
+
+		err := tmpl.ExecuteTemplate(w, "tos.html", data)
 		if err != nil {
 			common.Log.Errorf("Error executing template: %v", err)
 			return
