@@ -1,4 +1,4 @@
-package roles
+package meta
 
 import (
 	"github.com/starshine-sys/catalogger/v2/bot"
@@ -12,14 +12,11 @@ type Bot struct {
 }
 
 func Setup(root *bot.Bot) {
-	log.Debug("Adding roles handlers")
+	log.Debug("Adding meta handlers")
 
 	bot := &Bot{Bot: root}
 
 	bot.AddHandler(
-		// role create logs
-		bot.roleCreate,
-		// role update logs
-		bot.roleUpdate,
+		bot.ready,
 	)
 }

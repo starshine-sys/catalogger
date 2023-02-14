@@ -18,6 +18,7 @@ import (
 	"github.com/starshine-sys/catalogger/v2/store"
 	"github.com/starshine-sys/catalogger/v2/store/memory"
 	"github.com/starshine-sys/catalogger/v2/store/redis"
+	"github.com/starshine-sys/pkgo/v2"
 )
 
 const Intents = gateway.IntentGuildBans |
@@ -32,6 +33,7 @@ const Intents = gateway.IntentGuildBans |
 type Bot struct {
 	Router *bcr.Router
 	DB     *db.DB
+	PK     *pkgo.Session
 
 	user   discord.User
 	Config Config
@@ -43,6 +45,9 @@ type Bot struct {
 
 	webhookClients   map[discord.WebhookID]*webhook.Client
 	webhookClientsMu sync.Mutex
+
+	users   map[discord.UserID]*discord.User
+	usersMu sync.Mutex
 }
 
 // New creates a new Bot.
@@ -73,11 +78,14 @@ func New(c Config) (*Bot, error) {
 	bot := &Bot{
 		Config: c,
 		Router: bcr.NewFromShardManager("Bot "+c.Auth.Discord, mgr),
+		PK:     pkgo.New(""),
 
+		queues:         map[discord.WebhookID]*queue{},
 		webhookClients: map[discord.WebhookID]*webhook.Client{},
+		users:          map[discord.UserID]*discord.User{},
 	}
 
-	if !c.Bot.NoAutoMigrate {
+	if c.Bot.NoAutoMigrate {
 		log.Warnf("Not running migrations automatically. Please run `catalogger migrate` before starting the bot.")
 	}
 

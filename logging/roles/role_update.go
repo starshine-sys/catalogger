@@ -64,7 +64,7 @@ func (bot *Bot) roleUpdate(ev *gateway.GuildRoleUpdateEvent) {
 	// did the role get hoisted/unhoisted? or did it become mentionable?
 	if ev.Role.Hoist != old.Hoist || ev.Role.Mentionable != old.Mentionable {
 		e.Fields = append(e.Fields, discord.EmbedField{
-			Name:  "​",
+			Name:  "\u200b",
 			Value: fmt.Sprintf("**Mentionable:** %v\n**Shown separately:** %v", ev.Role.Mentionable, ev.Role.Hoist),
 		})
 		roleChanged = true

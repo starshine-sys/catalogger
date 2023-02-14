@@ -40,6 +40,21 @@ func (s *Store) Channel(_ context.Context, channelID discord.ChannelID) (discord
 	return *ch, nil
 }
 
+func (s *Store) RootChannel(ctx context.Context, channelID discord.ChannelID) (discord.Channel, error) {
+	ch, err := s.Channel(ctx, channelID)
+	if err != nil {
+		return discord.Channel{}, err
+	}
+
+	if ch.Type == discord.GuildNewsThread ||
+		ch.Type == discord.GuildPublicThread ||
+		ch.Type == discord.GuildPrivateThread {
+		return s.Channel(ctx, ch.ParentID)
+	}
+
+	return ch, nil
+}
+
 func (s *Store) SetChannel(_ context.Context, guildID discord.GuildID, ch discord.Channel) error {
 	s.channelsMu.Lock()
 	defer s.channelsMu.Unlock()

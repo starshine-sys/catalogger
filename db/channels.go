@@ -32,6 +32,20 @@ type LogChannels struct {
 	MessageDeleteBulk     discord.ChannelID `json:"MESSAGE_DELETE_BULK"`
 }
 
+type Redirects map[string]discord.ChannelID
+
+type Ignores struct {
+	GlobalChannels []discord.ChannelID         `json:"global_channels"`
+	GlobalUsers    []discord.UserID            `json:"global_users"`
+	PerChannel     map[string][]discord.UserID `json:"per_channel"`
+}
+
+type Channels struct {
+	Channels  LogChannels
+	Redirects Redirects
+	Ignores   Ignores
+}
+
 // For returns the channel ID for the given event.
 // TODO: add all events
 func (lc LogChannels) For(evName string) discord.ChannelID {
@@ -40,20 +54,40 @@ func (lc LogChannels) For(evName string) discord.ChannelID {
 		return lc.GuildRoleCreate
 	case "GuildRoleUpdateEvent":
 		return lc.GuildRoleUpdate
+	case "MessageDeleteEvent":
+		return lc.MessageDelete
 	}
 
 	return discord.NullChannelID
 }
 
-func (db *DB) Channels(guildID discord.GuildID) (lc LogChannels, err error) {
-	sql, args, err := sq.Select("channels").From("guilds").Where("id = ?", guildID).ToSql()
+func (db *DB) Channels(guildID discord.GuildID) (chs Channels, err error) {
+	sql, args, err := sq.Select("channels", "redirects", "ignores").From("guilds").Where("id = ?", guildID).ToSql()
 	if err != nil {
-		return lc, errors.Wrap(err, "building sql")
+		return chs, errors.Wrap(err, "building sql")
 	}
 
-	err = db.QueryRow(context.Background(), sql, args...).Scan(&lc)
+	err = db.QueryRow(context.Background(), sql, args...).Scan(&chs.Channels, &chs.Redirects, &chs.Ignores)
 	if err != nil {
-		return lc, errors.Wrap(err, "getting channels")
+		return chs, errors.Wrap(err, "getting channels")
 	}
-	return lc, nil
+	return chs, nil
+}
+
+func (db *DB) SetChannels(guildID discord.GuildID, chs Channels) error {
+	sql, args, err := sq.Update("guilds").
+		Set("channels", chs.Channels).
+		Set("redirects", chs.Redirects).
+		Set("ignores", chs.Ignores).
+		Where("id = ?", guildID).
+		ToSql()
+	if err != nil {
+		return errors.Wrap(err, "building sql")
+	}
+
+	_, err = db.Exec(context.Background(), sql, args...)
+	if err != nil {
+		return errors.Wrap(err, "executing sql")
+	}
+	return nil
 }

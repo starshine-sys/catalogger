@@ -36,6 +36,8 @@ type BotConfig struct {
 	CommandsGuildID discord.GuildID   `toml:"commands_guild_id"`
 	NoSyncCommands  bool              `toml:"no_sync_commands"`
 	JoinLeaveLog    discord.ChannelID `toml:"join_leave_log"`
+	// Ready event logs
+	MetaLog discord.ChannelID `toml:"meta_log"`
 
 	// TestMode disables all interaction with Discord that is not necessary for building a cache.
 	// No logging or command responses are done in this mode, invites and members are still fetched.

@@ -4,6 +4,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/starshine-sys/catalogger/v2/bot"
 	"github.com/starshine-sys/catalogger/v2/common"
+	"github.com/starshine-sys/catalogger/v2/common/log"
 )
 
 type SendData = bot.SendData
@@ -11,10 +12,15 @@ type SendData = bot.SendData
 type Bot struct {
 	*bot.Bot
 
-	proxyTriggers, handledMessages *common.Set[discord.MessageID]
+	// messages that triggered a proxy and should not be logged
+	proxyTriggers *common.Set[discord.MessageID]
+	// pluralkit messages that already have data from the pk;log channel
+	handledMessages *common.Set[discord.MessageID]
 }
 
 func Setup(root *bot.Bot) {
+	log.Debug("Adding messages handlers")
+
 	bot := &Bot{
 		Bot: root,
 
@@ -29,5 +35,7 @@ func Setup(root *bot.Bot) {
 		bot.messageCreate,
 		// pk message create handler (handles adding extra info to proxied messages)
 		bot.pkMessageCreate,
+		// message delete handler
+		bot.messageDelete,
 	)
 }

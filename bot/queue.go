@@ -47,7 +47,7 @@ func (bot *Bot) Send(
 			log.Errorf("getting channels for guild %v: %v", guildID, err)
 		}
 
-		channelID = channels.For(eventName)
+		channelID = channels.Channels.For(eventName)
 		if !channelID.IsValid() {
 			log.Debugf("event %v in guild %v has no valid channel", eventName, guildID)
 			return
@@ -95,6 +95,10 @@ var shouldQueue = map[string]bool{
 	reflect.ValueOf(&gateway.ChannelUpdateEvent{}).Elem().Type().Name():     true,
 	reflect.ValueOf(&gateway.InviteCreateEvent{}).Elem().Type().Name():      true,
 	reflect.ValueOf(&gateway.InviteDeleteEvent{}).Elem().Type().Name():      true,
+	// Internal events
+	reflect.ValueOf(&gateway.ReadyEvent{}).Elem().Type().Name():       true,
+	reflect.ValueOf(&gateway.GuildCreateEvent{}).Elem().Type().Name(): true,
+	reflect.ValueOf(&gateway.GuildDeleteEvent{}).Elem().Type().Name(): true,
 }
 
 // queue is a webhook embed queue.

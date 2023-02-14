@@ -15,6 +15,7 @@ create table guilds (
 
 create table messages (
     id          bigint  primary key,
+    original_id bigint  null,
     user_id     bigint  not null,
     channel_id  bigint  not null,
     guild_id    bigint  not null,

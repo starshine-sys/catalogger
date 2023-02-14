@@ -15,10 +15,11 @@ import (
 
 // Message is a single message
 type Message struct {
-	MsgID     discord.MessageID
-	UserID    discord.UserID
-	ChannelID discord.ChannelID
-	ServerID  discord.GuildID
+	ID         discord.MessageID
+	OriginalID *discord.MessageID
+	UserID     discord.UserID
+	ChannelID  discord.ChannelID
+	GuildID    discord.GuildID
 
 	Content  string `db:"-"`
 	Username string `db:"-"`
@@ -32,6 +33,8 @@ type Message struct {
 
 	Metadata    *Metadata `db:"-"`
 	RawMetadata *[]byte   `db:"metadata"`
+
+	AttachmentSize int
 }
 
 // Metadata is optional message metadata
@@ -73,20 +76,23 @@ func (db *DB) InsertMessage(m Message) (err error) {
 	}
 
 	_, err = db.Exec(context.Background(), `insert into messages
-(msg_id, user_id, channel_id, server_id, content, username, member, system, metadata) values
+(id, user_id, channel_id, guild_id, content, username, member, system, metadata) values
 ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-on conflict (msg_id) do update
-set content = $5`, m.MsgID, m.UserID, m.ChannelID, m.ServerID, m.EncryptedContent, m.EncryptedUsername, m.Member, m.System, metadata)
+on conflict (id) do update
+set content = $5`, m.ID, m.UserID, m.ChannelID, m.GuildID, m.EncryptedContent, m.EncryptedUsername, m.Member, m.System, metadata)
 	return err
 }
 
 // UpdatePKInfo updates the PluralKit info for the given message, if it exists in the database.
-func (db *DB) UpdatePKInfo(msgID discord.MessageID, userID pkgo.Snowflake, system, member string) (err error) {
+func (db *DB) UpdatePKInfo(msgID, originalID discord.MessageID,
+	userID pkgo.Snowflake, system, member string) (err error) {
+
 	sql, args, err := sq.Update("messages").
+		Set("original_id", originalID).
 		Set("user_id", userID).
 		Set("system", system).
 		Set("member", member).
-		Where(squirrel.Eq{"msg_id": msgID}).
+		Where(squirrel.Eq{"id": msgID}).
 		ToSql()
 	if err != nil {
 		return errors.Wrap(err, "building sql")
@@ -96,11 +102,22 @@ func (db *DB) UpdatePKInfo(msgID discord.MessageID, userID pkgo.Snowflake, syste
 	return
 }
 
+func (db *DB) HasPKInfo(msgID discord.MessageID) (exists bool) {
+	err := db.QueryRow(context.Background(),
+		"select exists(select id from messages where (system is not null and member is not null) and (id = $1 or original_id = $1))", msgID).
+		Scan(&exists)
+	if err != nil {
+		// if there's an error, there's probably no row to update anyway
+		return false
+	}
+	return exists
+}
+
 // UpdateUserID updates *just* the user ID for the given message, if it exists in the database.
 func (db *DB) UpdateUserID(msgID discord.MessageID, userID discord.UserID) (err error) {
 	sql, args, err := sq.Update("messages").
 		Set("user_id", userID).
-		Where(squirrel.Eq{"msg_id": msgID}).
+		Where(squirrel.Eq{"id": msgID}).
 		ToSql()
 	if err != nil {
 		return errors.Wrap(err, "building sql")
@@ -116,7 +133,7 @@ func (db *DB) GetMessage(id discord.MessageID) (m *Message, err error) {
 
 	sql, args, err := sq.Select("*").
 		From("messages").
-		Where(squirrel.Eq{"msg_id": id}).
+		Where(squirrel.Eq{"id": id}).
 		ToSql()
 	if err != nil {
 		return nil, errors.Wrap(err, "building sql")
@@ -142,7 +159,7 @@ func (db *DB) GetMessage(id discord.MessageID) (m *Message, err error) {
 	if m.RawMetadata != nil {
 		b, err := decrypt(*m.RawMetadata, db.aesKey)
 		if err != nil {
-			log.Errorf("Error decrypting metadata for %v: %v", m.MsgID, err)
+			log.Errorf("Error decrypting metadata for %v: %v", m.ID, err)
 		}
 
 		var md Metadata
@@ -159,7 +176,7 @@ func (db *DB) GetMessage(id discord.MessageID) (m *Message, err error) {
 // DeleteMessage deletes a message from the database
 func (db *DB) DeleteMessage(id discord.MessageID) (err error) {
 	sql, args, err := sq.Delete("messages").
-		Where(squirrel.Eq{"msg_id": id}).
+		Where(squirrel.Eq{"id": id}).
 		ToSql()
 	if err != nil {
 		return errors.Wrap(err, "building sql")

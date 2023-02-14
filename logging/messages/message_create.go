@@ -2,6 +2,7 @@ package messages
 
 import (
 	"regexp"
+	"time"
 
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
@@ -26,9 +27,9 @@ func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) {
 	}
 
 	// if logging for these events is disabled entirely, don't save this guild's messages in the database
-	if !channels.MessageUpdate.IsValid() &&
-		!channels.MessageDelete.IsValid() &&
-		!channels.MessageDeleteBulk.IsValid() {
+	if !channels.Channels.MessageUpdate.IsValid() &&
+		!channels.Channels.MessageDelete.IsValid() &&
+		!channels.Channels.MessageDeleteBulk.IsValid() {
 		return
 	}
 
@@ -39,10 +40,10 @@ func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) {
 	}
 
 	msg := db.Message{
-		MsgID:     m.ID,
+		ID:        m.ID,
 		UserID:    m.Author.ID,
 		ChannelID: m.ChannelID,
-		ServerID:  m.GuildID,
+		GuildID:   m.GuildID,
 		Username:  m.Author.Username + "#" + m.Author.Discriminator,
 
 		Content: content,
@@ -67,16 +68,25 @@ func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) {
 		return
 	}
 
-	// if this is not a webhook message, that's all we need to do
-	if !m.WebhookID.IsValid() {
+	// check if message was from a PluralKit webhook
+	var isPK bool
+	for _, id := range pkBots {
+		if m.ApplicationID == discord.AppID(id) {
+			isPK = true
+			break
+		}
+	}
+
+	// if not a proxied message, we can stop here
+	if !isPK {
 		return
 	}
 
-	// ignore our own webhooks + some other bots
-	for _, id := range ignoreApplications {
-		if m.ApplicationID.IsValid() && m.ApplicationID == id {
-			return
-		}
+	time.Sleep(time.Second) // sleep for a second to give PK time to send the log message
+	// if the message has been handled, we're done
+	if bot.handledMessages.Exists(m.ID) {
+		bot.handledMessages.Remove(m.ID)
+		return
 	}
 }
 
@@ -108,18 +118,22 @@ func (bot *Bot) pkMessageCreate(m *gateway.MessageCreateEvent) {
 	}
 
 	// message needs to have embed with footer + match expected footer
-	if len(m.Embeds) < 1 || m.Embeds[0].Footer == nil || pkFooterRegex.MatchString(m.Embeds[0].Footer.Text) {
+	if len(m.Embeds) < 1 || m.Embeds[0].Footer == nil {
 		return
 	}
 
 	// find matches in embed footer
 	groups := pkFooterRegex.FindStringSubmatch(m.Embeds[0].Footer.Text)
+	if len(groups) < 6 {
+		return
+	}
 
 	var (
-		sysID    = groups[1]
-		memberID = groups[2]
-		userID   discord.UserID
-		msgID    discord.MessageID
+		sysID             = groups[1]
+		memberID          = groups[2]
+		userID            discord.UserID
+		msgID             discord.MessageID
+		originalMessageID discord.Snowflake
 	)
 
 	// all snowflakes will be valid
@@ -131,13 +145,21 @@ func (bot *Bot) pkMessageCreate(m *gateway.MessageCreateEvent) {
 
 		// add the original message ID to the list of proxy trigger messages
 		// so that we don't log it being deleted
-		originalMessageID, _ := discord.ParseSnowflake(groups[5])
+		originalMessageID, _ = discord.ParseSnowflake(groups[5])
 		bot.proxyTriggers.Add(discord.MessageID(originalMessageID))
 	}
 
-	err := bot.DB.UpdatePKInfo(msgID, pkgo.Snowflake(userID), sysID, memberID)
+	err := bot.DB.UpdatePKInfo(msgID, discord.MessageID(originalMessageID), pkgo.Snowflake(userID), sysID, memberID)
 	if err != nil {
 		log.Errorf("updating pk info for message %v: %v", msgID, err)
+	}
+
+	log.Debugf("saved pk info for message %v, original %v", msgID, originalMessageID)
+
+	// delete the original message from the DB
+	err = bot.DB.DeleteMessage(discord.MessageID(originalMessageID))
+	if err != nil {
+		log.Errorf("deleting original message %v from db: %v", originalMessageID, err)
 	}
 
 	// add the message ID to the list of handled messages, so that we don't call the API later

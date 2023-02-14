@@ -32,6 +32,7 @@ type MemberStore interface {
 type ChannelStore interface {
 	Channels(context.Context, discord.GuildID) ([]discord.Channel, error)
 	Channel(context.Context, discord.ChannelID) (discord.Channel, error)
+	RootChannel(context.Context, discord.ChannelID) (discord.Channel, error)
 
 	SetChannel(context.Context, discord.GuildID, discord.Channel) error
 	SetChannels(context.Context, discord.GuildID, []discord.Channel) error
