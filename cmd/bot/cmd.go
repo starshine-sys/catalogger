@@ -6,6 +6,7 @@ import (
 
 	"emperror.dev/errors"
 	"github.com/starshine-sys/catalogger/v2/bot"
+	"github.com/starshine-sys/catalogger/v2/commands/config"
 	"github.com/starshine-sys/catalogger/v2/common/log"
 	"github.com/starshine-sys/catalogger/v2/logging/cache"
 	"github.com/starshine-sys/catalogger/v2/logging/messages"
@@ -36,6 +37,8 @@ func run(c *cli.Context) error {
 	roles.Setup(b)    // role logging
 	messages.Setup(b) // message logging
 	meta.Setup(b)     // meta logging (guilds, ready)
+
+	config.Setup(b) // config commands
 
 	// actually run bot!
 	ctx, cancel := signal.NotifyContext(c.Context, os.Interrupt, os.Kill)

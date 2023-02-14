@@ -114,6 +114,9 @@ func New(c Config) (*Bot, error) {
 		RoleStore:    memoryStore,
 	}
 
+	// add interaction handler
+	bot.AddHandler(bot.interactionCreate)
+
 	return bot, nil
 }
 

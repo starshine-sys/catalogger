@@ -11,41 +11,9 @@ var Commands = []api.CreateCommandData{
 		Description:              "Configure Catalogger",
 		DefaultMemberPermissions: discord.NewPermissions(discord.PermissionManageGuild),
 		Options: discord.CommandOptions{
-			&discord.SubcommandGroupOption{
-				OptionName:  "event",
-				Description: "Event settings",
-				Subcommands: []*discord.SubcommandOption{
-					{
-						OptionName:  "set",
-						Description: "Set an event to log to the given channel",
-						Options: []discord.CommandOptionValue{
-							&discord.StringOption{
-								OptionName:  "event",
-								Description: "The event to log",
-								Required:    true,
-								Choices:     events,
-							},
-							&discord.ChannelOption{
-								OptionName:   "channel",
-								Description:  "The channel to log to",
-								Required:     true,
-								ChannelTypes: []discord.ChannelType{discord.GuildText, discord.GuildNews},
-							},
-						},
-					},
-					{
-						OptionName:  "disable",
-						Description: "Disable logging an event",
-						Options: []discord.CommandOptionValue{
-							&discord.StringOption{
-								OptionName:  "event",
-								Description: "The event to stop logging",
-								Required:    true,
-								Choices:     events,
-							},
-						},
-					},
-				},
+			&discord.SubcommandOption{
+				OptionName:  "channels",
+				Description: "Configure logging channels",
 			},
 		},
 	},
