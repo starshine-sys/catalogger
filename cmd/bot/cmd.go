@@ -5,8 +5,10 @@ import (
 	"os/signal"
 
 	"emperror.dev/errors"
+	"github.com/getsentry/sentry-go"
 	"github.com/starshine-sys/catalogger/v2/bot"
 	"github.com/starshine-sys/catalogger/v2/commands/config"
+	"github.com/starshine-sys/catalogger/v2/common"
 	"github.com/starshine-sys/catalogger/v2/common/log"
 	"github.com/starshine-sys/catalogger/v2/logging/cache"
 	"github.com/starshine-sys/catalogger/v2/logging/messages"
@@ -25,6 +27,22 @@ func run(c *cli.Context) error {
 	conf, err := bot.ReadConfig("config.toml")
 	if err != nil {
 		return errors.Wrap(err, "reading config")
+	}
+
+	// set up sentry
+	if conf.Auth.Sentry != "" {
+		log.Debug("setting up sentry")
+		err := sentry.Init(sentry.ClientOptions{
+			Dsn:     conf.Auth.Sentry,
+			Release: common.Version(),
+		})
+		if err != nil {
+			log.Fatalf("setting up sentry: %v", err)
+		}
+
+		log.Debug("set up sentry")
+	} else {
+		log.Debugf("sentry DSN was not provided, not setting it up")
 	}
 
 	b, err := bot.New(conf)
