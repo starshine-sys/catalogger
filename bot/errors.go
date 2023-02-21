@@ -24,7 +24,7 @@ func (bot *Bot) ReportError(c bcr.HasContext, err error) error {
 			Timestamp: discord.NowTimestamp(),
 		}
 
-		_, mErr := ctx.State.SendMessage(ctx.Event.ChannelID, "", embed)
+		mErr := ctx.Reply("", embed)
 		return mErr
 	}
 
@@ -49,8 +49,7 @@ func (bot *Bot) ReportError(c bcr.HasContext, err error) error {
 		id = (*sentry.EventID)(&uid)
 	}
 
-	_, mErr := ctx.State.SendMessage(ctx.Event.ChannelID,
-		fmt.Sprintf("Error code: ``%v``", string(*id)),
+	mErr := ctx.ReplyEphemeral(fmt.Sprintf("Error code: ``%v``", string(*id)),
 		discord.Embed{
 			Title: "Internal error occurred",
 			Description: fmt.Sprintf("An internal error has occurred. "+

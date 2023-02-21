@@ -2,13 +2,15 @@ package common
 
 import (
 	"context"
-
-	"github.com/diamondburned/arikawa/v3/state"
 )
+
+type StateWaiter interface {
+	WaitFor(context.Context, func(any) bool) any
+}
 
 // WaitFor is a wrapper around s.WaitFor that checks for a specific type
 // and accepts a filter function based on that, avoiding type casting in the filter function.
-func WaitFor[T any](ctx context.Context, s *state.State, filter func(t T) bool) (t T, ok bool) {
+func WaitFor[T any](ctx context.Context, s StateWaiter, filter func(t T) bool) (t T, ok bool) {
 	v := s.WaitFor(ctx, func(i interface{}) bool {
 		if t, ok := i.(T); ok {
 			return filter(t)

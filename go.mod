@@ -6,7 +6,7 @@ require (
 	emperror.dev/errors v0.8.1
 	github.com/BurntSushi/toml v1.2.0
 	github.com/Masterminds/squirrel v1.5.3
-	github.com/diamondburned/arikawa/v3 v3.1.1-0.20221204032416-686a47e5d1fb
+	github.com/diamondburned/arikawa/v3 v3.2.1-0.20230216160556-759a2eede5fd
 	github.com/georgysavva/scany v1.2.1
 	github.com/getsentry/sentry-go v0.18.0
 	github.com/google/uuid v1.3.0
@@ -45,3 +45,5 @@ require (
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20220922220347-f3bd1da661af // indirect
 )
+
+replace github.com/diamondburned/arikawa/v3 => ../arikawa
