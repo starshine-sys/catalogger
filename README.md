@@ -3,9 +3,15 @@
 This is the rewrite of Catalogger.  
 The original bot's foundation was written in about a weekend, and it's spaghetti all the way down.
 
+The [`main`](https://github.com/starshine-sys/catalogger/tree/main) branch is the original branch,
+though we aren't adding new features to it, only major bugfixes.  
+Any new features will be in this branch (`rewrite`)
+
+When the rewrite is finished, this branch will be renamed to `main` and the original branch will be renamed to `legacy`.
+
 ## License
 
-Copyright (C) 2021-2022 sam (starshines)
+Copyright (C) 2021-2023 sam (starshines)
 
 This program is free software: you can redistribute it and/or modify  
 it under the terms of the GNU Affero General Public License as published  
