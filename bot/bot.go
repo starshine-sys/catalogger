@@ -21,7 +21,7 @@ import (
 	"github.com/starshine-sys/pkgo/v2"
 )
 
-const Intents = gateway.IntentGuildBans |
+const Intents = gateway.IntentGuildModeration |
 	gateway.IntentGuildEmojis |
 	gateway.IntentGuildIntegrations |
 	gateway.IntentGuildInvites |

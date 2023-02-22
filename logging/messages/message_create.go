@@ -49,6 +49,10 @@ func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) {
 		Content: content,
 	}
 
+	for _, attachment := range m.Attachments {
+		msg.AttachmentSize += attachment.Size
+	}
+
 	// also add extra data for bulk delete logging, if necessary
 	if len(m.Embeds) > 0 || m.WebhookID.IsValid() {
 		msg.Metadata = &db.Metadata{}

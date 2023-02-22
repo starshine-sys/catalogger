@@ -6,6 +6,11 @@ import (
 )
 
 func (bot *Bot) interactionCreate(ev *gateway.InteractionCreateEvent) {
+	if bot.Config.Bot.TestMode {
+		log.Debugf("ignoring interaction %v in test mode", ev.ID)
+		return
+	}
+
 	err := bot.Router.Execute(ev)
 	if err != nil {
 		log.Errorf("handling interaction %v: %v", ev.ID, err)

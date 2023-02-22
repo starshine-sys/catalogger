@@ -219,7 +219,6 @@ func (bot *Bot) channelsEntry(ctx *bcr.CommandContext) (err error) {
 		return bot.ReportError(ctx, errors.Wrap(err, "sending initial embed"))
 	}
 
-	// TODO: the rest of the fucking owl
 	msg, err := ctx.Original()
 	if err != nil {
 		log.Errorf("getting original message for %v: %v", ctx.Event.ID, err)

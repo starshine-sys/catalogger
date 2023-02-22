@@ -34,7 +34,7 @@ type Message struct {
 	Metadata    *Metadata `db:"-"`
 	RawMetadata *[]byte   `db:"metadata"`
 
-	AttachmentSize int
+	AttachmentSize uint64
 }
 
 // Metadata is optional message metadata
