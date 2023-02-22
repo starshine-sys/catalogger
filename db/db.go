@@ -7,14 +7,14 @@ import (
 
 	"emperror.dev/errors"
 	"github.com/Masterminds/squirrel"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/mediocregopher/radix/v4"
 	"github.com/starshine-sys/catalogger/v2/common/log"
 
 	migrate "github.com/rubenv/sql-migrate"
 
 	// pgx driver for migrations
-	_ "github.com/jackc/pgx/v4/stdlib"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 // sq is a squirrel builder for postgres
@@ -34,7 +34,7 @@ func New(postgres, redis, aesKey string, shouldMigrate bool) (*DB, error) {
 		return nil, errors.Wrap(err, "running migrations")
 	}
 
-	pool, err := pgxpool.Connect(context.Background(), postgres)
+	pool, err := pgxpool.New(context.Background(), postgres)
 	if err != nil {
 		return nil, errors.Wrap(err, "connecting to postgres")
 	}

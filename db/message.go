@@ -6,7 +6,7 @@ import (
 
 	"emperror.dev/errors"
 	"github.com/diamondburned/arikawa/v3/discord"
-	"github.com/georgysavva/scany/pgxscan"
+	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/starshine-sys/catalogger/v2/common/log"
 	"github.com/starshine-sys/pkgo/v2"
 
