@@ -3,6 +3,7 @@ package messages
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/diamondburned/arikawa/v3/discord"
@@ -58,7 +59,12 @@ func (bot *Bot) messageDelete(ev *gateway.MessageDeleteEvent) {
 				return
 			}
 		} else {
-			log.Errorf("getting PluralKit API info for message %v: %v", ev.ID, err)
+			pkerr, ok := err.(pkgo.PKAPIError)
+			if ok && pkerr.StatusCode == http.StatusNotFound {
+				log.Debugf("message %v is not a proxy or proxy trigger message", ev.ID)
+			} else {
+				log.Errorf("getting PluralKit API info for message %v: %v", ev.ID, err)
+			}
 		}
 	}
 

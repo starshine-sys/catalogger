@@ -7,6 +7,7 @@ require (
 	github.com/BurntSushi/toml v1.2.0
 	github.com/Masterminds/squirrel v1.5.3
 	github.com/diamondburned/arikawa/v3 v3.2.1-0.20230222002814-c1cc1b8a540e
+	github.com/dustin/go-humanize v1.0.1
 	github.com/georgysavva/scany/v2 v2.0.0
 	github.com/getsentry/sentry-go v0.18.0
 	github.com/google/uuid v1.3.0

@@ -44,6 +44,8 @@ func (s *Store) SetRole(_ context.Context, guildID discord.GuildID, r discord.Ro
 	s.rolesMu.Lock()
 	defer s.rolesMu.Unlock()
 
+	s.roles[r.ID] = &r
+
 	if !contains(s.guildRoles[guildID], r.ID) {
 		s.guildRoles[guildID] = append(s.guildRoles[guildID], r.ID)
 	}

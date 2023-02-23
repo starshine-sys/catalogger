@@ -16,6 +16,7 @@ func (bot *Bot) roleCreate(ev *gateway.GuildRoleCreateEvent) {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
+		log.Debugf("setting role %v in %v", ev.Role.ID, ev.GuildID)
 		err := bot.Cabinet.SetRole(ctx, ev.GuildID, ev.Role)
 		if err != nil {
 			log.Errorf("setting role %v in %v: %v", ev.Role.ID, ev.GuildID, err)
@@ -31,9 +32,9 @@ func (bot *Bot) roleCreate(ev *gateway.GuildRoleCreateEvent) {
 		Color: common.ColourGreen,
 
 		Description: fmt.Sprintf(`**Name:** %v
-**Colour:** #%06X
+**Colour:** #%v
 **Mentionable:** %v
-**Shown separately:** %v`, ev.Role.Name, ev.Role.Color, ev.Role.Mentionable, ev.Role.Hoist),
+**Shown separately:** %v`, ev.Role.Name, ev.Role.Color.String(), ev.Role.Mentionable, ev.Role.Hoist),
 
 		Footer: &discord.EmbedFooter{
 			Text: "ID: " + ev.Role.ID.String(),

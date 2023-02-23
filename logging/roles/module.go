@@ -21,5 +21,7 @@ func Setup(root *bot.Bot) {
 		bot.roleCreate,
 		// role update logs
 		bot.roleUpdate,
+		// role delete logs
+		bot.roleDelete,
 	)
 }

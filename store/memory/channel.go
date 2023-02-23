@@ -46,7 +46,7 @@ func (s *Store) RootChannel(ctx context.Context, channelID discord.ChannelID) (d
 		return discord.Channel{}, err
 	}
 
-	if ch.Type == discord.GuildNewsThread ||
+	if ch.Type == discord.GuildAnnouncementThread ||
 		ch.Type == discord.GuildPublicThread ||
 		ch.Type == discord.GuildPrivateThread {
 		return s.Channel(ctx, ch.ParentID)

@@ -51,12 +51,50 @@ type Channels struct {
 // TODO: add all events
 func (lc LogChannels) For(evName string) discord.ChannelID {
 	switch evName {
+	case "GuildUpdateEvent":
+		return lc.GuildUpdate
+	case "GuildEmojisUpdateEvent":
+		return lc.GuildEmojisUpdate
 	case "GuildRoleCreateEvent":
 		return lc.GuildRoleCreate
 	case "GuildRoleUpdateEvent":
 		return lc.GuildRoleUpdate
+	case "GuildRoleDeleteEvent":
+		return lc.GuildRoleDelete
+	case "ChannelCreateEvent":
+		return lc.ChannelCreate
+	case "ChannelUpdateEvent":
+		return lc.ChannelUpdate
+	case "ChannelDeleteEvent":
+		return lc.ChannelDelete
+	case "GuildMemberAddEvent":
+		return lc.GuildMemberAdd
+	case "GuildMemberRemoveEvent":
+		return lc.GuildMemberRemove
+	case "GuildMemberUpdateEvent":
+		return lc.GuildMemberUpdate
+	case "GuildKeyRoleUpdateEvent":
+		return lc.GuildKeyRoleUpdate
+	case "GuildMemberNickUpdateEvent":
+		return lc.GuildMemberNickUpdate
+	case "GuildMemberAvatarUpdateEvent":
+		return lc.GuildMemberAvatarUpdate
+	case "GuildMemberKickEvent":
+		return lc.GuildMemberKick
+	case "GuildBanAddEvent":
+		return lc.GuildBanAdd
+	case "GuildBanRemoveEvent":
+		return lc.GuildBanRemove
+	case "InviteCreateEvent":
+		return lc.InviteCreate
+	case "InviteDeleteEvent":
+		return lc.InviteDelete
+	case "MessageUpdateEvent":
+		return lc.MessageUpdate
 	case "MessageDeleteEvent":
 		return lc.MessageDelete
+	case "MessageDeleteBulkEvent":
+		return lc.MessageDeleteBulk
 	}
 
 	return discord.NullChannelID
