@@ -11,6 +11,7 @@ import (
 	"github.com/starshine-sys/catalogger/v2/common"
 	"github.com/starshine-sys/catalogger/v2/common/log"
 	"github.com/starshine-sys/catalogger/v2/logging/cache"
+	"github.com/starshine-sys/catalogger/v2/logging/invites"
 	"github.com/starshine-sys/catalogger/v2/logging/messages"
 	"github.com/starshine-sys/catalogger/v2/logging/meta"
 	"github.com/starshine-sys/catalogger/v2/logging/roles"
@@ -55,6 +56,7 @@ func run(c *cli.Context) error {
 	roles.Setup(b)    // role logging
 	messages.Setup(b) // message logging
 	meta.Setup(b)     // meta logging (guilds, ready)
+	invites.Setup(b)  // invite logging
 
 	config.Setup(b) // config commands
 
