@@ -2,6 +2,7 @@ package bot
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"emperror.dev/errors"
@@ -116,6 +117,10 @@ func New(c Config) (*Bot, error) {
 
 	// add interaction handler
 	bot.AddHandler(bot.interactionCreate)
+
+	// set up pkgo user agent
+	// TODO: get version from git tags after full release
+	bot.PK.UserAgent = fmt.Sprintf("Catalogger/v2 (+https://github.com/starshine-sys/catalogger; %v)", bot.Config.Bot.Owner)
 
 	return bot, nil
 }

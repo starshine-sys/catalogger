@@ -15,7 +15,7 @@ require (
 	github.com/mediocregopher/radix/v4 v4.1.0
 	github.com/rubenv/sql-migrate v1.2.0
 	github.com/starshine-sys/bcr/v2 v2.0.0-20220715105734-c9f61cbd22fe
-	github.com/starshine-sys/pkgo/v2 v2.0.2
+	github.com/starshine-sys/pkgo/v2 v2.1.0
 	github.com/urfave/cli/v2 v2.16.3
 	go.uber.org/zap v1.23.0
 )
