@@ -17,6 +17,9 @@ func Setup(root *bot.Bot) {
 	bot := &Bot{Bot: root}
 
 	bot.AddHandler(
+		// shard ready logging
 		bot.ready,
+		// initializing guild config + logging guild join
+		bot.guildCreate,
 	)
 }
