@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"embed"
+	"encoding/base64"
 
 	"emperror.dev/errors"
 	"github.com/Masterminds/squirrel"
@@ -49,7 +50,11 @@ func New(postgres, redis, aesKey string, shouldMigrate bool) (*DB, error) {
 		Redis: redisPool,
 	}
 
-	copy(db.aesKey[:], []byte(aesKey))
+	keyBytes, err := base64.RawStdEncoding.DecodeString(aesKey)
+	if err != nil {
+		return nil, errors.Wrap(err, "decoding base64 crypt key")
+	}
+	copy(db.aesKey[:], keyBytes)
 
 	return db, nil
 }

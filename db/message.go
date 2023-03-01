@@ -51,12 +51,12 @@ func (db *DB) InsertMessage(m Message) (err error) {
 		m.Content = "None"
 	}
 
-	m.EncryptedContent, err = encrypt([]byte(m.Content), db.aesKey)
+	m.EncryptedContent, err = Encrypt([]byte(m.Content), db.aesKey)
 	if err != nil {
 		return errors.Wrap(err, "encrypting content")
 	}
 
-	m.EncryptedUsername, err = encrypt([]byte(m.Username), db.aesKey)
+	m.EncryptedUsername, err = Encrypt([]byte(m.Username), db.aesKey)
 	if err != nil {
 		return errors.Wrap(err, "encrypting username")
 	}
@@ -68,7 +68,7 @@ func (db *DB) InsertMessage(m Message) (err error) {
 			return errors.Wrap(err, "marshaling metadata")
 		}
 
-		b, err := encrypt(jsonb, db.aesKey)
+		b, err := Encrypt(jsonb, db.aesKey)
 		if err != nil {
 			return errors.Wrap(err, "encrypting metadata")
 		}
@@ -144,20 +144,20 @@ func (db *DB) GetMessage(id discord.MessageID) (m *Message, err error) {
 		return nil, errors.Wrap(err, "getting from database")
 	}
 
-	out, err := decrypt(m.EncryptedContent, db.aesKey)
+	out, err := Decrypt(m.EncryptedContent, db.aesKey)
 	if err != nil {
 		return nil, errors.Wrap(err, "decrypting content")
 	}
 	m.Content = string(out)
 
-	out, err = decrypt(m.EncryptedUsername, db.aesKey)
+	out, err = Decrypt(m.EncryptedUsername, db.aesKey)
 	if err != nil {
 		return nil, errors.Wrap(err, "decrypting username")
 	}
 	m.Username = string(out)
 
 	if m.RawMetadata != nil {
-		b, err := decrypt(*m.RawMetadata, db.aesKey)
+		b, err := Decrypt(*m.RawMetadata, db.aesKey)
 		if err != nil {
 			log.Errorf("Error decrypting metadata for %v: %v", m.ID, err)
 		}
