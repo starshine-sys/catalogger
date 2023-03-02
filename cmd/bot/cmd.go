@@ -8,6 +8,7 @@ import (
 	"github.com/getsentry/sentry-go"
 	"github.com/starshine-sys/catalogger/v2/bot"
 	"github.com/starshine-sys/catalogger/v2/commands/config"
+	metacommands "github.com/starshine-sys/catalogger/v2/commands/meta"
 	"github.com/starshine-sys/catalogger/v2/common"
 	"github.com/starshine-sys/catalogger/v2/common/log"
 	"github.com/starshine-sys/catalogger/v2/logging/cache"
@@ -58,7 +59,8 @@ func run(c *cli.Context) error {
 	meta.Setup(b)     // meta logging (guilds, ready)
 	invites.Setup(b)  // invite logging
 
-	config.Setup(b) // config commands
+	config.Setup(b)       // config commands
+	metacommands.Setup(b) // meta commands
 
 	// actually run bot!
 	ctx, cancel := signal.NotifyContext(c.Context, os.Interrupt, os.Kill)

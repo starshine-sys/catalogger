@@ -7,6 +7,24 @@ import (
 
 var Commands = []api.CreateCommandData{
 	{
+		Name:        "catalogger",
+		Description: "Meta commands",
+		Options: discord.CommandOptions{
+			&discord.SubcommandOption{
+				OptionName:  "help",
+				Description: "Show help!",
+			},
+			&discord.SubcommandOption{
+				OptionName:  "invite",
+				Description: "Get an invite for Catalogger",
+			},
+			&discord.SubcommandOption{
+				OptionName:  "dashboard",
+				Description: "Get a link to the Catalogger dashboard",
+			},
+		},
+	},
+	{
 		Name:                     "config",
 		Description:              "Configure Catalogger",
 		DefaultMemberPermissions: discord.NewPermissions(discord.PermissionManageGuild),

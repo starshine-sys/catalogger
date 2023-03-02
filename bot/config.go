@@ -61,6 +61,8 @@ type DashboardConfig struct {
 type InfoConfig struct {
 	SupportServer string `toml:"support_server"`
 	DashboardBase string `toml:"dashboard_base"`
+
+	HelpFields []discord.EmbedField `toml:"help_fields"`
 }
 
 // ShouldLog returns true if test mode is not enabled.
