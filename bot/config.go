@@ -25,9 +25,10 @@ type AuthConfig struct {
 }
 
 type AuthInfluxConfig struct {
-	URL   string `toml:"url"`
-	Token string `toml:"token"`
-	DB    string `toml:"db"`
+	URL          string `toml:"url"`
+	Token        string `toml:"token"`
+	Organization string `toml:"organization"`
+	Database     string `toml:"database"`
 }
 
 type BotConfig struct {

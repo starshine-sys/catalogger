@@ -14,6 +14,7 @@ import (
 	arikawastore "github.com/diamondburned/arikawa/v3/state/store"
 	"github.com/diamondburned/arikawa/v3/utils/ws"
 	"github.com/starshine-sys/bcr/v2"
+	"github.com/starshine-sys/catalogger/v2/bot/metrics"
 	"github.com/starshine-sys/catalogger/v2/common/log"
 	"github.com/starshine-sys/catalogger/v2/db"
 	"github.com/starshine-sys/catalogger/v2/store"
@@ -32,9 +33,10 @@ const Intents = gateway.IntentGuildModeration |
 	gateway.IntentGuilds
 
 type Bot struct {
-	Router *bcr.Router
-	DB     *db.DB
-	PK     *pkgo.Session
+	Router  *bcr.Router
+	DB      *db.DB
+	PK      *pkgo.Session
+	Metrics *metrics.Client
 
 	user   discord.User
 	Config Config
@@ -86,6 +88,9 @@ func New(c Config) (*Bot, error) {
 		users:          map[discord.UserID]*discord.User{},
 	}
 
+	// add request logs
+	bot.Router.Rest.Client.OnResponse = append(bot.Router.Rest.Client.OnResponse, bot.onResponse)
+
 	if c.Bot.NoAutoMigrate {
 		log.Warnf("Not running migrations automatically. Please run `catalogger migrate` before starting the bot.")
 	}
@@ -113,6 +118,12 @@ func New(c Config) (*Bot, error) {
 		ChannelStore: memoryStore,
 		GuildStore:   memoryStore,
 		RoleStore:    memoryStore,
+	}
+
+	// set up metrics
+	if bot.Config.Auth.Influx.URL != "" {
+		c := bot.Config.Auth.Influx
+		bot.Metrics = metrics.New(c.URL, c.Token, c.Organization, c.Database)
 	}
 
 	// add interaction handler
