@@ -31,7 +31,8 @@ func (bot *Bot) messageDelete(ev *gateway.MessageDeleteEvent) {
 	}
 
 	// check if message exists in db and if it's already got pluralkit info
-	if !bot.DB.HasPKInfo(ev.ID) {
+	// if the message is more than 1 minute old, we can safely assume it's *not* a proxy trigger message
+	if !bot.DB.HasPKInfo(ev.ID) && ev.ID.Time().Before(time.Now().Add(1*time.Minute)) {
 		log.Debugf("fetching PK info for message %v", ev.ID)
 
 		pkm, err := bot.PK.Message(pkgo.Snowflake(ev.ID))

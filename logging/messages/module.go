@@ -37,5 +37,7 @@ func Setup(root *bot.Bot) {
 		bot.pkMessageCreate,
 		// message delete handler
 		bot.messageDelete,
+		// message update handler
+		bot.messageUpdate,
 	)
 }

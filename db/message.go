@@ -174,7 +174,7 @@ func (db *DB) GetMessage(id discord.MessageID) (m *Message, err error) {
 }
 
 // DeleteMessage deletes a message from the database
-func (db *DB) DeleteMessage(id discord.MessageID) (err error) {
+func (db *DB) DeleteMessage(id discord.MessageID) error {
 	sql, args, err := sq.Delete("messages").
 		Where(squirrel.Eq{"id": id}).
 		ToSql()
@@ -183,5 +183,33 @@ func (db *DB) DeleteMessage(id discord.MessageID) (err error) {
 	}
 
 	_, err = db.Exec(context.Background(), sql, args...)
-	return
+	if err != nil {
+		return errors.Wrap(err, "executing query")
+	}
+	return nil
+}
+
+func (db *DB) IgnoreMessage(id discord.MessageID) error {
+	sql, args, err := sq.Insert("ignored_messages").
+		Columns("id").
+		Values(id).
+		Suffix("ON CONFLICT DO NOTHING").
+		ToSql()
+	if err != nil {
+		return errors.Wrap(err, "building sql")
+	}
+
+	_, err = db.Exec(context.Background(), sql, args...)
+	if err != nil {
+		return errors.Wrap(err, "executing query")
+	}
+	return nil
+}
+
+func (db *DB) IsMessageIgnored(id discord.MessageID) (isIgnored bool, err error) {
+	err = db.QueryRow(context.Background(), "SELECT EXISTS(SELECT * FROM ignored_messages WHERE id = $1)", id).Scan(&isIgnored)
+	if err != nil {
+		return false, errors.Wrap(err, "executing query")
+	}
+	return isIgnored, nil
 }
