@@ -49,7 +49,7 @@ func (bot *Bot) inviteCreate(ev *gateway.InviteCreateEvent) {
 		Fields: []discord.EmbedField{
 			{
 				Name:  "Created by",
-				Value: fmt.Sprintf("%v\n%v#%v\nID: %v", ev.Inviter.Mention(), ev.Inviter.Username, ev.Inviter.Discriminator, ev.Inviter.ID),
+				Value: fmt.Sprintf("%v\n%v\nID: %v", ev.Inviter.Mention(), ev.Inviter.Tag(), ev.Inviter.ID),
 			},
 			{
 				Name:   "Maximum uses",

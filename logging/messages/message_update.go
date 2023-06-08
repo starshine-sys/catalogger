@@ -88,7 +88,7 @@ func (bot *Bot) messageUpdate(ev *gateway.MessageUpdateEvent) {
 			UserID:    ev.Author.ID,
 			ChannelID: ev.ChannelID,
 			GuildID:   ev.GuildID,
-			Username:  ev.Author.Username + "#" + ev.Author.Discriminator,
+			Username:  ev.Author.Tag(),
 
 			Content: content,
 		}
