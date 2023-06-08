@@ -39,7 +39,7 @@ func (bot *Bot) guildMemberUpdate(ev *gateway.GuildMemberUpdateEvent) (resp *han
 		return bot.handleTimeout(ev)
 	}
 
-	if m.Nick != ev.Nick || m.User.Tag() != ev.User.Tag() || m.User.Avatar != ev.User.Avatar {
+	if m.Nick != ev.Nick || m.User.Tag() != ev.User.Tag() || m.User.Avatar != ev.User.Avatar || m.User.DisplayName != ev.User.DisplayName {
 		// username or nickname changed, so run that handler
 		return bot.guildMemberNickUpdate(ev, m)
 	}
@@ -165,39 +165,56 @@ func (bot *Bot) guildMemberNickUpdate(ev *gateway.GuildMemberUpdateEvent, m disc
 		Timestamp: discord.NowTimestamp(),
 	}
 
+	var old, new string
+	var nameChanged bool
 	if m.User.Tag() != ev.User.Tag() {
 		e.Title = "Changed username"
+		old = m.User.Tag()
+		new = ev.User.Tag()
+		nameChanged = true
+	} else if m.Nick != ev.Nick {
+		e.Title = "Changed nickname"
+		old = m.Nick
+		new = ev.Nick
+		nameChanged = true
+	} else if m.User.DisplayName != ev.User.DisplayName {
+		e.Title = "Changed display name"
+		old = m.User.DisplayName
+		new = ev.User.DisplayName
+		nameChanged = true
 	}
 
-	oldNick := m.Nick
-	newNick := ev.Nick
-	if oldNick == "" {
-		oldNick = "<none>"
-	}
-	if newNick == "" {
-		newNick = "<none>"
-	}
-
-	if oldNick == newNick {
-		oldNick = m.User.Tag()
-		newNick = ev.User.Tag()
-	}
-
-	e.Description = fmt.Sprintf("**Before:** %v\n**After:** %v", oldNick, newNick)
-
-	if m.User.Avatar != ev.User.Avatar {
-		if oldNick == newNick {
-			e.Title = ""
-			e.Description = ""
+	if nameChanged {
+		if old == "" {
+			old = "<none>"
+		}
+		if new == "" {
+			new = "<none>"
 		}
 
-		e.Fields = append(e.Fields, discord.EmbedField{
-			Name:  "Avatar updated",
-			Value: fmt.Sprintf("[Before](%v) (link will only work as long as the avatar is cached)\n[After](%v)", m.User.AvatarURL()+"?size=1024", ev.User.AvatarURL()+"?size=1024"),
+		e.Description = fmt.Sprintf("**Before:** %v\n**After:** %v", old, new)
+		resp.Embeds = append(resp.Embeds, e)
+	}
+
+	if m.User.Avatar != ev.User.Avatar {
+		resp.Embeds = append(resp.Embeds, discord.Embed{
+			Title: "Changed avatar",
+			Author: &discord.EmbedAuthor{
+				Icon: ev.User.AvatarURL(),
+				Name: ev.User.Tag(),
+			},
+			Thumbnail: &discord.EmbedThumbnail{
+				URL: ev.User.AvatarURL() + "?size=1024",
+			},
+			Description: fmt.Sprintf("**%v** changed their avatar.\n[Before](%v) (link will only work as long as the avatar is cached)\n[After](%v)", m.User.Tag(), m.User.AvatarURL()+"?size=1024", ev.User.AvatarURL()+"?size=1024"),
+			Color:       bcr.ColourGreen,
+			Footer: &discord.EmbedFooter{
+				Text: fmt.Sprintf("User ID: %v", m.User.ID),
+			},
+			Timestamp: discord.NowTimestamp(),
 		})
 	}
 
-	resp.Embeds = append(resp.Embeds, e)
 	return resp, err
 }
 
