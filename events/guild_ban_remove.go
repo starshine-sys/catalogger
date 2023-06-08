@@ -30,10 +30,10 @@ func (bot *Bot) guildBanRemove(ev *gateway.GuildBanRemoveEvent) (resp *handler.R
 	e := discord.Embed{
 		Author: &discord.EmbedAuthor{
 			Icon: ev.User.AvatarURL(),
-			Name: ev.User.Username + "#" + ev.User.Discriminator,
+			Name: ev.User.Tag(),
 		},
 
-		Description: fmt.Sprintf("**%v#%v** (%v, %v) was unbanned", ev.User.Username, ev.User.Discriminator, ev.User.ID, ev.User.Mention()),
+		Description: fmt.Sprintf("**%v** (%v, %v) was unbanned", ev.User.Tag(), ev.User.ID, ev.User.Mention()),
 
 		Fields: []discord.EmbedField{
 			{
@@ -73,7 +73,7 @@ func (bot *Bot) guildBanRemove(ev *gateway.GuildBanRemoveEvent) (resp *handler.R
 					break
 				}
 
-				e.Fields[1].Value = fmt.Sprintf("%v#%v (%v)", mod.Username, mod.Discriminator, mod.ID)
+				e.Fields[1].Value = fmt.Sprintf("%v (%v)", mod.Tag(), mod.ID)
 
 				break
 			}

@@ -70,7 +70,7 @@ func (bot *Bot) guildUpdate(ev *gateway.GuildUpdateEvent) (resp *handler.Respons
 
 		e.Fields = append(e.Fields, discord.EmbedField{
 			Name:  "Ownership transferred",
-			Value: fmt.Sprintf("**Before:** %v#%v (%v)\n**After:** %v#%v (%v)", oldOwner.Username, oldOwner.Discriminator, oldOwner.ID, newOwner.Username, newOwner.Discriminator, newOwner.ID),
+			Value: fmt.Sprintf("**Before:** %v (%v)\n**After:** %v (%v)", oldOwner.Tag(), oldOwner.ID, newOwner.Tag(), newOwner.ID),
 		})
 		changed = true
 	}

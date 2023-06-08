@@ -39,7 +39,7 @@ func (bot *Bot) guildMemberUpdate(ev *gateway.GuildMemberUpdateEvent) (resp *han
 		return bot.handleTimeout(ev)
 	}
 
-	if m.Nick != ev.Nick || m.User.Username+"#"+m.User.Discriminator != ev.User.Username+"#"+ev.User.Discriminator || m.User.Avatar != ev.User.Avatar {
+	if m.Nick != ev.Nick || m.User.Tag() != ev.User.Tag() || m.User.Avatar != ev.User.Avatar {
 		// username or nickname changed, so run that handler
 		return bot.guildMemberNickUpdate(ev, m)
 	}
@@ -84,7 +84,7 @@ func (bot *Bot) guildMemberUpdate(ev *gateway.GuildMemberUpdateEvent) (resp *han
 	e := discord.Embed{
 		Author: &discord.EmbedAuthor{
 			Icon: m.User.AvatarURL(),
-			Name: ev.User.Username + "#" + ev.User.Discriminator,
+			Name: ev.User.Tag(),
 		},
 		Color:       bcr.ColourOrange,
 		Title:       "Roles updated",
@@ -153,7 +153,7 @@ func (bot *Bot) guildMemberNickUpdate(ev *gateway.GuildMemberUpdateEvent, m disc
 		Title: "Changed nickname",
 		Author: &discord.EmbedAuthor{
 			Icon: ev.User.AvatarURL(),
-			Name: ev.User.Username + "#" + ev.User.Discriminator,
+			Name: ev.User.Tag(),
 		},
 		Thumbnail: &discord.EmbedThumbnail{
 			URL: ev.User.AvatarURL() + "?size=1024",
@@ -165,7 +165,7 @@ func (bot *Bot) guildMemberNickUpdate(ev *gateway.GuildMemberUpdateEvent, m disc
 		Timestamp: discord.NowTimestamp(),
 	}
 
-	if m.User.Username+"#"+m.User.Discriminator != ev.User.Username+"#"+ev.User.Discriminator {
+	if m.User.Tag() != ev.User.Tag() {
 		e.Title = "Changed username"
 	}
 
@@ -179,8 +179,8 @@ func (bot *Bot) guildMemberNickUpdate(ev *gateway.GuildMemberUpdateEvent, m disc
 	}
 
 	if oldNick == newNick {
-		oldNick = m.User.Username + "#" + m.User.Discriminator
-		newNick = ev.User.Username + "#" + ev.User.Discriminator
+		oldNick = m.User.Tag()
+		newNick = ev.User.Tag()
 	}
 
 	e.Description = fmt.Sprintf("**Before:** %v\n**After:** %v", oldNick, newNick)

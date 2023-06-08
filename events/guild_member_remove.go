@@ -34,7 +34,7 @@ func (bot *Bot) guildMemberRemove(ev *gateway.GuildMemberRemoveEvent) (resp *han
 		Title: "Member left",
 		Author: &discord.EmbedAuthor{
 			Icon: ev.User.AvatarURL(),
-			Name: ev.User.Username + "#" + ev.User.Discriminator,
+			Name: ev.User.Tag(),
 		},
 
 		Color:       bcr.ColourGold,

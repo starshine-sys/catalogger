@@ -70,7 +70,7 @@ func (bot *Bot) keyroleUpdate(ev *GuildKeyRoleUpdateEvent) (resp *handler.Respon
 		Color: bcr.ColourOrange,
 
 		Author: &discord.EmbedAuthor{
-			Name: ev.User.Username + "#" + ev.User.Discriminator,
+			Name: ev.User.Tag(),
 			Icon: ev.User.AvatarURL(),
 		},
 
@@ -131,7 +131,7 @@ func (bot *Bot) keyroleUpdate(ev *GuildKeyRoleUpdateEvent) (resp *handler.Respon
 				if err == nil {
 					e.Fields = append(e.Fields, discord.EmbedField{
 						Name:  "Responsible moderator",
-						Value: fmt.Sprintf("%v#%v (%v, %v)", mod.Username, mod.Discriminator, mod.Mention(), mod.ID),
+						Value: fmt.Sprintf("%v (%v, %v)", mod.Tag(), mod.Mention(), mod.ID),
 					})
 				} else {
 					e.Fields = append(e.Fields, discord.EmbedField{

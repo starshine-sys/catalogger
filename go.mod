@@ -6,7 +6,7 @@ require (
 	emperror.dev/errors v0.8.0
 	github.com/Masterminds/squirrel v1.5.0
 	github.com/ReneKroon/ttlcache/v2 v2.1.0
-	github.com/diamondburned/arikawa/v3 v3.1.1-0.20221210140357-3b98cde06f9e
+	github.com/diamondburned/arikawa/v3 v3.3.1-0.20230608010326-2b0395ab12a6
 	github.com/dustin/go-humanize v1.0.0
 	github.com/georgysavva/scany v1.0.0
 	github.com/getsentry/sentry-go v0.13.0
@@ -65,10 +65,10 @@ require (
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
-	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
-	golang.org/x/net v0.0.0-20220624214902-1bab6f366d9e // indirect
-	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a // indirect
-	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/crypto v0.1.0 // indirect
+	golang.org/x/net v0.1.0 // indirect
+	golang.org/x/sys v0.1.0 // indirect
+	golang.org/x/text v0.4.0 // indirect
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20210602131652-f16073e35f0c // indirect

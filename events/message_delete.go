@@ -104,10 +104,10 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) (*handler.Response,
 	var author *discord.EmbedAuthor
 	u, err := bot.User(msg.UserID)
 	if err == nil {
-		mention = fmt.Sprintf("%v\n%v#%v\nID: %v", u.Mention(), u.Username, u.Discriminator, u.ID)
+		mention = fmt.Sprintf("%v\n%v\nID: %v", u.Mention(), u.Tag(), u.ID)
 		author = &discord.EmbedAuthor{
 			Icon: u.AvatarURL(),
-			Name: u.Username + "#" + u.Discriminator,
+			Name: u.Tag(),
 		}
 	}
 
@@ -154,7 +154,7 @@ func (bot *Bot) messageDelete(m *gateway.MessageDeleteEvent) (*handler.Response,
 
 		e.Fields = append(e.Fields, []discord.EmbedField{
 			{
-				Name:  "​",
+				Name:  "\u200b",
 				Value: "**PluralKit information**",
 			},
 			{

@@ -58,7 +58,7 @@ func (bot *Bot) watchlistField(wl db.WatchlistUser) (field discord.EmbedField) {
 	if err != nil {
 		field.Name = "unknown user " + wl.UserID.String()
 	} else {
-		field.Name = u.Username + "#" + u.Discriminator
+		field.Name = u.Tag()
 	}
 
 	mod, err := bot.User(wl.Moderator)
@@ -66,7 +66,7 @@ func (bot *Bot) watchlistField(wl db.WatchlistUser) (field discord.EmbedField) {
 	if err != nil {
 		field.Value = fmt.Sprintf("**Moderator:** %v", wl.Moderator.Mention())
 	} else {
-		field.Value = fmt.Sprintf("**Moderator:** %v#%v", mod.Username, mod.Discriminator)
+		field.Value = fmt.Sprintf("**Moderator:** %v", mod.Tag())
 	}
 
 	field.Value += fmt.Sprintf("\n**Added:** <t:%v>\n\n**Reason:** ", wl.Added.Unix())

@@ -71,7 +71,7 @@ func (bot *Bot) messageCreate(m *gateway.MessageCreateEvent) (*handler.Response,
 		UserID:    m.Author.ID,
 		ChannelID: m.ChannelID,
 		ServerID:  m.GuildID,
-		Username:  m.Author.Username + "#" + m.Author.Discriminator,
+		Username:  m.Author.Tag(),
 
 		Content: content,
 	}

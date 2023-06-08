@@ -1,3 +1,5 @@
+# Terms of Service
+
 By using the Catalogger Discord bot (henceforth referred to as “the bot”) or the Catalogger dashboard (henceforth referred to as “the website”), you accept and agree to abide by the terms and provisions of this agreement.
 
 In addition, when using the bot’s services, or those of the website, you shall be subject to any posted guidelines or rules applicable to such services, which may be posted and modified from time to time.

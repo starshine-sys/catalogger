@@ -64,11 +64,11 @@ func (bot *Bot) bulkMessageDelete(ev *gateway.MessageDeleteBulkEvent) (resp *han
 		m, err := bot.DB.GetMessage(id)
 		if err == nil && m.UserID != 0 {
 			if u, ok := users[m.UserID]; ok {
-				m.Username = u.Username + "#" + u.Discriminator
+				m.Username = u.Tag()
 			} else {
 				u, err := bot.User(m.UserID)
 				if err == nil {
-					m.Username = u.Username + "#" + u.Discriminator
+					m.Username = u.Tag()
 					users[u.ID] = u
 				} else {
 					m.Username = "unknown#0000"

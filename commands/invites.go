@@ -40,7 +40,7 @@ func (bot *Bot) listInvites(ctx bcr.Contexter) (err error) {
 			Name: code,
 			Value: fmt.Sprintf(`%v
 Uses: %v
-Created by %v#%v`, names.Name(code), invite.Uses, invite.Inviter.Username, invite.Inviter.Discriminator),
+Created by %v`, names.Name(code), invite.Uses, invite.Inviter.Tag()),
 			Inline: true,
 		})
 	}

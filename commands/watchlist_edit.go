@@ -24,7 +24,7 @@ func (bot *Bot) watchlistAdd(ctx *bcr.Context) (err error) {
 		return bot.DB.ReportCtx(ctx, err)
 	}
 
-	_, err = ctx.Reply("Added **%v#%v** to the watchlist.", u.Username, u.Discriminator)
+	_, err = ctx.Reply("Added **%v** to the watchlist.", u.Tag())
 	return
 }
 
@@ -40,7 +40,7 @@ func (bot *Bot) watchlistRemove(ctx *bcr.Context) (err error) {
 		return bot.DB.ReportCtx(ctx, err)
 	}
 
-	_, err = ctx.Reply("Removed **%v#%v** from the watchlist.", u.Username, u.Discriminator)
+	_, err = ctx.Reply("Removed **%v** from the watchlist.", u.Tag())
 	return
 }
 
@@ -60,7 +60,7 @@ func (bot *Bot) watchlistAddSlash(ctx bcr.Contexter) (err error) {
 		return bot.DB.ReportCtx(ctx, err)
 	}
 
-	return ctx.SendfX("Added **%v#%v** to the watchlist.", u.Username, u.Discriminator)
+	return ctx.SendfX("Added **%v** to the watchlist.", u.Tag())
 }
 
 func (bot *Bot) watchlistRemoveSlash(ctx bcr.Contexter) (err error) {
@@ -74,5 +74,5 @@ func (bot *Bot) watchlistRemoveSlash(ctx bcr.Contexter) (err error) {
 		return bot.DB.ReportCtx(ctx, err)
 	}
 
-	return ctx.SendfX("Removed **%v#%v** from the watchlist.", u.Username, u.Discriminator)
+	return ctx.SendfX("Removed **%v** from the watchlist.", u.Tag())
 }

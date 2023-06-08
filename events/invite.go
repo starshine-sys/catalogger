@@ -43,7 +43,7 @@ func (bot *Bot) inviteCreateEvent(ev *gateway.InviteCreateEvent) (resp *handler.
 		Fields: []discord.EmbedField{
 			{
 				Name:  "Created by",
-				Value: fmt.Sprintf("%v\n%v#%v\nID: %v", ev.Inviter.Mention(), ev.Inviter.Username, ev.Inviter.Discriminator, ev.Inviter.ID),
+				Value: fmt.Sprintf("%v\n%v\nID: %v", ev.Inviter.Mention(), ev.Inviter.Tag(), ev.Inviter.ID),
 			},
 			{
 				Name:   "Maximum uses",
@@ -119,7 +119,7 @@ func (bot *Bot) inviteDeleteEvent(ev *gateway.InviteDeleteEvent) (resp *handler.
 		Fields: []discord.EmbedField{
 			{
 				Name:  "Created by",
-				Value: fmt.Sprintf("%v\n%v#%v\nID: %v", inv.Inviter.Mention(), inv.Inviter.Username, inv.Inviter.Discriminator, inv.Inviter.ID),
+				Value: fmt.Sprintf("%v\n%v\nID: %v", inv.Inviter.Mention(), inv.Inviter.Tag(), inv.Inviter.ID),
 			},
 			{
 				Name:   "Uses",

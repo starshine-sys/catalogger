@@ -132,7 +132,7 @@ func run(*cli.Context) (err error) {
 
 	log.Info("Connected to Discord. Press Ctrl-C or send an interrupt signal to stop.")
 
-	log.Infof("User: %v#%v (%v)", botUser.Username, botUser.Discriminator, botUser.ID)
+	log.Infof("User: %v (%v)", botUser.Tag(), botUser.ID)
 	// normally creating a Context would do this, but as we set the user above, that doesn't work
 	r.Prefixes = append(r.Prefixes, "<@"+r.Bot.ID.String()+">", "<@!"+r.Bot.ID.String()+">")
 

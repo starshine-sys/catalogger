@@ -81,7 +81,7 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) (*handler.Response,
 		common.Log.Debugf("updating message %v", m.ID)
 
 		username := m.Author.Username
-		if msg.System == nil {
+		if msg.System == nil && m.Author.Discriminator != "0" {
 			username += "#" + m.Author.Discriminator
 		}
 
@@ -116,10 +116,10 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) (*handler.Response,
 		resp.ChannelID = redirects[channelID.String()]
 	}
 
-	mention := fmt.Sprintf("%v\n%v#%v\nID: %v", m.Author.Mention(), m.Author.Username, m.Author.Discriminator, m.Author.ID)
+	mention := fmt.Sprintf("%v\n%v\nID: %v", m.Author.Mention(), m.Author.Tag(), m.Author.ID)
 	author := &discord.EmbedAuthor{
 		Icon: m.Author.AvatarURL(),
-		Name: m.Author.Username + "#" + m.Author.Discriminator,
+		Name: m.Author.Tag(),
 	}
 
 	e := discord.Embed{
@@ -195,7 +195,7 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) (*handler.Response,
 		})
 	}
 
-	e.Fields = append(e.Fields, discord.EmbedField{Name: "​", Value: "​"})
+	e.Fields = append(e.Fields, discord.EmbedField{Name: "\u200b", Value: "\u200b"})
 
 	if len(updated) > 1000 {
 		e.Fields = append(e.Fields, discord.EmbedField{
@@ -255,7 +255,7 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) (*handler.Response,
 
 			e.Fields[len(e.Fields)-1] = discord.EmbedField{
 				Name:   "Linked Discord account",
-				Value:  fmt.Sprintf("%v\n%v#%v\nID: %v", u.Mention(), u.Username, u.Discriminator, u.ID),
+				Value:  fmt.Sprintf("%v\n%v\nID: %v", u.Mention(), u.Tag(), u.ID),
 				Inline: true,
 			}
 		} else {
@@ -268,7 +268,7 @@ func (bot *Bot) messageUpdate(m *gateway.MessageUpdateEvent) (*handler.Response,
 
 		e.Fields = append(e.Fields, []discord.EmbedField{
 			{
-				Name:  "​",
+				Name:  "\u200b",
 				Value: "**PluralKit information**",
 			},
 			{

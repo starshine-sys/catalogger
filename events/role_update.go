@@ -56,7 +56,7 @@ func (bot *Bot) guildRoleUpdate(ev *gateway.GuildRoleUpdateEvent) (resp *handler
 
 	if ev.Role.Hoist != old.Hoist || ev.Role.Mentionable != old.Mentionable {
 		e.Fields = append(e.Fields, discord.EmbedField{
-			Name:  "​",
+			Name:  "\u200b",
 			Value: fmt.Sprintf("**Mentionable:** %v\n**Shown separately:** %v", ev.Role.Mentionable, ev.Role.Hoist),
 		})
 		changed = true

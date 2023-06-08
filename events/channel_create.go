@@ -68,7 +68,7 @@ func (bot *Bot) channelCreate(ev *gateway.ChannelCreateEvent) (resp *handler.Res
 		} else if p.Type == discord.OverwriteMember {
 			u, err := bot.User(discord.UserID(p.ID))
 			if err == nil {
-				f.Name = "Member override for " + u.Username + "#" + u.Discriminator
+				f.Name = "Member override for " + u.Tag()
 			}
 		}
 

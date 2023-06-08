@@ -178,7 +178,7 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) (resp *handler.Re
 	e = discord.Embed{
 		Title:       "⚠️ User on watchlist",
 		Color:       bcr.ColourRed,
-		Description: fmt.Sprintf("**%v#%v** is on this server's watchlist.", m.User.Username, m.User.Discriminator),
+		Description: fmt.Sprintf("**%v** is on this server's watchlist.", m.User.Tag()),
 		Footer: &discord.EmbedFooter{
 			Text: fmt.Sprintf("ID: %v | Added", m.User.ID),
 		},
@@ -210,7 +210,7 @@ func (bot *Bot) guildMemberAdd(m *gateway.GuildMemberAddEvent) (resp *handler.Re
 	if err == nil {
 		e.Fields = append(e.Fields, discord.EmbedField{
 			Name:  "Moderator",
-			Value: fmt.Sprintf("%v#%v (%v)", mod.Username, mod.Discriminator, mod.Mention()),
+			Value: fmt.Sprintf("%v (%v)", mod.Tag(), mod.Mention()),
 		})
 	} else {
 		e.Fields = append(e.Fields, discord.EmbedField{

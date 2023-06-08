@@ -152,7 +152,7 @@ func (bot *Bot) channelUpdate(ev *gateway.ChannelUpdateEvent) (resp *handler.Res
 			} else if r.Type == discord.OverwriteMember {
 				u, err := bot.User(discord.UserID(r.ID))
 				if err == nil {
-					f.Value += u.Username + "#" + u.Discriminator + ", "
+					f.Value += u.Tag() + ", "
 				}
 			} else {
 				f.Value += r.ID.String() + ", "
@@ -179,7 +179,7 @@ func (bot *Bot) channelUpdate(ev *gateway.ChannelUpdateEvent) (resp *handler.Res
 		} else if p.Type == discord.OverwriteMember {
 			u, err := bot.User(discord.UserID(p.ID))
 			if err == nil {
-				f.Name = "Member override for " + u.Username + "#" + u.Discriminator
+				f.Name = "Member override for " + u.Tag()
 			}
 		}
 
