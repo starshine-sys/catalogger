@@ -14,7 +14,7 @@ import (
 )
 
 type SendData struct {
-	// If ChanneLID is not valid, the channel ID is fetched by bot.Send.
+	// If ChannelID is not valid, the channel ID is fetched by bot.Send.
 	// This should only be set if the log channel ID is checked in the log handler.
 	ChannelID discord.ChannelID
 

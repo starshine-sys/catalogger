@@ -12,6 +12,7 @@ import (
 	"github.com/starshine-sys/catalogger/v2/common"
 	"github.com/starshine-sys/catalogger/v2/common/log"
 	"github.com/starshine-sys/catalogger/v2/logging/cache"
+	"github.com/starshine-sys/catalogger/v2/logging/channels"
 	"github.com/starshine-sys/catalogger/v2/logging/invites"
 	"github.com/starshine-sys/catalogger/v2/logging/messages"
 	"github.com/starshine-sys/catalogger/v2/logging/meta"
@@ -58,6 +59,7 @@ func run(c *cli.Context) error {
 	messages.Setup(b) // message logging
 	meta.Setup(b)     // meta logging (guilds, ready)
 	invites.Setup(b)  // invite logging
+	channels.Setup(b) // channel logging
 
 	config.Setup(b)       // config commands
 	metacommands.Setup(b) // meta commands

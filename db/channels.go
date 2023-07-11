@@ -48,7 +48,6 @@ type Channels struct {
 }
 
 // For returns the channel ID for the given event.
-// TODO: add all events
 func (lc LogChannels) For(evName string) discord.ChannelID {
 	switch evName {
 	case "GuildUpdateEvent":
