@@ -19,5 +19,7 @@ func Setup(root *bot.Bot) {
 	b.AddHandler(
 		// invite create handler
 		b.inviteCreate,
+		// invite delete handler
+		b.inviteDelete,
 	)
 }
