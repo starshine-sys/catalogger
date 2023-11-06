@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/starshine-sys/catalogger/v2/cmd/bot"
+	"github.com/starshine-sys/catalogger/v2/cmd/commands"
 	"github.com/starshine-sys/catalogger/v2/cmd/importdb"
 	"github.com/starshine-sys/catalogger/v2/cmd/migrate"
 	"github.com/starshine-sys/catalogger/v2/common"
@@ -20,6 +21,7 @@ var app = &cli.App{
 		bot.Command,
 		migrate.Command,
 		importdb.Command,
+		commands.Command,
 	},
 }
 
