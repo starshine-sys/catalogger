@@ -3,6 +3,7 @@ package handler
 import (
 	"errors"
 	"fmt"
+	"log"
 	"reflect"
 	"sync"
 
@@ -45,6 +46,12 @@ func (h *Handler) Call(ev interface{}) {
 }
 
 func (h *Handler) call(hn handler, ev reflect.Value) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("panic in handler for %s: %v", hn.event, r)
+		}
+	}()
+
 	resps := hn.call(ev)
 
 	erri := resps[1].Interface()
