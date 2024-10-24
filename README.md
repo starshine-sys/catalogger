@@ -1,3 +1,5 @@
+> **NOTE:** this codebase is basically abandoned. We're working on a rewrite over at https://codeberg.org/starshine/catalogger.
+
 # Catalogger
 
 A logger bot that integrates with PluralKit's message proxying.  
